@@ -1,6 +1,6 @@
 nom_plat,mida_racio,complexitat,temperatura,te_ordre,formalitat,preu_cost,apte_esdeveniment,disponibilitat,ingredients
 Amanida de pollastre amb sèsam,mitjana,mitjana,tebi,primer,informal,5.5,['totes'],"['estiu', 'hivern', 'primavera', 'tardor']","['pollastre', 'salsa de soja', 'gingebre', 'sucre morè', 'all', 'maionesa', 'oli de sèsam', 'sucre blanc', 'sèsam', 'col', 'pastanaga', 'fideus cruixents']"
-Arròs fregit clàssic,mitjana,mitjana,tebi,segon,informal,6.0,['totes'],['estiu'],"['mantega', 'all', 'chili', 'ceba tendra', 'pastanaga', 'pollastre', 'arròs', 'salsa d’ostres', 'salsa Worcestershire', 'sal', 'pebre', 'cogombre', 'tomàquet', 'ou']"
+Arròs fregit clàssic,mitjana,mitjana,tebi,segon,informal,6.0,['totes'],['estiu'],"['mantega', 'all', 'chili', 'ceba tendra', 'pastanaga', 'pollastre', 'arròs', 'salsa d\’ostres', 'salsa Worcestershire', 'sal', 'pebre', 'cogombre', 'tomàquet', 'ou']"
 Pastís de boda de maduixa i iogurt grec,gran,alta,fred,postres,formal,11.5,['casament_only'],"['primavera', 'estiu']","['maduixes', 'iogurt grec', 'farina', 'ou', 'sucre', 'mantega']"
 Tomàquets farcits,mitjana,mitjana,tebi,primer,informal,5.0,['totes'],['estiu'],"['tomàquet', 'bolets', 'ceba', 'herbes', 'pebre', 'all', 'sal', 'oli']"
 Arròs al curri amb panses,mitjana,mitjana,tebi,segon,informal,5.0,['totes'],"['estiu','hivern','primavera','tardor']","['arròs','greix','curri','ceba','raïm sec','brou']"
@@ -10,7 +10,7 @@ Cassola de tonyina cremosa,baixa,baixa,tebi,segon,informal,4.5,['totes'],"['esti
 Amanida de fruites Ambrosia,mitjana,baixa,fred,postres,informal,4.5,['totes'],"['estiu', 'hivern', 'primavera', 'tardor']","['nata', 'nata agra', 'marshmallows']"
 Sayur Asem (sopa agredolça d’Indonèsia),mitjana,mitjana,tebi,primer,informal,6.0,"['empresa','aniversari']","['estiu','hivern','primavera','tardor']","['xili','ceba','pastanaga','tamarinde','salam','mongeta','carbassó','blat de moro','jackfruit','cacauet','sal','sucre']"
 Arròs amb mongetes a la jamaicana,mitjana,mitjana,tebi,segon,informal,4.8,['totes'],"['estiu','hivern','primavera','tardor']","['mongetes','aigua','sal','all','llet de coco','pebre','ceba tendra','farigola','margarina','espècies','arròs']"
-Bunyols d’arròs dolços indonesis,mitjana,baixa,tebi,postres,informal,4.5,['totes'],"['estiu', 'hivern', 'primavera', 'tardor']","[‘pandan’, ‘farina d’arròs glutinos’, ‘farina de sagú’, ‘sucre de palma’, ‘coco’, ‘aigua’]"
+Bunyols d’arròs dolços indonesis,mitjana,baixa,tebi,postres,informal,4.5,['totes'],"['estiu', 'hivern', 'primavera', 'tardor']","[‘pandan’, ‘farina d\’arròs glutinos’, ‘farina de sagú’, ‘sucre de palma’, ‘coco’, ‘aigua’]"
 Cassola d’arròs amb tonyina i pèsols,baixa,baixa,tebi,segon,informal,4.5,['totes'],"['estiu', 'hivern', 'primavera', 'tardor']","['tonyina', 'pèsols', 'arròs', 'aigua', 'crema de cheddar']"
 Amanida de tonyina amb herbes mediterrànies i feta,baixa,baixa,fred,primer,informal,5.0,"['empresa','aniversari']","['totes']","['tonyina','sal','pebre','mostassa','llimona','oli','alfàbrega','farigola','orenga','julivert','feta']"
 omaní i balsàmic,mitjana,mitjana,tebi,segon,informal,7.0,['totes'],"['estiu','hivern','primavera','tardor']","['pollastre','vinagre balsàmic','romaní','sal','pebre','xili','paprika','all','farina de blat de moro','oli']"
