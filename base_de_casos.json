@@ -12,22 +12,22 @@
         },
         "solucio": {
             "primer_plat": {
-                "nom": "Amanida de pollastre amb sèsam i soja",
-                "ingredients": [],
+                "nom": "Amanida de pollastre amb sèsam",
+                "ingredients": ["pollastre", "salsa de soja", "gingebre", "sucre morè", "all", "maionesa", "oli de sèsam", "sucre blanc", "sèsam", "col", "pastanaga", "fideus cruixents"],
                 "curs": "primer",
                 "estil_tags": [],
                 "preu": 0.0
             },
             "segon_plat": {
                 "nom": "Arròs fregit clàssic",
-                "ingredients": [],
+                "ingredients": ["mantega", "all", "chili", "ceba tendra", "pastanaga", "pollastre", "arròs", "salsa d’ostres", "salsa Worcestershire", "sal", "pebre", "cogombre", "tomàquet", "ou"],
                 "curs": "segon",
                 "estil_tags": [],
                 "preu": 0.0
             },
             "postres": {
                 "nom": "Pastís de boda de maduixa i iogurt grec",
-                "ingredients": [],
+                "ingredients": ["maduixes", "iogurt grec", "farina", "ou", "sucre", "mantega"],
                 "curs": "postres",
                 "estil_tags": [],
                 "preu": 0.0
@@ -77,14 +77,14 @@
             },
             "segon_plat": {
                 "nom": "Arròs al curri amb panses",
-                "ingredients": [],
+                "ingredients": ["arròs","greix","curri","ceba","raïm sec","brou"],
                 "curs": "segon",
                 "estil_tags": [],
                 "preu": 0.0
             },
             "postres": {
                 "nom": "Pastís de boda de coco i pinya",
-                "ingredients": [],
+                "ingredients": ["pinya natural","coco ratllat","nata","farina","ou","sucre","mantega"],
                 "curs": "postres",
                 "estil_tags": [],
                 "preu": 0.0
@@ -118,14 +118,14 @@
         "solucio": {
             "primer_plat": {
                 "nom": "Amanida japonesa d'algues amb sèsam torrat",
-                "ingredients": [],
+                "ingredients": ["algues","ceba","salsa de soja","vinagre d’arròs","mirin","oli de sèsam","pebre vermell","sal","sèsam"],
                 "curs": "primer",
                 "estil_tags": [],
                 "preu": 0.0
             },
             "segon_plat": {
                 "nom": "Cassola de tonyina cremosa",
-                "ingredients": [],
+                "ingredients": ["tonyina","macarrons","llet","pèsols","crema","pa ratllat","mantega","ceba"],
                 "curs": "segon",
                 "estil_tags": [],
                 "preu": 0.0
@@ -172,21 +172,21 @@
         "solucio": {
             "primer_plat": {
                 "nom": "Sayur Asem (sopa agredolça d'Indonèsia)",
-                "ingredients": [],
+                "ingredients": ["tamarinde","mongetes verdes","maíz","col","pastanaga","ceba","tomàquet","espècies","oli"],
                 "curs": "primer",
                 "estil_tags": [],
                 "preu": 0.0
             },
             "segon_plat": {
                 "nom": "Arròs amb mongetes a la jamaicana",
-                "ingredients": [],
+                "ingredients": ["arròs","mongetes vermelles","ceba","all","pebrot vermell","espècies","oli"],
                 "curs": "segon",
                 "estil_tags": [],
                 "preu": 0.0
             },
             "postres": {
                 "nom": "Bunyols d'arròs dolços indonesis",
-                "ingredients": [],
+                "ingredients": ["farina d'arròs","sucre","coco ratllat","llet de coco","olis vegetals"],
                 "curs": "postres",
                 "estil_tags": [],
                 "preu": 0.0
@@ -220,14 +220,14 @@
         "solucio": {
             "primer_plat": {
                 "nom": "Amanida japonesa d'algues amb sèsam torrat",
-                "ingredients": [],
+                "ingredients": ["algues","ceba","salsa de soja sense gluten","vinagre d’arròs","oli de sèsam","pebre vermell","sal","sèsam"],
                 "curs": "primer",
                 "estil_tags": [],
                 "preu": 0.0
             },
             "segon_plat": {
                 "nom": "Cassola d'arròs amb tonyina i pèsols",
-                "ingredients": [],
+                "ingredients": ["arròs","tonyina","pèsols","ceba","oli d’oliva","sal","pebre"],
                 "curs": "segon",
                 "estil_tags": [],
                 "preu": 0.0
@@ -274,21 +274,21 @@
         "solucio": {
             "primer_plat": {
                 "nom": "Amanida de tonyina amb herbes mediterrànies i feta",
-                "ingredients": [],
+                "ingredients": ["tonyina","formatge feta sense gluten","fulles de mesclum","tomàquet","ceba","olives","oli d’oliva","sal","pebre","herbes mediterrànies"],
                 "curs": "primer",
                 "estil_tags": [],
                 "preu": 0.0
             },
             "segon_plat": {
                 "nom": "Ales al romaní i balsàmic",
-                "ingredients": [],
+                "ingredients": ["ales de pollastre","oli d’oliva","all","romaní","vinagre balsàmic","sal","pebre"],
                 "curs": "segon",
                 "estil_tags": [],
                 "preu": 0.0
             },
             "postres": {
                 "nom": "Arròs amb llet",
-                "ingredients": [],
+                "ingredients": ["arròs","llet sense gluten","sucre","pell de llimona","canella"],
                 "curs": "postres",
                 "estil_tags": [],
                 "preu": 0.0
@@ -323,7 +323,7 @@
         "solucio": {
             "primer_plat": {
                 "nom": "Xató clàssic amb bacallà i tonyina",
-                "ingredients": [],
+                "ingredients": ["escarola","bacallà dessalat","tonyina","olives arbequines","salsa xató","ametlles","nous","all","oli d’oliva","vinagre","sal"],
                 "curs": "primer",
                 "estil_tags": [],
                 "preu": 0.0
@@ -343,7 +343,7 @@
             },
             "postres": {
                 "nom": "Merenga italiana",
-                "ingredients": [],
+                "ingredients": ["clares d’ou","sucre","vainilla"],
                 "curs": "postres",
                 "estil_tags": [
                     "formal"
@@ -379,14 +379,14 @@
         "solucio": {
             "primer_plat": {
                 "nom": "Sopa miso tradicional",
-                "ingredients": [],
+                "ingredients": ["alga wakame","tofu","ceba tendra","pastanaga","miso","aigua","ceba"],
                 "curs": "primer",
                 "estil_tags": [],
                 "preu": 0.0
             },
             "segon_plat": {
                 "nom": "Carbassons farcits d'espinacs i bolets",
-                "ingredients": [],
+                "ingredients": ["carbassó","espinacs","bolets","ceba","all","formatge ratllat","oli d’oliva","sal","pebre"],
                 "curs": "segon",
                 "estil_tags": [],
                 "preu": 0.0
@@ -436,7 +436,7 @@
         "solucio": {
             "primer_plat": {
                 "nom": "Amanida de pollastre amb sèsam i soja",
-                "ingredients": [],
+                "ingredients": ["pollastre","salsa de soja","sèsam","enciam","pastanaga","pepino","ceba","oli d’oliva","sal","pebre"],
                 "curs": "primer",
                 "estil_tags": [],
                 "preu": 0.0
@@ -463,7 +463,7 @@
             },
             "postres": {
                 "nom": "Brownies de pastanaga i clara d'ou",
-                "ingredients": [],
+                "ingredients": ["pastanaga","farina","sucre","clares d’ou","mantega","cacau en pols","vainilla"],
                 "curs": "postres",
                 "estil_tags": [],
                 "preu": 0.0
@@ -495,14 +495,14 @@
         "solucio": {
             "primer_plat": {
                 "nom": "Amanida japonesa d'algues amb sèsam torrat",
-                "ingredients": [],
+                "ingredients": ["algues","ceba","salsa de soja","vinagre d’arròs","oli de sèsam","pebre vermell","sal","sèsam"],
                 "curs": "primer",
                 "estil_tags": [],
                 "preu": 0.0
             },
             "segon_plat": {
                 "nom": "Entrepà de formatge a la planxa",
-                "ingredients": [],
+                "ingredients": ["pa","formatge","mantega","tomàquet","mostassa"],
                 "curs": "segon",
                 "estil_tags": [],
                 "preu": 0.0
@@ -552,7 +552,7 @@
         "solucio": {
             "primer_plat": {
                 "nom": "Onigiri japonès farcit",
-                "ingredients": [],
+                "ingredients": ["arròs","algues nori","salmó","salsa de soja","sal"],
                 "curs": "primer",
                 "estil_tags": [],
                 "preu": 0.0
@@ -576,7 +576,7 @@
             },
             "postres": {
                 "nom": "Mousse lleugera de coco i cereals",
-                "ingredients": [],
+                "ingredients": ["nata","llet de coco","sucre","cereals inflats","vainilla"],
                 "curs": "postres",
                 "estil_tags": [],
                 "preu": 0.0
@@ -608,7 +608,7 @@
         "solucio": {
             "primer_plat": {
                 "nom": "Amanida Caprese amb mozzarella i alfàbrega",
-                "ingredients": [],
+                "ingredients": ["tomàquet","mozzarella","alfàbrega","oli d’oliva","sal","pebre"],
                 "curs": "primer",
                 "estil_tags": [],
                 "preu": 0.0
@@ -669,7 +669,7 @@
         "solucio": {
             "primer_plat": {
                 "nom": "Còctel de cranc i blat de moro amb maionesa lleugera",
-                "ingredients": [],
+                "ingredients": ["cranc","blat de moro","maionesa","llimona","ceba tendra","pebrot","sal","pebre"],
                 "curs": "primer",
                 "estil_tags": [],
                 "preu": 0.0
@@ -739,14 +739,14 @@
         "solucio": {
             "primer_plat": {
                 "nom": "Amanida de fideus asiàtics amb sèsam",
-                "ingredients": [],
+                "ingredients": ["fideus d’arròs","pastanaga","pepino","ceba tendra","sèsam","oli de sèsam","salsa de soja","sal","pebre"],
                 "curs": "primer",
                 "estil_tags": [],
                 "preu": 0.0
             },
             "segon_plat": {
                 "nom": "Albergínia a la brasa amb miso i sèsam",
-                "ingredients": [],
+                "ingredients": ["albergínia","miso","oli de sèsam","all","sèsam","ceba tendra","sal","pebre"],
                 "curs": "segon",
                 "estil_tags": [],
                 "preu": 0.0

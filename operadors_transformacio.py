@@ -1,6 +1,6 @@
 import random
 
-def substituir_ingredient(plat, tipus_cuina, base_ingredients, base_cuina, temporada):
+def substituir_ingredient(plat, tipus_cuina, base_ingredients, base_cuina):
     """
     Substitueix un ingredient d'un plat que NO sigui de l'estil de cuina desitjat
     per un altre ingredient amb el mateix rol i disponible a la temporada.
@@ -10,7 +10,6 @@ def substituir_ingredient(plat, tipus_cuina, base_ingredients, base_cuina, tempo
         tipus_cuina (str): 'japonesa', 'francesa', etc.
         base_ingredients (list): Llista de diccionaris amb nom, categoria, rol, disponibilitat
         base_cuina (dict): Diccionari amb ingredients propis de cada estil
-        temporada (str): 'primavera', 'estiu', 'tardor', 'hivern'
         
     Returns:
         dict: Plat amb un ingredient substituït
@@ -23,25 +22,23 @@ def substituir_ingredient(plat, tipus_cuina, base_ingredients, base_cuina, tempo
     ingredients_a_substituir = [ing for ing in plat['ingredients'] if ing not in ingredients_estil]
     
     if not ingredients_a_substituir:
+        print(f"Tots els ingredients ja són de l'estil {tipus_cuina}.")
         return plat
     
     # Escull un ingredient a substituir
     ingredient_vell = random.choice(ingredients_a_substituir)
     
     # Troba el rol de l'ingredient a substituir
-    rol = next((ing['rol'] for ing in base_ingredients if ing['nom'] == ingredient_vell), None)
+    rol = next((ing['rol_tipic'] for ing in base_ingredients if ing['nom_ingredient'] == ingredient_vell), None)
     if not rol:
+        print(f"No s'ha trobat rol_tipic per {ingredient_vell}, no es pot substituir.")
         return plat
     
-    # Busca alternatives amb el mateix rol, del mateix estil i disponibles a la temporada
-    alternatives = [
-        ing['nom'] for ing in base_ingredients
-        if ing['rol'] == rol
-        and ing['nom'] in ingredients_estil
-        and temporada in ing['disponibilitat']
-    ]
+    alternatives = [ing['nom_ingredient'] for ing in base_ingredients
+                    if ing['rol_tipic'] == rol and ing['nom_ingredient'] in ingredients_estil]
     
     if not alternatives:
+        print(f"No hi ha alternatives per substituir {ingredient_vell} dins l'estil {tipus_cuina}.")
         return plat
     
     nou_ingredient = random.choice(alternatives)

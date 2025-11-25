@@ -5,34 +5,16 @@ from operadors_transformacio import *
 import pandas as pd
 import ast
 import re
-
-# Carreguem la base de plats amb totes les columnes com a string
-base_plats = pd.read_csv("base_plats_casos.csv", dtype=str)
-
-def parse_ingredients(s):
-    if pd.isna(s):
-        return []
-    # Substituïm cometes tipogràfiques per cometes simples
-    s = s.replace("‘", "'").replace("’", "'").replace("“", '"').replace("”", '"')
-    # Eliminem espais sobrants a dins de la llista
-    s = re.sub(r"\s*,\s*", ",", s.strip())
-    try:
-        return ast.literal_eval(s)
-    except Exception as e:
-        print(f"Error parsejant ingredients: {s}\n{e}")
-        return []
-
-# Convertim la columna 'ingredients' de string a llista
-base_plats['ingredients'] = base_plats['ingredients'].apply(parse_ingredients)
-
-# Convertim també apte_esdeveniment i disponibilitat
-for col in ['apte_esdeveniment', 'disponibilitat']:
-    base_plats[col] = base_plats[col].apply(parse_ingredients)
+import csv
 
 
 # Carreguem la base d'ingredients
-with open("base_ingredients.json", "r", encoding="utf-8") as f:
-    base_ingredients = json.load(f)
+base_ingredients = []
+
+with open("ingredients.csv", "r", encoding="utf-8") as f:
+    reader = csv.DictReader(f)  # converteix cada fila en un diccionari
+    for row in reader:
+        base_ingredients.append(row)
     
 # Carreguem la base de tipus de cuina
 with open("tipus_cuina.json", "r", encoding="utf-8") as f:
@@ -92,27 +74,29 @@ def main():
     resultats_2 = retriever.recuperar_casos_similars(peticio_2)
     imprimir_resultat(resultats_2)
     
-    print("\n\nEXTREIENT INGREDIENTS DEL MENÚ...")
+    print("\n\nEXTREIENT INGREDIENTS I CURS DEL MENÚ...")
     if resultats_1:
         cas_seleccionat = resultats_1[0]['cas']  # Agafem el cas amb més similitud
         plats_cas = [
-            cas_seleccionat['solucio']['primer_plat']['nom'],
-            cas_seleccionat['solucio']['segon_plat']['nom'],
-            cas_seleccionat['solucio']['postres']['nom']
+            cas_seleccionat['solucio']['primer_plat'],
+            cas_seleccionat['solucio']['segon_plat'],
+            cas_seleccionat['solucio']['postres']
         ]
         
-        # Extraiem ingredients de cada plat
-        ingredients_per_plat = {}
+        ingredients_i_curs_per_plat = {}
         for plat in plats_cas:
-            fila = base_plats[base_plats['nom_plat'] == plat]
-            if not fila.empty:
-                ingredients_per_plat[plat] = fila.iloc[0]['ingredients']
-            else:
-                ingredients_per_plat[plat] = []  # Si no troba el plat
-    
-        print("Ingredients originals del menú:")
-        for plat, ingredients in ingredients_per_plat.items():
-            print(f"  {plat}: {ingredients}")
+            nom_plat = plat['nom']
+            curs_plat = plat['curs']
+            ingredients = plat['ingredients']
+            
+            ingredients_i_curs_per_plat[nom_plat] = {
+                'ingredients': ingredients,
+                'curs': curs_plat
+            }
+
+        print("Ingredients i curs de cada plat del menú:")
+        for nom, info in ingredients_i_curs_per_plat.items():
+            print(f"  {nom} ({info['curs']}): {info['ingredients']}")
         
     
     print("\n\n\nPASSANT A L'ADAPTACIÓ...")
@@ -121,17 +105,22 @@ def main():
         cas_seleccionat = resultats_1[0]['cas'] # Agafem el cas amb més similitud
         plat1 = cas_seleccionat['solucio']['primer_plat']
         plat2 = cas_seleccionat['solucio']['segon_plat']
+        postres = cas_seleccionat['solucio']['postres']
         
         # Substituïm ingredients per estil i temporada
         plat1_modificat = substituir_ingredient(
-            plat1, peticio_1.estil_culinari, base_ingredients, base_cuina, peticio_1.temporada)
+            plat1, peticio_1.estil_culinari, base_ingredients, base_cuina)
         plat2_modificat = substituir_ingredient(
-            plat2, peticio_1.estil_culinari, base_ingredients, base_cuina, peticio_1.temporada
-        )
+            plat2, peticio_1.estil_culinari, base_ingredients, base_cuina)
+        postres_modificat = substituir_ingredient(
+            postres, peticio_1.estil_culinari, base_ingredients, base_cuina)
+
 
         print(f"\nMenú adaptat:")
         print(f"  Primer plat: {plat1_modificat['nom']} amb ingredients {plat1_modificat['ingredients']}")
         print(f"  Segon plat: {plat2_modificat['nom']} amb ingredients {plat2_modificat['ingredients']}")
+        print(f"  Postres: {postres_modificat['nom']} amb ingredients {postres_modificat['ingredients']}")
+
 
 if __name__ == "__main__":
     main()
