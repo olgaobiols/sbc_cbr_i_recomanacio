@@ -1,4 +1,8 @@
 import random
+from src.flavorgraph_embeddings import FlavorGraphWrapper
+print("Inicialitzant motor FlavorGraph...")
+# Assegura't que el path al .pickle és correcte
+FLAVOR_ENGINE = FlavorGraphWrapper("models/FlavorGraph_Node_Embedding.pickle")
 
 # ---------------------------------------------------------------------
 #  FUNCIONS AUXILIARS
@@ -192,6 +196,163 @@ def substituir_ingredient(plat, tipus_cuina, base_ingredients, base_cuina):
 
     print(f"[INGREDIENTS] Substituint '{ingredient_vell}' per '{nou_ingredient}' al plat '{plat['nom']}'")
     return nou_plat
+
+def substituir_avancat(plat, nom_original, base_dades, temperatura=0.2, estil_vector=None):
+    
+    # 1. Recuperar Dades Ontològiques de l'Original
+    info_orig = base_dades.get_info(nom_original)
+    rol_orig = info_orig["Rol_Estructural"] # Ex: "Principal"
+    cat_orig = info_orig["Categoria"]       # Ex: "Carn"
+    
+    # 2. Obtenir Candidats "Creatius" del FlavorGraph
+    # Si la temperatura és alta (0.8), FlavorGraph ens pot donar "Cigrons" per "Pollastre"
+    candidats = FLAVOR_ENGINE.get_creative_candidates(nom_original, temperature=temperatura, style_vector=estil_vector)
+    
+    millor_opcio = None
+    
+    for nom_candidat, score in candidats:
+        info_cand = base_dades.get_info(nom_candidat)
+        if not info_cand: continue
+        
+        # 3. EL GRAN FILTRE ONTOLÒGIC
+        # A. Filtre Crític: EL ROL HA DE SER EL MATEIX
+        # No podem canviar un Principal per un Condiment, per molt creatius que siguim
+        if info_cand["Rol_Estructural"] != rol_orig:
+            continue
+            
+        # B. Filtre Flexible: LA CATEGORIA
+        if temperatura < 0.4:
+            # Mode Conservador: Ha de ser la mateixa categoria (Carn -> Carn)
+            if info_cand["Categoria"] != cat_orig:
+                continue
+        else:
+            # Mode Creatiu: Acceptem canvi de categoria si el Rol és igual
+            # Ex: Carn -> Llegum (els dos són Rol Principal)
+            pass 
+            
+        # Si passa els filtres, tenim guanyador
+        millor_opcio = nom_candidat
+        break
+        
+    return millor_opcio
+
+
+
+
+def substituir_ingredient_generatiu(plat, nom_ing_original, base_ingredients, restriccions_usuari, direccio_sabor=None):
+    """
+    Substitueix un ingredient utilitzant IA (FlavorGraph) per trobar candidats 
+    i Regles (Heurístiques) per validar-los.
+    
+    Args:
+        plat (dict): El diccionari del plat.
+        nom_ing_original (str): Nom de l'ingredient a treure.
+        base_ingredients (list): Llista de diccionaris (el teu CSV d'ingredients).
+        restriccions_usuari (list): Llista d'ingredients prohibits o al·lèrgies.
+        direccio_sabor (str, opcional): "spicy", "sweet", "fresh", etc. per modificar el perfil.
+    """
+    
+    # 0. Preparació de dades
+    # Creem un índex ràpid per buscar info d'ingredients (rols, etc.)
+    db_ing_map = {row["nom_ingredient"].lower(): row for row in base_ingredients}
+    
+    info_original = db_ing_map.get(nom_ing_original.lower())
+    if not info_original:
+        print(f"  [Error] L'ingredient original '{nom_ing_original}' no és a la BD.")
+        return plat # No podem fer res
+
+    rol_original = info_original.get("rol", "Desconegut") # Ex: 'proteina', 'midó'
+    print(f"  > Substituint {nom_ing_original} (Rol: {rol_original})...")
+
+    # ---------------------------------------------------------
+    # FASE 1: GENERACIÓ DE CANDIDATS (Neuro / Embeddings)
+    # ---------------------------------------------------------
+    if FLAVOR_ENGINE:
+        if direccio_sabor:
+            print(f"  > Aplicant direcció semàntica: {direccio_sabor}")
+            candidats_raw = FLAVOR_ENGINE.apply_semantic_direction(nom_ing_original, direccio_sabor, intensity=0.6, n=30)
+        else:
+            # Si no hi ha direcció, busquem els més similars (substitució directa)
+            candidats_raw = FLAVOR_ENGINE.find_similar(nom_ing_original, n=30)
+    else:
+        candidats_raw = [] # Fallback si no tenim IA
+
+    # Extraiem només els noms dels candidats suggerits per la IA
+    noms_candidats = [c[0] for c in candidats_raw]
+    
+    # Si la IA falla o no troba res, afegim ingredients random de la BD com a fallback
+    if not noms_candidats:
+        noms_candidats = list(db_ing_map.keys())
+        random.shuffle(noms_candidats)
+
+    # ---------------------------------------------------------
+    # FASE 2: FILTRATGE PER HEURÍSTIQUES DURES (Simbòlic)
+    # ---------------------------------------------------------
+    millor_candidat = None
+    motiu_descart = ""
+
+    for nom_cand in noms_candidats:
+        info_cand = db_ing_map.get(nom_cand)
+        
+        # 1. Existeix a la nostra BD de cuina? (La IA pot proposar coses rares)
+        if not info_cand:
+            continue 
+
+        # 2. HEURÍSTICA DE ROL (La més important)
+        # El substitut ha de complir la mateixa funció estructural (Proteïna per Proteïna)
+        if info_cand.get("rol") != rol_original:
+            continue 
+
+        # 3. RESTRICCIONS D'USUARI (Al·lèrgies/Gustos)
+        # Si és prohibit, fora.
+        es_prohibit = False
+        for rest in restriccions_usuari:
+            if rest.lower() in nom_cand.lower() or rest.lower() in info_cand.get("categoria", "").lower():
+                es_prohibit = True
+                break
+        
+        if es_prohibit:
+            continue
+
+        # 4. EVITAR REPETICIONS
+        if nom_cand in plat["ingredients"]:
+            continue
+
+        # Si passem tots els filtres, tenim un guanyador!
+        millor_candidat = nom_cand
+        print(f"  > Candidat acceptat: {millor_candidat} (Score IA alt i compleix Rols/Restriccions)")
+        break
+    
+    # ---------------------------------------------------------
+    # FASE 3: APLICACIÓ DEL CANVI
+    # ---------------------------------------------------------
+    if millor_candidat:
+        # Fem la substitució a la llista d'ingredients del plat
+        nous_ingredients = [millor_candidat if x == nom_ing_original else x for x in plat["ingredients"]]
+        plat["ingredients"] = nous_ingredients
+        
+        # Registrem el canvi per l'explicació
+        if "transformacions" not in plat: plat["transformacions"] = []
+        
+        explicacio = f"Substitució de {nom_ing_original} per {millor_candidat}"
+        if direccio_sabor: explicacio += f" per aportar un toc {direccio_sabor}"
+        
+        plat["transformacions"].append(explicacio)
+        return plat
+    else:
+        print("  [Avís] No s'ha trobat cap substitut vàlid que compleixi les regles.")
+        return plat
+
+
+
+
+
+
+
+
+
+
+
 
 
 # ---------------------------------------------------------------------

@@ -1,0 +1,15 @@
+id_cas,tipus_event,estil_culinari,comensals,temporada,pressupost_max,restriccions,solucio_1r,solucio_2n,solucio_postres,solucio_beg_1r,solucio_beg_2n,solucio_beg_postres,solucio_preu,resultat_exit
+1,casament,mediterrani_fresc,80,estiu,75.0,cap,Amanida de pollastre amb sèsam i soja,Arròs fregit clàssic,Pastís de boda de maduixa i iogurt grec,Vi blanc jove sec,Vi blanc jove sec,Vi blanc jove sec,54.02,True
+2,casament,mediterrani_fresc,80,estiu,75.0,cap,Tomàquets farcits,Arròs al curri amb panses,Pastís de boda de coco i pinya,Martini blanc,Martini blanc,Martini blanc,60.41,True
+3,empresa,oriental_fusio,140,primavera,38.0,vegà,Amanida japonesa d'algues amb sèsam torrat,Cassola de tonyina cremosa,Amanida de fruites Ambrosia,Refresc de llimona,Refresc de llimona,Refresc de llimona,24.0,True
+4,empresa,exotic_africa,140,primavera,38.0,vegà,Sayur Asem (sopa agredolça d'Indonèsia),Arròs amb mongetes a la jamaicana,Bunyols d'arròs dolços indonesis,Tònica premium,Tònica premium,Tònica premium,27.5,True
+5,aniversari,oriental_fusio,40,primavera,32.0,celíac,Amanida japonesa d'algues amb sèsam torrat,Cassola d'arròs amb tonyina i pèsols,Amanida de fruites Ambrosia,Refresc de llimona,Refresc de llimona,Refresc de llimona,22.0,True
+6,aniversari,mediterrani_fresc,40,primavera,32.0,celíac,Amanida de tonyina amb herbes mediterrànies i feta,Ales al romaní i balsàmic,Arròs amb llet,Tònica premium,Tònica premium,Tònica premium,24.86,True
+7,comunió,tradicional_espanyol,60,primavera,95.0,llet|fruits secs,Xató clàssic amb bacallà i tonyina,Ostres rostides simples,Merenga italiana,Ginger Ale artesanal,Tònica premium,Mojito sense alcohol,55.26,True
+8,altres,confort_food,40,hivern,50.0,cap,Sopa miso tradicional,Carbassons farcits d'espinacs i bolets,Boletes de xocolata,Refresc de llimona,Refresc de llimona,Refresc de llimona,25.97,True
+9,altres,tradicional_espanyol,40,hivern,50.0,cap,Amanida de pollastre amb sèsam i soja,Bolets farcits amb bacó i formatge,Brownies de pastanaga i clara d'ou,Vi negre criança,Vi negre criança,Vi negre criança,40.22,True
+10,congrés,finger_food,600,estiu,25.0,cap,Amanida japonesa d'algues amb sèsam torrat,Entrepà de formatge a la planxa,Boletes de xocolata,Vi blanc jove sec,Vi blanc jove sec,Vi blanc jove sec,22.5,True
+11,congrés,finger_food,600,estiu,25.0,cap,Onigiri japonès farcit,Vedella amb salsa suya,Mousse lleugera de coco i cereals,Vi espumos reserva,Vi espumos reserva,Vi espumos reserva,22.5,True
+12,congrés,mediterrani_fresc,150,indiferent,45.0,cap,Amanida Caprese amb mozzarella i alfàbrega,Ostres rostides simples,Meringata de fruita en copa,Ginger Ale artesanal,Ginger Ale artesanal,Ginger Ale artesanal,27.74,True
+13,congrés,mediterrani_fresc,150,indiferent,45.0,cap,Còctel de cranc i blat de moro amb maionesa lleugera,Ostres en escabetx,Nyoquis amb crema de maduixa gratinada,Vi espumos gran reserva,Vi espumos gran reserva,Vi espumos gran reserva,37.35,True
+14,indiferent,oriental_fusio,150,primavera,45.0,kosher,Amanida de fideus asiàtics amb sèsam,Albergínia a la brasa amb miso i sèsam,Boletes de xocolata,Refresc de llimona,Refresc de llimona,Refresc de llimona,25.2,True

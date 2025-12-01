@@ -1,0 +1,785 @@
+[
+    {
+        "id_cas": 1,
+        "problema": {
+            "tipus_esdeveniment": "casament",
+            "estil_culinari": "mediterrani_fresc",
+            "n_comensals": 80,
+            "temporada": "estiu",
+            "pressupost_max": 75.0,
+            "restriccions": [],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Amanida de pollastre amb sèsam",
+                "ingredients": ["pollastre", "salsa de soja", "gingebre", "sucre morè", "all", "maionesa", "oli de sèsam", "sucre blanc", "sèsam", "col", "pastanaga", "fideus cruixents"],
+                "curs": "primer",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "segon_plat": {
+                "nom": "Arròs fregit clàssic",
+                "ingredients": ["mantega", "all", "chili", "ceba tendra", "pastanaga", "pollastre", "arròs", "salsa d’ostres", "salsa Worcestershire", "sal", "pebre", "cogombre", "tomàquet", "ou"],
+                "curs": "segon",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "postres": {
+                "nom": "Pastís de boda de maduixa i iogurt grec",
+                "ingredients": ["maduixes", "iogurt grec", "farina", "ou", "sucre", "mantega"],
+                "curs": "postres",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "begudes": [
+                "Vi blanc jove sec"
+            ],
+            "preu_total": 54.02,
+            "descripcio": "Menú mediterrani_fresc generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 2,
+        "problema": {
+            "tipus_esdeveniment": "casament",
+            "estil_culinari": "mediterrani_fresc",
+            "n_comensals": 80,
+            "temporada": "estiu",
+            "pressupost_max": 75.0,
+            "restriccions": [],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Tomàquets farcits",
+                "ingredients": [
+                    "tomàquet",
+                    "bolets",
+                    "ceba",
+                    "herbes",
+                    "pebre",
+                    "all",
+                    "sal",
+                    "oli"
+                ],
+                "curs": "primer",
+                "estil_tags": [
+                    "informal"
+                ],
+                "preu": 5.0
+            },
+            "segon_plat": {
+                "nom": "Arròs al curri amb panses",
+                "ingredients": ["arròs","greix","curri","ceba","raïm sec","brou"],
+                "curs": "segon",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "postres": {
+                "nom": "Pastís de boda de coco i pinya",
+                "ingredients": ["pinya natural","coco ratllat","nata","farina","ou","sucre","mantega"],
+                "curs": "postres",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "begudes": [
+                "Martini blanc"
+            ],
+            "preu_total": 60.41,
+            "descripcio": "Menú mediterrani_fresc generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 3,
+        "problema": {
+            "tipus_esdeveniment": "empresa",
+            "estil_culinari": "oriental_fusio",
+            "n_comensals": 140,
+            "temporada": "primavera",
+            "pressupost_max": 38.0,
+            "restriccions": [
+                "vegà"
+            ],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Amanida japonesa d'algues amb sèsam torrat",
+                "ingredients": ["algues","ceba","salsa de soja","vinagre d’arròs","mirin","oli de sèsam","pebre vermell","sal","sèsam"],
+                "curs": "primer",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "segon_plat": {
+                "nom": "Cassola de tonyina cremosa",
+                "ingredients": ["tonyina","macarrons","llet","pèsols","crema","pa ratllat","mantega","ceba"],
+                "curs": "segon",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "postres": {
+                "nom": "Amanida de fruites Ambrosia",
+                "ingredients": [
+                    "nata",
+                    "nata agra",
+                    "marshmallows"
+                ],
+                "curs": "postres",
+                "estil_tags": [
+                    "informal"
+                ],
+                "preu": 4.5
+            },
+            "begudes": [
+                "Refresc de llimona"
+            ],
+            "preu_total": 24.0,
+            "descripcio": "Menú oriental_fusio generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 4,
+        "problema": {
+            "tipus_esdeveniment": "empresa",
+            "estil_culinari": "exotic_africa",
+            "n_comensals": 140,
+            "temporada": "primavera",
+            "pressupost_max": 38.0,
+            "restriccions": [
+                "vegà"
+            ],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Sayur Asem (sopa agredolça d'Indonèsia)",
+                "ingredients": ["tamarinde","mongetes verdes","maíz","col","pastanaga","ceba","tomàquet","espècies","oli"],
+                "curs": "primer",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "segon_plat": {
+                "nom": "Arròs amb mongetes a la jamaicana",
+                "ingredients": ["arròs","mongetes vermelles","ceba","all","pebrot vermell","espècies","oli"],
+                "curs": "segon",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "postres": {
+                "nom": "Bunyols d'arròs dolços indonesis",
+                "ingredients": ["farina d'arròs","sucre","coco ratllat","llet de coco","olis vegetals"],
+                "curs": "postres",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "begudes": [
+                "Tònica premium"
+            ],
+            "preu_total": 27.5,
+            "descripcio": "Menú exotic_africa generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 5,
+        "problema": {
+            "tipus_esdeveniment": "aniversari",
+            "estil_culinari": "oriental_fusio",
+            "n_comensals": 40,
+            "temporada": "primavera",
+            "pressupost_max": 32.0,
+            "restriccions": [
+                "celíac"
+            ],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Amanida japonesa d'algues amb sèsam torrat",
+                "ingredients": ["algues","ceba","salsa de soja sense gluten","vinagre d’arròs","oli de sèsam","pebre vermell","sal","sèsam"],
+                "curs": "primer",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "segon_plat": {
+                "nom": "Cassola d'arròs amb tonyina i pèsols",
+                "ingredients": ["arròs","tonyina","pèsols","ceba","oli d’oliva","sal","pebre"],
+                "curs": "segon",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "postres": {
+                "nom": "Amanida de fruites Ambrosia",
+                "ingredients": [
+                    "nata",
+                    "nata agra",
+                    "marshmallows"
+                ],
+                "curs": "postres",
+                "estil_tags": [
+                    "informal"
+                ],
+                "preu": 4.5
+            },
+            "begudes": [
+                "Refresc de llimona"
+            ],
+            "preu_total": 22.0,
+            "descripcio": "Menú oriental_fusio generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 6,
+        "problema": {
+            "tipus_esdeveniment": "aniversari",
+            "estil_culinari": "mediterrani_fresc",
+            "n_comensals": 40,
+            "temporada": "primavera",
+            "pressupost_max": 32.0,
+            "restriccions": [
+                "celíac"
+            ],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Amanida de tonyina amb herbes mediterrànies i feta",
+                "ingredients": ["tonyina","formatge feta sense gluten","fulles de mesclum","tomàquet","ceba","olives","oli d’oliva","sal","pebre","herbes mediterrànies"],
+                "curs": "primer",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "segon_plat": {
+                "nom": "Ales al romaní i balsàmic",
+                "ingredients": ["ales de pollastre","oli d’oliva","all","romaní","vinagre balsàmic","sal","pebre"],
+                "curs": "segon",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "postres": {
+                "nom": "Arròs amb llet",
+                "ingredients": ["arròs","llet sense gluten","sucre","pell de llimona","canella"],
+                "curs": "postres",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "begudes": [
+                "Tònica premium"
+            ],
+            "preu_total": 24.86,
+            "descripcio": "Menú mediterrani_fresc generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 7,
+        "problema": {
+            "tipus_esdeveniment": "comunió",
+            "estil_culinari": "tradicional_espanyol",
+            "n_comensals": 60,
+            "temporada": "primavera",
+            "pressupost_max": 95.0,
+            "restriccions": [
+                "llet",
+                "fruits secs"
+            ],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Xató clàssic amb bacallà i tonyina",
+                "ingredients": ["escarola","bacallà dessalat","tonyina","olives arbequines","salsa xató","ametlles","nous","all","oli d’oliva","vinagre","sal"],
+                "curs": "primer",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "segon_plat": {
+                "nom": "Ostres rostides simples",
+                "ingredients": [
+                    "ostres",
+                    "sal",
+                    "pebre"
+                ],
+                "curs": "segon",
+                "estil_tags": [
+                    "formal"
+                ],
+                "preu": 5.5
+            },
+            "postres": {
+                "nom": "Merenga italiana",
+                "ingredients": ["clares d’ou","sucre","vainilla"],
+                "curs": "postres",
+                "estil_tags": [
+                    "formal"
+                ],
+                "preu": 4.0
+            },
+            "begudes": [
+                "Ginger Ale artesanal",
+                "Tònica premium",
+                "Mojito sense alcohol"
+            ],
+            "preu_total": 55.26,
+            "descripcio": "Menú tradicional_espanyol generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 8,
+        "problema": {
+            "tipus_esdeveniment": "altres",
+            "estil_culinari": "confort_food",
+            "n_comensals": 40,
+            "temporada": "hivern",
+            "pressupost_max": 50.0,
+            "restriccions": [],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Sopa miso tradicional",
+                "ingredients": ["alga wakame","tofu","ceba tendra","pastanaga","miso","aigua","ceba"],
+                "curs": "primer",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "segon_plat": {
+                "nom": "Carbassons farcits d'espinacs i bolets",
+                "ingredients": ["carbassó","espinacs","bolets","ceba","all","formatge ratllat","oli d’oliva","sal","pebre"],
+                "curs": "segon",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "postres": {
+                "nom": "Boletes de xocolata",
+                "ingredients": [
+                    "mantega de cacauet",
+                    "cereals inflats",
+                    "mantega",
+                    "nous",
+                    "vainilla",
+                    "icing sugar",
+                    "coco",
+                    "xocolata"
+                ],
+                "curs": "postres",
+                "estil_tags": [
+                    "informal"
+                ],
+                "preu": 3.5
+            },
+            "begudes": [
+                "Refresc de llimona"
+            ],
+            "preu_total": 25.97,
+            "descripcio": "Menú confort_food generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 9,
+        "problema": {
+            "tipus_esdeveniment": "altres",
+            "estil_culinari": "tradicional_espanyol",
+            "n_comensals": 40,
+            "temporada": "hivern",
+            "pressupost_max": 50.0,
+            "restriccions": [],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Amanida de pollastre amb sèsam i soja",
+                "ingredients": ["pollastre","salsa de soja","sèsam","enciam","pastanaga","pepino","ceba","oli d’oliva","sal","pebre"],
+                "curs": "primer",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "segon_plat": {
+                "nom": "Bolets farcits amb bacó i formatge",
+                "ingredients": [
+                    "formatge",
+                    "soja",
+                    "sal",
+                    "pebre",
+                    "ceba",
+                    "pebrot",
+                    "bolets",
+                    "pa ratllat",
+                    "mantega",
+                    "bacó"
+                ],
+                "curs": "segon",
+                "estil_tags": [
+                    "informal"
+                ],
+                "preu": 7.0
+            },
+            "postres": {
+                "nom": "Brownies de pastanaga i clara d'ou",
+                "ingredients": ["pastanaga","farina","sucre","clares d’ou","mantega","cacau en pols","vainilla"],
+                "curs": "postres",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "begudes": [
+                "Vi negre criança"
+            ],
+            "preu_total": 40.22,
+            "descripcio": "Menú tradicional_espanyol generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 10,
+        "problema": {
+            "tipus_esdeveniment": "congrés",
+            "estil_culinari": "finger_food",
+            "n_comensals": 600,
+            "temporada": "estiu",
+            "pressupost_max": 25.0,
+            "restriccions": [],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Amanida japonesa d'algues amb sèsam torrat",
+                "ingredients": ["algues","ceba","salsa de soja","vinagre d’arròs","oli de sèsam","pebre vermell","sal","sèsam"],
+                "curs": "primer",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "segon_plat": {
+                "nom": "Entrepà de formatge a la planxa",
+                "ingredients": ["pa","formatge","mantega","tomàquet","mostassa"],
+                "curs": "segon",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "postres": {
+                "nom": "Boletes de xocolata",
+                "ingredients": [
+                    "mantega de cacauet",
+                    "cereals inflats",
+                    "mantega",
+                    "nous",
+                    "vainilla",
+                    "icing sugar",
+                    "coco",
+                    "xocolata"
+                ],
+                "curs": "postres",
+                "estil_tags": [
+                    "informal"
+                ],
+                "preu": 3.5
+            },
+            "begudes": [
+                "Vi blanc jove sec"
+            ],
+            "preu_total": 22.5,
+            "descripcio": "Menú finger_food generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 11,
+        "problema": {
+            "tipus_esdeveniment": "congrés",
+            "estil_culinari": "finger_food",
+            "n_comensals": 600,
+            "temporada": "estiu",
+            "pressupost_max": 25.0,
+            "restriccions": [],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Onigiri japonès farcit",
+                "ingredients": ["arròs","algues nori","salmó","salsa de soja","sal"],
+                "curs": "primer",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "segon_plat": {
+                "nom": "Vedella amb salsa suya",
+                "ingredients": [
+                    "pebrot",
+                    "ceba",
+                    "tomàquet",
+                    "oli",
+                    "espècies",
+                    "sal",
+                    "suya"
+                ],
+                "curs": "segon",
+                "estil_tags": [
+                    "informal"
+                ],
+                "preu": 5.5
+            },
+            "postres": {
+                "nom": "Mousse lleugera de coco i cereals",
+                "ingredients": ["nata","llet de coco","sucre","cereals inflats","vainilla"],
+                "curs": "postres",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "begudes": [
+                "Vi espumos reserva"
+            ],
+            "preu_total": 22.5,
+            "descripcio": "Menú finger_food generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 12,
+        "problema": {
+            "tipus_esdeveniment": "congrés",
+            "estil_culinari": "mediterrani_fresc",
+            "n_comensals": 150,
+            "temporada": "indiferent",
+            "pressupost_max": 45.0,
+            "restriccions": [],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Amanida Caprese amb mozzarella i alfàbrega",
+                "ingredients": ["tomàquet","mozzarella","alfàbrega","oli d’oliva","sal","pebre"],
+                "curs": "primer",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "segon_plat": {
+                "nom": "Ostres rostides simples",
+                "ingredients": [
+                    "ostres",
+                    "sal",
+                    "pebre"
+                ],
+                "curs": "segon",
+                "estil_tags": [
+                    "formal"
+                ],
+                "preu": 5.5
+            },
+            "postres": {
+                "nom": "Meringata de fruita en copa",
+                "ingredients": [
+                    "crema",
+                    "fruita",
+                    "nata",
+                    "merenga",
+                    "menta",
+                    "coulis"
+                ],
+                "curs": "postres",
+                "estil_tags": [
+                    "formal"
+                ],
+                "preu": 5.5
+            },
+            "begudes": [
+                "Ginger Ale artesanal"
+            ],
+            "preu_total": 27.74,
+            "descripcio": "Menú mediterrani_fresc generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 13,
+        "problema": {
+            "tipus_esdeveniment": "congrés",
+            "estil_culinari": "mediterrani_fresc",
+            "n_comensals": 150,
+            "temporada": "indiferent",
+            "pressupost_max": 45.0,
+            "restriccions": [],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Còctel de cranc i blat de moro amb maionesa lleugera",
+                "ingredients": ["cranc","blat de moro","maionesa","llimona","ceba tendra","pebrot","sal","pebre"],
+                "curs": "primer",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "segon_plat": {
+                "nom": "Ostres en escabetx",
+                "ingredients": [
+                    "ostres",
+                    "sal",
+                    "vinagre",
+                    "pebre",
+                    "nou moscada",
+                    "clau"
+                ],
+                "curs": "segon",
+                "estil_tags": [
+                    "formal"
+                ],
+                "preu": 7.0
+            },
+            "postres": {
+                "nom": "Nyoquis amb crema de maduixa gratinada",
+                "ingredients": [
+                    "farina",
+                    "oli",
+                    "aigua",
+                    "maduixes",
+                    "mantega",
+                    "sucre",
+                    "llimona",
+                    "vainilla",
+                    "nata",
+                    "formatge fresc"
+                ],
+                "curs": "postres",
+                "estil_tags": [
+                    "formal"
+                ],
+                "preu": 5.5
+            },
+            "begudes": [
+                "Vi espumos gran reserva"
+            ],
+            "preu_total": 37.35,
+            "descripcio": "Menú mediterrani_fresc generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 14,
+        "problema": {
+            "tipus_esdeveniment": "indiferent",
+            "estil_culinari": "oriental_fusio",
+            "n_comensals": 150,
+            "temporada": "primavera",
+            "pressupost_max": 45.0,
+            "restriccions": [
+                "kosher"
+            ],
+            "formalitat": "inferida"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Amanida de fideus asiàtics amb sèsam",
+                "ingredients": ["fideus d’arròs","pastanaga","pepino","ceba tendra","sèsam","oli de sèsam","salsa de soja","sal","pebre"],
+                "curs": "primer",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "segon_plat": {
+                "nom": "Albergínia a la brasa amb miso i sèsam",
+                "ingredients": ["albergínia","miso","oli de sèsam","all","sèsam","ceba tendra","sal","pebre"],
+                "curs": "segon",
+                "estil_tags": [],
+                "preu": 0.0
+            },
+            "postres": {
+                "nom": "Boletes de xocolata",
+                "ingredients": [
+                    "mantega de cacauet",
+                    "cereals inflats",
+                    "mantega",
+                    "nous",
+                    "vainilla",
+                    "icing sugar",
+                    "coco",
+                    "xocolata"
+                ],
+                "curs": "postres",
+                "estil_tags": [
+                    "informal"
+                ],
+                "preu": 3.5
+            },
+            "begudes": [
+                "Refresc de llimona"
+            ],
+            "preu_total": 25.2,
+            "descripcio": "Menú oriental_fusio generat històricament."
+        },
+        "avaluacio": {
+            "derivacio": "Cas Seed (Manual)",
+            "feedback_textual": "Cas inicial provinent del sistema expert Part 1.",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    }
+]
