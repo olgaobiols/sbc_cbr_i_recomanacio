@@ -68,11 +68,20 @@ def imprimir_casos(candidats, top_k=5):
         detall = c["detall"]
         sol = cas["solucio"]
         etiqueta = "#1 (RECOMANAT)" if i == 1 else f"#{i}"
+
         print(f"\n{etiqueta} [Similitud: {score:.1%}] - ID Cas: {cas['id_cas']}")
         print(f"   Estil original: {cas['problema']['estil_culinari']} ({cas['problema']['tipus_esdeveniment']})")
         print(f"   Preu total: {sol['preu_total']}€  |  Comensals: {cas['problema']['n_comensals']}")
         print(f"   Menú: {sol['primer_plat']['nom']} + {sol['segon_plat']['nom']} + {sol['postres']['nom']}")
-        print(f"   Detall similitud -> Semàntica: {detall['sim_semantica']:.4f} | Numèrica: {detall['sim_numerica']:.4f}")
+
+        # 🔥 Nova línia de detall amb les noves mètriques
+        print("   Detall similitud:")
+        print(f"     - Semàntica global: {detall['sim_semantica_global']:.3f}")
+        print(f"     - Estil:            {detall['sim_estil']:.3f}")
+        print(f"     - Esdeveniment:     {detall['sim_event']:.3f}")
+        print(f"     - Temporada:        {detall['sim_temp']:.3f}")
+        print(f"     - Formalitat:       {detall['sim_form']:.3f}")
+        print(f"     - Numèrica:         {detall['sim_num']:.3f}")
 
 
 def _resum_breu_transformacions(transformacions):
