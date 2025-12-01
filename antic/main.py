@@ -1,7 +1,7 @@
 import json
 from estructura_cas import DescripcioProblema
 from retriever import Retriever
-from operadors_transformacio import *
+from antic.operadors_transformacio import *
 import pandas as pd
 import ast
 import re
