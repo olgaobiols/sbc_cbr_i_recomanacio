@@ -5,85 +5,150 @@ from estructura_cas import DescripcioProblema
 
 class Retriever:
     def __init__(self, path_base_casos):
-        # 1. Carregar la base de casos
+
+        # ----------------------------
+        # 1. Carregar base
+        # ----------------------------
         try:
-            with open(path_base_casos, 'r', encoding='utf-8') as f:
+            with open(path_base_casos, 'r', encoding="utf-8") as f:
                 self.base_casos = json.load(f)
         except FileNotFoundError:
-            print(f"❌ Error: No es troba '{path_base_casos}'. Has executat el generador?")
+            print(f"❌ No es troba: {path_base_casos}")
             self.base_casos = []
             return
-        
-        # 2. Carregar el model d'Embeddings (Petit i ràpid)
-        print("🧠 Carregant model de llenguatge (MiniLM) per a la similitud semàntica...")
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
-        
-        # 3. Pre-calcular els embeddings dels casos existents (Indexació)
-        # Concatenem estil i tipus d'event per crear la "signatura" del cas
-        self.corpus_text = [
-            f"{c['problema']['estil_culinari']} {c['problema']['tipus_esdeveniment']} {c['problema']['formalitat']}" 
-            for c in self.base_casos
-        ]
-        # Això converteix el text en vectors numèrics
+
+        print("🧠 Carregant MiniLM per a embeddings enriquits...")
+        self.model = SentenceTransformer("all-MiniLM-L6-v2")
+
+        # ----------------------------
+        # 2. Crear signatura rica per cas
+        # ----------------------------
+        self.corpus_text = [self._construir_signatura_cas(c) for c in self.base_casos]
         self.corpus_embeddings = self.model.encode(self.corpus_text, convert_to_tensor=True)
-        print(f"✅ Retriever inicialitzat amb {len(self.base_casos)} casos indexats.")
 
+        print(f"✅ Retriever indexat amb {len(self.base_casos)} casos.")
+
+    # ---------------------------------------------------------
+    # Construcció de SIGNATURA: la clau de la millora
+    # ---------------------------------------------------------
+    def _construir_signatura_cas(self, cas):
+        p = cas["problema"]
+        s = cas["solucio"]
+
+        # 1. Ingredients concatenats
+        ing = (
+            s["primer_plat"]["ingredients"] +
+            s["segon_plat"]["ingredients"] +
+            s["postres"]["ingredients"]
+        )
+        ing_text = " ".join(ing)
+
+        # 2. Text ric i estructurat
+        text = (
+            f"Estil: {p['estil_culinari']}. "
+            f"Esdeveniment: {p['tipus_esdeveniment']}. "
+            f"Temporada: {p['temporada']}. "
+            f"Formalitat: {p['formalitat']}. "
+            f"Restriccions: {' '.join(p['restriccions']) if p['restriccions'] else 'cap'}. "
+            f"Ingredients: {ing_text}."
+        )
+        return text
+
+    # ---------------------------------------------------------
+    # Similitud numèrica millorada
+    # ---------------------------------------------------------
     def _similitud_numerica(self, peticio: DescripcioProblema, cas_dict):
-        """Calcula una puntuació (0-1) basada en restriccions dures."""
-        
-        # 1. Pressupost (Factor crític)
-        preu_cas = cas_dict['solucio']['preu_total']
-        if preu_cas > peticio.pressupost_max:
-            # Si es passa de pressupost, penalitzem molt (però no descartem del tot per si l'estil és perfecte)
-            sim_preu = 0.2
+
+        # Pressupost → hard constraint suavitzat
+        preu_cas = cas_dict["solucio"]["preu_total"]
+        if preu_cas <= peticio.pressupost_max:
+            s_preu = 1.0
         else:
-            sim_preu = 1.0
-            
-        # 2. Comensals (Factor logístic)
-        # Utilitzem una funció gaussiana simple: com més lluny, menys similitud
-        diff = abs(peticio.n_comensals - cas_dict['problema']['n_comensals'])
-        sim_comensals = 1 / (1 + 0.01 * diff) 
+            excedent = preu_cas - peticio.pressupost_max
+            s_preu = max(0.0, 1 - excedent / 50)
 
-        return (sim_preu * 0.6) + (sim_comensals * 0.4)
+        # Comensals (gaussiana suau)
+        diff = abs(peticio.n_comensals - cas_dict["problema"]["n_comensals"])
+        s_com = np.exp(-diff / 80)
 
+        return 0.6 * s_preu + 0.4 * s_com
+
+    # ---------------------------------------------------------
+    # Similitud semàntica per atributs (pesada)
+    # ---------------------------------------------------------
+    def _similitud_textual_per_atribut(self, valor_query, valor_cas):
+        t = f"{valor_query}"
+        c = f"{valor_cas}"
+        emb_t = self.model.encode(t, convert_to_tensor=True)
+        emb_c = self.model.encode(c, convert_to_tensor=True)
+        return float(util.cos_sim(emb_t, emb_c)[0][0])
+
+    # ---------------------------------------------------------
+    # Recuperació principal
+    # ---------------------------------------------------------
     def recuperar_casos_similars(self, peticio: DescripcioProblema, k=3):
-        """
-        Retorna els k casos més similars combinant Semàntica + Numèrica.
-        """
+
         if not self.base_casos:
             return []
 
-        # 1. Crear embedding de la PETICIÓ de l'usuari
-        query_text = f"{peticio.estil_culinari} {peticio.tipus_esdeveniment} {peticio.formalitat}"
-        query_embedding = self.model.encode(query_text, convert_to_tensor=True)
+        # -----------------------------------------------------
+        # 1. Embedding de signatura rica de la petició
+        # -----------------------------------------------------
+        query_text = (
+            f"Estil: {peticio.estil_culinari}. "
+            f"Esdeveniment: {peticio.tipus_esdeveniment}. "
+            f"Temporada: {peticio.temporada}. "
+            f"Formalitat: {peticio.formalitat}. "
+            f"Restriccions: {' '.join(peticio.restriccions) if peticio.restriccions else 'cap'}."
+        )
+        query_emb = self.model.encode(query_text, convert_to_tensor=True)
 
-        # 2. Calcular Similitud Cosinus (Semàntica)
-        # Això ens diu com d'aprop estan els conceptes (ex: "Japonès" vs "Oriental")
-        cos_scores = util.cos_sim(query_embedding, self.corpus_embeddings)[0]
+        # -----------------------------------------------------
+        # 2. Semàntica global
+        # -----------------------------------------------------
+        cos_scores = util.cos_sim(query_emb, self.corpus_embeddings)[0]
 
         resultats = []
 
-        # 3. Combinar amb Similitud Numèrica i crear llista de candidats
-        for idx, score_sem_tensor in enumerate(cos_scores):
+        # -----------------------------------------------------
+        # 3. Combinació multi-similarity (PESADA)
+        # -----------------------------------------------------
+        for idx, sem_score in enumerate(cos_scores):
             cas = self.base_casos[idx]
-            score_sem = float(score_sem_tensor)
-            
-            score_num = self._similitud_numerica(peticio, cas)
-            
-            # PONDERACIÓ FINAL: 
-            # 70% Estil (Semàntica) + 30% Restriccions (Numèrica)
-            # Això prioritza que el menú "inspiri" l'estil, encara que haguem d'adaptar preu després.
-            score_final = (score_sem * 0.7) + (score_num * 0.3)
-            
+            p = cas["problema"]
+
+            sim_sem_global = float(sem_score)
+
+            # Atributs textuals amb pesos separats
+            sim_estil = self._similitud_textual_per_atribut(peticio.estil_culinari, p["estil_culinari"])
+            sim_event = self._similitud_textual_per_atribut(peticio.tipus_esdeveniment, p["tipus_esdeveniment"])
+            sim_temp = self._similitud_textual_per_atribut(peticio.temporada, p["temporada"])
+            sim_form = self._similitud_textual_per_atribut(peticio.formalitat, p["formalitat"])
+
+            sim_num = self._similitud_numerica(peticio, cas)
+
+            # PESOS recomanats
+            score_final = (
+                0.30 * sim_sem_global +
+                0.20 * sim_estil +
+                0.10 * sim_event +
+                0.05 * sim_temp +
+                0.05 * sim_form +
+                0.30 * sim_num
+            )
+
             resultats.append({
-                'cas': cas,
-                'score_final': score_final,
-                'detall': {
-                    'sim_semantica': round(score_sem, 4),
-                    'sim_numerica': round(score_num, 4)
+                "cas": cas,
+                "score_final": score_final,
+                "detall": {
+                    "sim_semantica_global": round(sim_sem_global, 3),
+                    "sim_estil": round(sim_estil, 3),
+                    "sim_event": round(sim_event, 3),
+                    "sim_temp": round(sim_temp, 3),
+                    "sim_form": round(sim_form, 3),
+                    "sim_num": round(sim_num, 3)
                 }
             })
 
-        # 4. Ordenar per millor puntuació i retornar els top K
-        resultats.sort(key=lambda x: x['score_final'], reverse=True)
+        resultats.sort(key=lambda x: x["score_final"], reverse=True)
         return resultats[:k]
