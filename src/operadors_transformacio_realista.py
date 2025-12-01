@@ -236,9 +236,6 @@ def substituir_avancat(plat, nom_original, base_dades, temperatura=0.2, estil_ve
         
     return millor_opcio
 
-
-
-
 def substituir_ingredient_generatiu(plat, nom_ing_original, base_ingredients, restriccions_usuari, direccio_sabor=None):
     """
     Substitueix un ingredient utilitzant IA (FlavorGraph) per trobar candidats 
