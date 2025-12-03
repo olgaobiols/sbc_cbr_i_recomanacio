@@ -1,5 +1,4 @@
-nom_estil,tipus,origen,sabors_clau,tecnniques_clau,ingredients_clau,caracteristiques,evita
-cuina_molecular,alta_cuina,mundial,neutre|umami|dolç_suau,esferificacio|gelificacio|espuma|deconstruccio|nitrogen_liquid,alginat|lecitina|agar|xantana,experiencial|sorpresa|transformacio,textures_tradicionals|fregits
-cuina_minimalista,alta_cuina,Nordic,fresc|acid_suau|terros,fermentacio|curat|marinat|brasa|rostit,nabius|herbes_silvestres|peixos_freds|verdures_hivern,puresa_producte|estacionalitat|zero_exces,salses_greixoses|fregits
-asiatica_general,tradicio_cultural,Asia,umami|salat|dolç_salat,wok|vapor|marinat|tempura,soja|gingebre|miso|salsa_ostres|arròs,contrasts|equilibri_sobors|rapidesa,lactics_pesats|cremes_occidentals
-italiana_tradicional,tradicio_cultural,Italia,umami|dolç_suau|herbaci,sofregit|forn|estofat,oli_oliva|tomàquet|alfabrega|formatges,territori|simplicitat|producte,coccions_excessives|espècies_extranyes
+nom_estil, tipus, origen,sabors_clau,tecnniques_clau,ingredients_clau,caracteristiques,evita
+cuina_molecular,alta_cuina,mundial,neutre|umami|dolç_suau,esferificacio|esferificacio_invertida|gelificacio|espaguetis_de_gel|espuma|emulsio|deconstruccio|encapsulacio|deshidratacio|nitrogen_liquid|infusio_rapida,alginat|lecitina|agar|xantana,experiencial|sorpresa|transformacio,textures_tradicionals|fregits
+cuina_minimalista,alta_cuina,Nordic,fresc|acid_suau|terros,plating_linia_minimal|puntillisme_salsa|cruixent_fina|contrast_volums|laminat_fi,nabius|herbes_silvestres|peixos_freds|verdures_hivern,puresa_producte|estacionalitat|zero_exces,salses_greixoses|fregits
+
