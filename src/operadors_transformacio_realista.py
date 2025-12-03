@@ -1,8 +1,9 @@
 import random
-from src.flavorgraph_embeddings import FlavorGraphWrapper
-print("Inicialitzant motor FlavorGraph...")
-# Assegura't que el path al .pickle és correcte
-FLAVOR_ENGINE = FlavorGraphWrapper("models/FlavorGraph_Node_Embedding.pickle")
+import os
+import json
+import subprocess
+
+
 
 # ---------------------------------------------------------------------
 #  FUNCIONS AUXILIARS
@@ -32,12 +33,7 @@ def _troba_ingredient_aplicable(tecnica_row, plat, info_ings, ingredients_usats)
     tags = set(tecnica_row.get("aplicable_a", "").split("|"))
     curs = plat.get("curs", "").lower()
 
-    # 1. Justificació pel CURS (ex: postres)
-    if "postres" in tags and curs == "postres":
-        # No gastem cap ingredient concret
-        return "el curs 'postres'", None
-
-    # 2. Busquem ingredients no usats, prioritzant categories fortes
+    # 1. Busquem ingredients no usats, prioritzant categories fortes
     for ing_row in info_ings:
         nom_ing = ing_row["nom_ingredient"]
         if nom_ing in ingredients_usats:
@@ -75,32 +71,46 @@ def _troba_ingredient_aplicable(tecnica_row, plat, info_ings, ingredients_usats)
             ingredients_usats.add(nom_ing)
             return f"la proteïna '{nom_ing}'", nom_ing
 
-    # 3. Si no hem trobat cap match fort, agafem el primer ingredient no usat
+    # 2. Si no hem trobat cap match fort, agafem el primer ingredient no usat
     for ing_row in info_ings:
         nom_ing = ing_row["nom_ingredient"]
         if nom_ing not in ingredients_usats:
             ingredients_usats.add(nom_ing)
             return f"un ingredient com '{nom_ing}'", nom_ing
 
-    # 4. No hi ha ingredients (o tots gastats)
+    # 3. Si no hi ha ingredients (o tots gastats),
+    #    i la tècnica és específica de POSTRES, fem servir el CURS
+    if "postres" in tags and curs == "postres":
+        return "el curs 'postres'", None
+
+    # 4. Fallback final genèric
     return "un element del plat", None
 
 
 def _score_tecnica_per_plat(tecnica_row, plat, info_ings):
     """
     Dona una puntuació (enter) que indica com bé encaixa aquesta tècnica
-    amb el plat i els seus ingredients. (Sense mirar l'estil, només aplicabilitat)
+    amb el plat i els seus ingredients.
+
+    Hi ha dues parts:
+      1) SCORE BASE genèric (curs + categories + famílies)
+      2) Ajustos específics segons categoria de la tècnica
+         (p.ex. 'molecular', 'minimalista', ...).
     """
     curs = plat.get("curs", "").lower()  # 'primer', 'segon', 'postres', ...
     tags = set(tecnica_row.get("aplicable_a", "").split("|"))
+    categoria_tecnica = (tecnica_row.get("categoria") or "").lower()
 
     score = 0
 
-    # --- 1) Match per CURS (p.ex. 'postres', 'primer', 'segon' dins aplicable_a)
+    # -------------------------
+    # 1) SCORE BASE GENERIC
+    # -------------------------
+    # Match per CURS (p.ex. 'postres', 'primer', 'segon' dins aplicable_a)
     if curs and curs in tags:
         score += 3
 
-    # --- 2) Match per CATEGORIA i FAMÍLIA d'ingredients (puntuació base)
+    # Match per CATEGORIA i FAMÍLIA d'ingredients (puntuació base)
     cats = {row["categoria_macro"] for row in info_ings}
     fams = {row["familia"] for row in info_ings}
 
@@ -109,9 +119,7 @@ def _score_tecnica_per_plat(tecnica_row, plat, info_ings):
     if tags & fams:
         score += 1
 
-    # --- 3) Heurístiques específiques segons tipus d'ingredient ---
-
-    # Detecció de tipus d'ingredients al plat
+    # Detecció de tipus d'ingredients presents al plat
     hi_ha_liquid = any(
         row["categoria_macro"] in ("salsa", "altre")
         or row["familia"] in ("aigua", "fons_cuina", "reducció_vi")
@@ -120,28 +128,61 @@ def _score_tecnica_per_plat(tecnica_row, plat, info_ings):
     hi_ha_fruta = any(row["categoria_macro"] == "fruita" for row in info_ings)
     hi_ha_lacti = any(row["categoria_macro"] == "lacti" for row in info_ings)
     hi_ha_feculent = any(row["categoria_macro"] == "cereal_feculent" for row in info_ings)
+    hi_ha_proteina_o_verdura = any(
+        row["categoria_macro"] in ("proteina_animal", "peix", "proteina_vegetal", "verdura")
+        for row in info_ings
+    )
 
-    # LÍQUIDS / SALSES / ALTRES → molt important per tècniques moleculars
-    if ("liquids" in tags or "salsa" in tags or "altre" in tags) and hi_ha_liquid:
-        score += 3
+    # -------------------------
+    # 2) AJUSTOS PER CATEGORIA
+    # -------------------------
 
-    # POSTRES
-    if "postres" in tags and curs == "postres":
-        score += 3
+    # 2.1) Criteris específics per a tècniques de CUINA MOLECULAR
+    if categoria_tecnica == "molecular":
+        # LÍQUIDS / SALSES → molt importants
+        if ("liquids" in tags or "salsa" in tags or "altre" in tags) and hi_ha_liquid:
+            score += 3
 
-    # FRUITA
-    if "fruita" in tags and hi_ha_fruta:
-        score += 2
+        # POSTRES moleculars funcionen molt bé
+        if "postres" in tags and curs == "postres":
+            score += 3
 
-    # LACTIS
-    if "lacti" in tags and hi_ha_lacti:
-        score += 2
+        # FRUITA, LACTIS, FECULENTS → bons candidats per gels, escumes, etc.
+        if "fruita" in tags and hi_ha_fruta:
+            score += 2
+        if "lacti" in tags and hi_ha_lacti:
+            score += 2
+        if "cereal_feculent" in tags and hi_ha_feculent:
+            score += 2
 
-    # FECULENTS
-    if "cereal_feculent" in tags and hi_ha_feculent:
-        score += 2
+    # 2.2) Criteris específics per a tècniques MINIMALISTES / PLATING
+    elif categoria_tecnica == "minimalista":
+        # Plats amb pocs ingredients → més propensos a minimalisme
+        if len(info_ings) <= 4:
+            score += 2
+
+        # En postres, minimalisme acostuma a quedar molt bé
+        if curs == "postres":
+            score += 2
+
+        # Presència de proteïna o verdura → encaixa amb plating en línia, contrast de volums…
+        if hi_ha_proteina_o_verdura:
+            score += 2
+
+        # Minimalisme sol evitar salses pesades; plats “nets” tenen un plus
+        hi_ha_salsa = any(row["categoria_macro"] == "salsa" for row in info_ings)
+        if not hi_ha_salsa:
+            score += 1
+
+    # 2.3) Altres categories (si n'afegeixes en el futur)
+    # elif categoria_tecnica == "autor":
+    #     ...
+    # elif categoria_tecnica == "avantguarda":
+    #     ...
+    # etc.
 
     return score
+
 
 
 # ---------------------------------------------------------------------
@@ -196,160 +237,6 @@ def substituir_ingredient(plat, tipus_cuina, base_ingredients, base_cuina):
 
     print(f"[INGREDIENTS] Substituint '{ingredient_vell}' per '{nou_ingredient}' al plat '{plat['nom']}'")
     return nou_plat
-
-def substituir_avancat(plat, nom_original, base_dades, temperatura=0.2, estil_vector=None):
-    
-    # 1. Recuperar Dades Ontològiques de l'Original
-    info_orig = base_dades.get_info(nom_original)
-    rol_orig = info_orig["Rol_Estructural"] # Ex: "Principal"
-    cat_orig = info_orig["Categoria"]       # Ex: "Carn"
-    
-    # 2. Obtenir Candidats "Creatius" del FlavorGraph
-    # Si la temperatura és alta (0.8), FlavorGraph ens pot donar "Cigrons" per "Pollastre"
-    candidats = FLAVOR_ENGINE.get_creative_candidates(nom_original, temperature=temperatura, style_vector=estil_vector)
-    
-    millor_opcio = None
-    
-    for nom_candidat, score in candidats:
-        info_cand = base_dades.get_info(nom_candidat)
-        if not info_cand: continue
-        
-        # 3. EL GRAN FILTRE ONTOLÒGIC
-        # A. Filtre Crític: EL ROL HA DE SER EL MATEIX
-        # No podem canviar un Principal per un Condiment, per molt creatius que siguim
-        if info_cand["Rol_Estructural"] != rol_orig:
-            continue
-            
-        # B. Filtre Flexible: LA CATEGORIA
-        if temperatura < 0.4:
-            # Mode Conservador: Ha de ser la mateixa categoria (Carn -> Carn)
-            if info_cand["Categoria"] != cat_orig:
-                continue
-        else:
-            # Mode Creatiu: Acceptem canvi de categoria si el Rol és igual
-            # Ex: Carn -> Llegum (els dos són Rol Principal)
-            pass 
-            
-        # Si passa els filtres, tenim guanyador
-        millor_opcio = nom_candidat
-        break
-        
-    return millor_opcio
-
-def substituir_ingredient_generatiu(plat, nom_ing_original, base_ingredients, restriccions_usuari, direccio_sabor=None):
-    """
-    Substitueix un ingredient utilitzant IA (FlavorGraph) per trobar candidats 
-    i Regles (Heurístiques) per validar-los.
-    
-    Args:
-        plat (dict): El diccionari del plat.
-        nom_ing_original (str): Nom de l'ingredient a treure.
-        base_ingredients (list): Llista de diccionaris (el teu CSV d'ingredients).
-        restriccions_usuari (list): Llista d'ingredients prohibits o al·lèrgies.
-        direccio_sabor (str, opcional): "spicy", "sweet", "fresh", etc. per modificar el perfil.
-    """
-    
-    # 0. Preparació de dades
-    # Creem un índex ràpid per buscar info d'ingredients (rols, etc.)
-    db_ing_map = {row["nom_ingredient"].lower(): row for row in base_ingredients}
-    
-    info_original = db_ing_map.get(nom_ing_original.lower())
-    if not info_original:
-        print(f"  [Error] L'ingredient original '{nom_ing_original}' no és a la BD.")
-        return plat # No podem fer res
-
-    rol_original = info_original.get("rol", "Desconegut") # Ex: 'proteina', 'midó'
-    print(f"  > Substituint {nom_ing_original} (Rol: {rol_original})...")
-
-    # ---------------------------------------------------------
-    # FASE 1: GENERACIÓ DE CANDIDATS (Neuro / Embeddings)
-    # ---------------------------------------------------------
-    if FLAVOR_ENGINE:
-        if direccio_sabor:
-            print(f"  > Aplicant direcció semàntica: {direccio_sabor}")
-            candidats_raw = FLAVOR_ENGINE.apply_semantic_direction(nom_ing_original, direccio_sabor, intensity=0.6, n=30)
-        else:
-            # Si no hi ha direcció, busquem els més similars (substitució directa)
-            candidats_raw = FLAVOR_ENGINE.find_similar(nom_ing_original, n=30)
-    else:
-        candidats_raw = [] # Fallback si no tenim IA
-
-    # Extraiem només els noms dels candidats suggerits per la IA
-    noms_candidats = [c[0] for c in candidats_raw]
-    
-    # Si la IA falla o no troba res, afegim ingredients random de la BD com a fallback
-    if not noms_candidats:
-        noms_candidats = list(db_ing_map.keys())
-        random.shuffle(noms_candidats)
-
-    # ---------------------------------------------------------
-    # FASE 2: FILTRATGE PER HEURÍSTIQUES DURES (Simbòlic)
-    # ---------------------------------------------------------
-    millor_candidat = None
-    motiu_descart = ""
-
-    for nom_cand in noms_candidats:
-        info_cand = db_ing_map.get(nom_cand)
-        
-        # 1. Existeix a la nostra BD de cuina? (La IA pot proposar coses rares)
-        if not info_cand:
-            continue 
-
-        # 2. HEURÍSTICA DE ROL (La més important)
-        # El substitut ha de complir la mateixa funció estructural (Proteïna per Proteïna)
-        if info_cand.get("rol") != rol_original:
-            continue 
-
-        # 3. RESTRICCIONS D'USUARI (Al·lèrgies/Gustos)
-        # Si és prohibit, fora.
-        es_prohibit = False
-        for rest in restriccions_usuari:
-            if rest.lower() in nom_cand.lower() or rest.lower() in info_cand.get("categoria", "").lower():
-                es_prohibit = True
-                break
-        
-        if es_prohibit:
-            continue
-
-        # 4. EVITAR REPETICIONS
-        if nom_cand in plat["ingredients"]:
-            continue
-
-        # Si passem tots els filtres, tenim un guanyador!
-        millor_candidat = nom_cand
-        print(f"  > Candidat acceptat: {millor_candidat} (Score IA alt i compleix Rols/Restriccions)")
-        break
-    
-    # ---------------------------------------------------------
-    # FASE 3: APLICACIÓ DEL CANVI
-    # ---------------------------------------------------------
-    if millor_candidat:
-        # Fem la substitució a la llista d'ingredients del plat
-        nous_ingredients = [millor_candidat if x == nom_ing_original else x for x in plat["ingredients"]]
-        plat["ingredients"] = nous_ingredients
-        
-        # Registrem el canvi per l'explicació
-        if "transformacions" not in plat: plat["transformacions"] = []
-        
-        explicacio = f"Substitució de {nom_ing_original} per {millor_candidat}"
-        if direccio_sabor: explicacio += f" per aportar un toc {direccio_sabor}"
-        
-        plat["transformacions"].append(explicacio)
-        return plat
-    else:
-        print("  [Avís] No s'ha trobat cap substitut vàlid que compleixi les regles.")
-        return plat
-
-
-
-
-
-
-
-
-
-
-
 
 
 # ---------------------------------------------------------------------
@@ -500,6 +387,211 @@ def descriu_transformacions(plat, transformacions):
         línies.append(línia)
 
     return "\n".join(línies)
+
+# operadors_transformacio_realista.py
+
+def _crida_ollama(prompt, model="llama3.2"):
+    """
+    Envia un prompt a un model local d'Ollama i retorna el text cru generat.
+    Cal tenir Ollama instal·lat i el model descarregat (p.ex. `ollama pull llama3.2`).
+    """
+    try:
+        result = subprocess.run(
+            ["ollama", "run", model],
+            input=prompt,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        text = result.stdout.strip()
+        if not text:
+            raise RuntimeError("Ollama no ha retornat cap text.")
+        return text
+    except Exception as e:
+        print(f"[LLM] Error cridant Ollama: {e}")
+        return ""
+
+
+def _extreu_camp_resposta(text: str, etiqueta: str) -> str | None:
+    """
+    Donat un text del LLM, extreu la línia que comença per, per exemple:
+       'NOM:' o 'DESCRIPCIO:' ...
+    i en retorna el contingut després dels dos punts.
+    """
+    etiqueta_upper = etiqueta.upper() + ":"
+    for linia in text.splitlines():
+        linia = linia.strip()
+        if linia.upper().startswith(etiqueta_upper):
+            return linia.split(":", 1)[1].strip()
+    return None
+
+
+def _format_transformacions_per_prompt(transformacions: list[dict]) -> str:
+    """
+    Genera un text breu i estructurat amb les tècniques aplicades,
+    de manera que el LLM pugui reutilitzar literalment noms de tècniques i ingredients.
+    """
+    if not transformacions:
+        # Indiquem clarament que NO hi ha tècniques perquè el model no se les inventi
+        return (
+            "En aquest plat no s'ha aplicat cap tècnica especial; el plat es manté clàssic. "
+            "Descriu-lo com un plat ben executat dins l'estil, però sense mencionar tècniques."
+        )
+
+    línies = ["Llista de tècniques aplicades (pots copiar literalment aquests noms):"]
+    for i, t in enumerate(transformacions, start=1):
+        nom = t.get("display") or t.get("nom")
+        # ingredient cru si el tenim, si no fem servir la frase
+        ing_nom = t.get("objectiu_ingredient") or t.get("objectiu_frase") or "un element del plat"
+        desc = t.get("descripcio", "") or ""
+        línies.append(
+            f"{i}) Tècnica: {nom} | Ingredient: {ing_nom} | Resum: {desc}"
+        )
+    return "\n".join(línies)
+
+
+def genera_descripcio_llm(
+    plat: dict,
+    transformacions: list[dict],
+    estil_tecnic: str,
+    estil_row: dict | None = None,
+    model: str = "llama3.2",
+) -> dict:
+    """
+    Usa un LLM LOCAL (Ollama) per:
+      - proposar un nou nom de plat
+      - descriure'l com a text de carta (frase curta)
+      - proposar una frase de presentació / plating
+
+    Tot el contingut depèn únicament del LLM.
+
+    Retorna:
+      - nom_nou
+      - descripcio_carta
+      - proposta_presentacio
+    """
+
+    nom_plat = plat.get("nom", "Plat sense nom")
+    ingredients_llista = plat.get("ingredients", []) or []
+
+    # Resum d'ingredients per no fer el prompt etern
+    if not ingredients_llista:
+        ingredients_txt = "ingredients diversos"
+    elif len(ingredients_llista) <= 6:
+        ingredients_txt = ", ".join(ingredients_llista)
+    else:
+        ingredients_txt = ", ".join(ingredients_llista[:6]) + ", ..."
+    curs = plat.get("curs", "")  # primer / segon / postres...
+
+    # Info de l'estil (si ve de estils.csv)
+    tipus = ""
+    sabors_clau: list[str] = []
+    caracteristiques: list[str] = []
+    evita: list[str] = []
+
+    if isinstance(estil_row, dict):
+        tipus = estil_row.get("tipus", "")
+        sabors_clau = (estil_row.get("sabors_clau") or "").split("|")
+        caracteristiques = (estil_row.get("caracteristiques") or "").split("|")
+        evita = (estil_row.get("evita") or "").split("|")
+
+    txt_sabors = ", ".join([s for s in sabors_clau if s]) or "no especificats"
+    txt_caract = ", ".join([c for c in caracteristiques if c]) or "no especificades"
+    txt_evita = ", ".join([e for e in evita if e]) or "—"
+
+    txt_transformacions = _format_transformacions_per_prompt(transformacions)
+
+    # ---------- PROMPT ÚNIC GENERALITZAT ----------
+    prompt = f"""
+Ets un xef català amb experiència en cuina d'autor i menús de banquet.
+Has de proposar un nom i dues frases curtes per descriure UN SOL PLAT.
+Treballes sempre en català estàndard, clar i sense floritures.
+
+INFORMACIÓ DEL PLAT
+- Nom original del plat: {nom_plat}
+- Curs (primer/segon/postres): {curs or "no especificat"}
+- Ingredients principals: {ingredients_txt}
+
+INFORMACIÓ DE L'ESTIL
+- Nom tècnic de l'estil: {estil_tecnic}
+- Tipus d'estil: {tipus or "no especificat"}
+- Sabors clau: {txt_sabors}
+- Característiques generals de l'estil: {txt_caract}
+- Coses que aquest estil acostuma a evitar: {txt_evita}
+
+INFORMACIÓ SOBRE LES TÈCNIQUES APLICADES
+{txt_transformacions}
+
+TASCA
+Escriu EXACTAMENT tres línies, amb aquest format exacte:
+
+NOM: <nom nou del plat, relacionat amb "{nom_plat}" i l'estil {estil_tecnic}.
+      Ha de contenir com a mínim una paraula del nom original i, com a màxim,
+      un adjectiu tècnic senzill (per exemple "gelificat", "esferificat", "en escuma").
+      Màxim 4 o 5 paraules en total. No facis servir paraules com "molecular", "ultratècnica", "sensorial", "experiència".>
+
+DESCRIPCIO: <una sola frase (màxim 28 paraules) que expliqui de què va el plat.
+             SI HI HA tècniques aplicades, la frase HA DE COMENÇAR amb "Es fa" o "S'aplica"
+             i HA D'INDICAR EXPLÍCITAMENT almenys una parella "Tècnica X sobre Ingredient Y",
+             copiant literalment els noms de "Tècnica" i "Ingredient" de la llista de tècniques.
+             Si hi ha dues tècniques, idealment menciona les dues.
+             Exemple d'estil:
+             "Es fa Esferificació sobre salsa de soja i Gelificació sobre pastanaga per aportar textura i contrast al plat.">
+
+PRESENTACIO: <una sola frase (màxim 20 paraules) explicant ÚNICAMENT com es disposa el plat al plat:
+              parla de la col·locació i aspecte visual (esferes, gel, crema, línies, punts...),
+              i de com es veuen els ingredients principals.
+              No parlis del que sentirà el comensal ni utilitzis metàfores.>
+
+RESTRICCIONS IMPORTANTS
+- Català estàndard, sense castellanismes ni paraules inventades.
+- No inventis ingredients nous ni salses o guarnicions que no surtin dels ingredients indicats.
+- No acabis cap frase amb punts suspensius "..." ni facis servir punts suspensius.
+- No facis servir paraules com "molecular", "ultratècnica", "experiència", "sensorial", "explosió", "explosives", "exploten",
+  ni expressions com "seqüència sensorial", "sorpresa", "descobrirà", "emoció", "viatge".
+- Si el text de tècniques diu que el plat es manté clàssic (sense tècniques especials), NO en parlis:
+  descriu el plat com una versió ben executada dins l'estil {estil_tecnic}.
+- To d'alta cuina però simple i entenedor, frases directes.
+- Escriu només aquestes tres línies, sense text addicional ni explicacions.
+"""
+
+    resposta = _crida_ollama(prompt, model=model)
+
+    # Si el model no retorna res, fem fallback directe
+    if not resposta:
+        return {
+            "nom_nou": f"{nom_plat} (versió {estil_tecnic})",
+            "descripcio_carta": f"Versió adaptada del plat en clau {estil_tecnic.replace('_', ' ')}.",
+            "proposta_presentacio": "Presentació neta i ordenada, ressaltant el producte principal.",
+        }
+
+    # ---------- PARSING SIMPLE PER ETIQUETES ----------
+    nom_nou = _extreu_camp_resposta(resposta, "NOM")
+    descripcio = _extreu_camp_resposta(resposta, "DESCRIPCIO")
+    presentacio = _extreu_camp_resposta(resposta, "PRESENTACIO")
+
+    # Fallbacks si el model no respecta del tot el format
+    if not nom_nou:
+        nom_nou = f"{nom_plat} (versió {estil_tecnic})"
+    if not descripcio:
+        descripcio = f"Versió adaptada del plat en clau {estil_tecnic.replace('_', ' ')}."
+    if not presentacio:
+        presentacio = "Presentació neta i ordenada, ressaltant el producte principal."
+
+    # Neteja mínima: eliminar punts suspensius i espais estranys
+    def _neteja(txt: str) -> str:
+        txt = txt.strip()
+        txt = txt.replace("...", "")
+        return txt
+
+    descripcio = _neteja(descripcio)
+    presentacio = _neteja(presentacio)
+
+    return {
+        "nom_nou": nom_nou,
+        "descripcio_carta": descripcio,
+        "proposta_presentacio": presentacio,
+    }
 
 
 
