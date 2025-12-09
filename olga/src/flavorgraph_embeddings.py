@@ -2,6 +2,7 @@ import pickle
 import pandas as pd
 import numpy as np
 import random
+import unicodedata
 from typing import List, Tuple, Optional
 
 """
@@ -32,17 +33,34 @@ class FlavorGraphWrapper:
         self.name_to_vector = {} 
         self.valid_ingredients = set()
 
+        self.alias_map = {
+            "prawns": "shrimp",
+            "prawn": "shrimp",
+            "garbanzo": "chickpea",
+            "garbanzo bean": "chickpea",
+            "garbanzo beans": "chickpeas",
+            "bell pepper": "red bell pepper",
+            "bell peppers": "red bell pepper",
+            "maize": "corn",
+            "sweetcorn": "corn",
+            "courgette": "zucchini",
+            "aubergine": "eggplant",
+        }
+
         for _, row in df.iterrows():
             node_id = str(row['node_id'])
-            name = str(row['name']).lower().replace("_", " ")
+            name = str(row['name'])
             node_type = str(row['type']).lower() if 'type' in df.columns else ""
 
             # Filtre: descartem químics i noms estranys
             is_chemical = 'compound' in node_type or (any(c.isdigit() for c in name) and len(name) > 10)
 
             if node_id in self.raw_embeddings and not is_chemical:
-                self.name_to_vector[name] = self.raw_embeddings[node_id]
-                self.valid_ingredients.add(name)
+                normalized_name = self._normalize_term(name)
+                if not normalized_name:
+                    continue
+                self.name_to_vector[normalized_name] = self.raw_embeddings[node_id]
+                self.valid_ingredients.add(normalized_name)
 
         # 3. Preparem la cache per a cerques ràpides
         self._prepare_cache()
@@ -50,16 +68,61 @@ class FlavorGraphWrapper:
     def _prepare_cache(self):
         """Optimització: Matriu NumPy estàtica per càlcul vectorial massiu."""
         self.cached_names = list(self.name_to_vector.keys())
+        if not self.cached_names:
+            self.cached_matrix = np.empty((0, 0))
+            self.cached_norms = np.array([])
+            return
         self.cached_matrix = np.array(list(self.name_to_vector.values()))
         self.cached_norms = np.linalg.norm(self.cached_matrix, axis=1)
 
+    def _normalize_term(self, text: str) -> str:
+        if not text:
+            return ""
+        text = unicodedata.normalize("NFKD", str(text))
+        text = text.encode("ascii", "ignore").decode("ascii")
+        text = text.replace("-", " ").replace("_", " ").lower().strip()
+        text = " ".join(text.split())
+        return text
+
     def get_vector(self, ingredient_name: str) -> Optional[np.ndarray]:
         """Retorna el vector d'un ingredient (cerca exacta o parcial)."""
-        term = ingredient_name.lower().replace("_", " ").strip()
-        if term in self.name_to_vector: return self.name_to_vector[term]
+        term = self._normalize_term(ingredient_name)
+        if not term:
+            return None
+
+        direct = self.name_to_vector.get(term)
+        if direct is not None:
+            return direct
+
+        alias = self.alias_map.get(term)
+        if alias:
+            alias_norm = self._normalize_term(alias)
+            if alias_norm in self.name_to_vector:
+                return self.name_to_vector[alias_norm]
+
+        # Proves simples: singular/plural i coincidència parcial
+        if term.endswith("s"):
+            singular = term[:-1]
+            if singular in self.name_to_vector:
+                return self.name_to_vector[singular]
+
         for name, vector in self.name_to_vector.items():
-            if term in name.split(): return vector
+            if term == name:
+                return vector
+            if term in name.split():
+                return vector
+            if term in name:
+                return vector
+
         return None
+
+    def _normalize_vector(self, vector: np.ndarray) -> Optional[np.ndarray]:
+        if vector is None:
+            return None
+        norm = np.linalg.norm(vector)
+        if norm == 0:
+            return None
+        return vector / norm
 
     def find_similar(self, ingredient_name: str, n: int = 10) -> List[Tuple[str, float]]:
         """Retorna els N ingredients més similars (mode conservador)."""
@@ -67,7 +130,13 @@ class FlavorGraphWrapper:
         if vec is None: return []
         return self._find_nearest_to_vector(vec, n, exclude_names=[ingredient_name])
 
-    def get_creative_candidates(self, ingredient_name: str, n: int = 10, temperature: float = 0.0, style_vector: Optional[np.ndarray] = None) -> List[Tuple[str, float]]:
+    def get_creative_candidates(
+        self,
+        ingredient_name: str,
+        n: int = 10,
+        temperature: float = 0.0,
+        style_vector: Optional[np.ndarray] = None
+    ) -> List[Tuple[str, float]]:   
         """
         Retorna candidats ajustant la 'bogeria' (temperature) i la direcció (style).
         - temperature: 0.0 (top N exactes) -> 1.0 (exploració àmplia).
@@ -76,16 +145,33 @@ class FlavorGraphWrapper:
         vec = self.get_vector(ingredient_name)
         if vec is None: return []
 
+        base_vec = self._normalize_vector(vec)
+        if base_vec is None:
+            return []
+
         # 1. APLICAR ESTIL (VECTOR STEERING)
-        # Si tenim estil, barregem el vector original (70%) amb l'estil (30%)
-        search_vector = vec
+        search_vector = base_vec.copy()
         if style_vector is not None:
-            search_vector = (vec * 0.7) + (style_vector * 0.3)
+            style_vec = self._normalize_vector(style_vector)
+            if style_vec is not None:
+                # Factor de barreja depenent de la temperatura (com més alta, més estil)
+                steer_strength = min(0.85, 0.25 + temperature * 0.6)
+                combined = self._normalize_vector(
+                    (1 - steer_strength) * base_vec + steer_strength * style_vec
+                )
+                search_vector = combined if combined is not None else base_vec
 
         # 2. DEFINIR FINESTRA DE CERCA
-        # Si temp és alta, recuperem molts més candidats (pool) per triar aleatòriament després
-        # Ex: temp 0 -> window 10. Temp 1.0 -> window 30.
-        window_size = int(n * (1 + temperature * 2))
+        temperature = max(0.0, min(1.0, temperature))
+        window_size = max(n * 2, int(n * (1 + temperature * 3)))
+
+        # 2b. Afegeix soroll per escapar veïnatge local
+        noise_level = 0.15 * temperature
+        if noise_level > 0:
+            noise = np.random.normal(0, noise_level, size=search_vector.shape)
+            noisy = self._normalize_vector(search_vector + noise)
+            search_vector = noisy if noisy is not None else search_vector
+
         pool = self._find_nearest_to_vector(search_vector, n=window_size, exclude_names=[ingredient_name])
 
         # 3. SELECCIÓ (SAMPLING)
@@ -114,8 +200,63 @@ class FlavorGraphWrapper:
             
         return selected
 
+    def get_style_representatives(
+        self,
+        style_vector: Optional[np.ndarray],
+        n: int = 5,
+        exclude_names: Optional[List[str]] = None,
+        candidate_pool: Optional[List[str]] = None
+    ) -> List[Tuple[str, float]]:
+        """
+        Retorna els ingredients més propers al vector d'estil.
+        Útil per afegir "tocs" d'un estil concret si el plat encara no hi arriba.
+        Si es passa candidate_pool, només es consideren aquests ingredients.
+        """
+        norm_vec = self._normalize_vector(style_vector)
+        if norm_vec is None:
+            return []
+
+        exclude_norm = set()
+        if exclude_names:
+            exclude_norm = {
+                self._normalize_term(name)
+                for name in exclude_names
+                if name
+            }
+
+        if candidate_pool:
+            scored = []
+            seen = set()
+            for name in candidate_pool:
+                norm_name = self._normalize_term(name)
+                if not norm_name or norm_name in exclude_norm or norm_name in seen:
+                    continue
+                vec = self.get_vector(name)
+                vec_norm = self._normalize_vector(vec)
+                if vec_norm is None:
+                    continue
+                sim = float(np.dot(vec_norm, norm_vec))
+                scored.append((name, sim))
+                seen.add(norm_name)
+            scored.sort(key=lambda x: x[1], reverse=True)
+            return scored[:n]
+
+        pool = self._find_nearest_to_vector(norm_vec, max(n * 4, 10), list(exclude_norm))
+        reps = []
+        for name, score in pool:
+            if name in exclude_norm:
+                continue
+            reps.append((name, score))
+            exclude_norm.add(name)
+            if len(reps) >= n:
+                break
+        return reps
+
     def _find_nearest_to_vector(self, target_vector: np.ndarray, n: int, exclude_names: List[str]) -> List[Tuple[str, float]]:
         """Càlcul massiu de similitud cosinus utilitzant la matriu cache."""
+        if target_vector is None:
+            return []
+
         if not hasattr(self, 'cached_matrix'): self._prepare_cache()
 
         dot_product = np.dot(self.cached_matrix, target_vector)
@@ -135,6 +276,34 @@ class FlavorGraphWrapper:
                 count += 1
                 if count >= n: break
         return results
+
+    def similarity_with_vector(self, ingredient_name: str, target_vector: np.ndarray) -> Optional[float]:
+        """Retorna la similitud cosinus entre un ingredient i un vector arbitrari."""
+        vec = self.get_vector(ingredient_name)
+        if vec is None or target_vector is None:
+            return None
+        vec_norm = self._normalize_vector(vec)
+        target_norm = self._normalize_vector(target_vector)
+        if vec_norm is None or target_norm is None:
+            return None
+        return float(np.dot(vec_norm, target_norm))
+    
+    def compute_concept_vector(self, ingredient_names: List[str]) -> Optional[np.ndarray]:
+        """
+        Calcula el 'centre de gravetat' (mitjana) d'una llista d'ingredients.
+        Això ens dona el vector d'un concepte (ex: vector 'picant', vector 'italia').
+        """
+        vectors = []
+        for name in ingredient_names:
+            v = self.get_vector(name)
+            if v is not None:
+                vectors.append(v)
+        
+        if not vectors:
+            return None
+        
+        # Calculem la mitjana de tots els vectors (axis=0 vol dir per columnes)
+        return np.mean(vectors, axis=0)
 
 # --- TEST ---
 if __name__ == "__main__":

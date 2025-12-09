@@ -398,3 +398,11 @@ cooked_chickpeas,plant_vegetal,legume,nutty|soft,false,false,false,main,cooked,w
 chickpea_puree,plant_vegetal,legume,nutty|creamy,false,false,false,base,processed,puree,none,omnivore|vegetarian|vegan
 cooked_lentils,plant_vegetal,legume,earthy|soft,false,false,false,main,cooked,whole,none,omnivore|vegetarian|vegan
 lentil_puree,plant_vegetal,legume,earthy|creamy,false,false,false,base,cooked,puree,none,omnivore|vegetarian|vegan
+shrimp,protein_animal,crustacean,umami|sweet_salty,false,false,true,main,fresh,whole,crustaceans,omnivore
+peeled_shrimp,protein_animal,crustacean,umami|sweet,false,false,true,side,fresh,meat,crustaceans,omnivore
+small_shrimp,protein_animal,crustacean,umami|sweet,false,false,true,side,fresh,whole,crustaceans,omnivore
+prawns,protein_animal,crustacean,umami|sweet_salty,false,false,true,main,fresh,whole,crustaceans,omnivore
+tiger_prawns,protein_animal,crustacean,umami|rich,false,false,true,main,fresh,whole,crustaceans,omnivore
+shrimp_cooked,protein_animal,crustacean,umami|sweet,false,false,true,side,cooked,whole,crustaceans,omnivore
+shrimp_canned,protein_animal,crustacean,umami|salty,false,false,true,side,canned,whole,crustaceans,omnivore
+dried_shrimp,protein_animal,crustacean,umami|salty,false,false,true,seasoning,dried,whole,crustaceans,omnivore

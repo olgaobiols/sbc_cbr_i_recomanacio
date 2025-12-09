@@ -110,5 +110,112 @@ prohibits_xoco = {"chocolate"}
 resultat_3 = substituir_ingredients_prohibits(plat_impossible, prohibits_xoco, base_ingredients)
 imprimir_resultat("TEST 3: Sense Substitut (Ha d'avisar)", plat_impossible, resultat_3)
 
+
+# --- CAS: ADAPTACIONS LATENTS MULTIDIMENSIONALS ---
+from operador_ingredients import adaptar_plat_a_estil_latent
+
+plat_suau = {
+    "nom": "Pollastre amb verdures",
+    "ingredients": ["chicken", "zucchini", "carrot", "onion"],
+    "curs": "segon"
+}
+
+plat_marin = {
+    "nom": "Peix blanc al vapor",
+    "ingredients": ["cod", "rice", "peas", "olive_oil"],
+    "curs": "segon"
+}
+
+plat_amanida = {
+    "nom": "Amanida cremosa",
+    "ingredients": ["cucumber", "rice", "cream", "parsley"],
+    "curs": "primer"
+}
+
+plat_bowl_veg = {
+    "nom": "Bowl vegetal neutre",
+    "ingredients": ["tofu", "rice", "zucchini", "peas"],
+    "curs": "primer"
+}
+
+plat_pasta_blanca = {
+    "nom": "Pasta blanca",
+    "ingredients": ["macaroni", "cream", "cheese", "olive_oil"],
+    "curs": "primer"
+}
+
+plat_postres = {
+    "nom": "Postres cremoses",
+    "ingredients": ["coconut_milk", "rice", "sugar", "cream"],
+    "curs": "postres"
+}
+
+plat_risotto = {
+    "nom": "Risotto neutre",
+    "ingredients": ["rice", "mushrooms", "cream", "parsley"],
+    "curs": "segon"
+}
+
+latent_tests = [
+    {
+        "nom": "picant",
+        "titol": "TEST LATENT: Fer-ho picant",
+        "ingredients_estil": ["chili", "red_chili", "green_chili", "paprika", "spicy_salami"],
+        "plat": plat_suau,
+    },
+    {
+        "nom": "fumat",
+        "titol": "TEST LATENT: Fer-ho fumat",
+        "ingredients_estil": ["smoked_paprika", "smoked_salmon", "smoked_tofu", "smoked_tempeh", "smoked_seitan"],
+        "plat": plat_marin,
+    },
+    {
+        "nom": "acid",
+        "titol": "TEST LATENT: Fer-ho cítric/àcid",
+        "ingredients_estil": ["lemon", "lime", "tamarind", "apple_cider_vinegar", "rice_vinegar"],
+        "plat": plat_amanida,
+    },
+    {
+        "nom": "umami_profund",
+        "titol": "TEST LATENT: Donar umami profund",
+        "ingredients_estil": ["miso", "shiitake", "kombu_broth", "soy_sauce", "anchovies"],
+        "plat": plat_bowl_veg,
+    },
+    {
+        "nom": "herbaci_fresc",
+        "titol": "TEST LATENT: Fer-ho herbaci fresc",
+        "ingredients_estil": ["basil", "mint", "fresh_rosemary", "oregano", "parsley"],
+        "plat": plat_pasta_blanca,
+    },
+    {
+        "nom": "tropical_dolc",
+        "titol": "TEST LATENT: Tocar tropical dolç",
+        "ingredients_estil": ["fresh_pineapple", "mango", "coconut", "coconut_milk", "lime"],
+        "plat": plat_postres,
+    },
+    {
+        "nom": "fermentat",
+        "titol": "TEST LATENT: Afegir notes fermentades",
+        "ingredients_estil": ["miso", "tempeh", "umeboshi", "soy_sauce", "kombu_broth"],
+        "plat": plat_bowl_veg,
+    },
+    {
+        "nom": "bosc_terros",
+        "titol": "TEST LATENT: Fer-ho bosc/terros",
+        "ingredients_estil": ["shiitake", "mushrooms", "hazelnuts", "walnuts", "olive_oil"],
+        "plat": plat_risotto,
+    },
+]
+
+for prova in latent_tests:
+    base_estils[prova["nom"]] = {"ingredients": prova["ingredients_estil"]}
+    resultat_latent = adaptar_plat_a_estil_latent(
+        prova["plat"],
+        prova["nom"],
+        base_estils,
+        base_ingredients
+    )
+    imprimir_resultat(prova["titol"], prova["plat"], resultat_latent)
+
 print("\n---------------------------------------")
 print("🏁 TESTS FINALITZATS")
