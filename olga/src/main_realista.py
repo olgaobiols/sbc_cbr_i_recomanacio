@@ -2,7 +2,7 @@ import json
 import csv
 from estructura_cas import DescripcioProblema
 from retriever import Retriever
-from operadors_transformacio_realista import *
+from operador_ingredients import *
 
 # =========================
 #   CARREGA DE BASES
