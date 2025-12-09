@@ -1,0 +1,66 @@
+{
+    "japonesa": 
+    {"tecniques": [
+      "vapor",
+      "tempura",
+      "marinat amb soja",
+      "tallar cru (sashimi)"
+    ],
+    "ingredients": [
+    "salsa de soja",
+    "gingebre",
+    "arròs",
+    "arròs negre glutinós",
+    "algues",
+    "nori",
+    "wakame",
+    "tofu",
+    "salmó",
+    "ton",
+    "tonyina",
+    "bacallà",
+    "cranc",
+    "ostres",
+    "cloïsses",
+    "daikon",
+    "bolets",
+    "carbassó",
+    "zucchini",
+    "ceba tendra",
+    "pastanaga",
+    "mirin",
+    "miso",
+    "umeboshi",
+    "oli de sèsam",
+    "dashi",
+    "sèsam"
+    ]
+
+},
+    "francesa":
+    {"tecniques": [
+      "reducció",
+      "confitat",
+      "gratinat",
+      "salses mare",
+      "flambejat"
+    ],
+    "ingredients":[
+        "mantega",
+        "pollastre",
+        "herbes provençals",
+        "patates",
+        "bolets"
+    ]
+},
+    "molecular":
+    {"tecniques": [
+        "esferificació",
+        "gelificació",
+        "emulsió",
+        "espuma",
+        "aire",
+        "deconstrucció"
+    ]
+}
+}

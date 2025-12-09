@@ -1,0 +1,624 @@
+[
+    {
+        "id_cas": 1,
+        "problema": {
+            "tipus_esdeveniment": "casament",
+            "estil_culinari": "mediterrani_fresc",
+            "n_comensals": 120,
+            "temporada": "estiu",
+            "pressupost_max": 70.0,
+            "restriccions": [],
+            "formalitat": "alta"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Amanida de tomàquet i mozzarella",
+                "ingredients": ["tomàquet", "mozarella", "alfàbrega", "oli", "sal"],
+                "curs": "primer",
+                "estil_tags": ["mediterrani"],
+                "preu": 5.0
+            },
+            "segon_plat": {
+                "nom": "Lluç al forn amb patates",
+                "ingredients": ["lluç", "patates", "ceba", "oli", "llimona"],
+                "curs": "segon",
+                "estil_tags": ["mediterrani"],
+                "preu": 12.0
+            },
+            "postres": {
+                "nom": "Sorbet de llimona",
+                "ingredients": ["llimona", "sucre", "aigua"],
+                "curs": "postres",
+                "estil_tags": ["fresc"],
+                "preu": 3.0
+            },
+            "begudes": ["Vi blanc"],
+            "preu_total": 56.0,
+            "descripcio": "Menú fresc i mediterrani per casaments d’estiu."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+
+    {
+        "id_cas": 2,
+        "problema": {
+            "tipus_esdeveniment": "casament",
+            "estil_culinari": "tradicional_espanyol",
+            "n_comensals": 150,
+            "temporada": "primavera",
+            "pressupost_max": 85.0,
+            "restriccions": [],
+            "formalitat": "alta"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Crema de marisc",
+                "ingredients": ["gamba", "peix blanc", "pastanaga", "ceba", "nata"],
+                "curs": "primer",
+                "estil_tags": ["tradicional"],
+                "preu": 6.0
+            },
+            "segon_plat": {
+                "nom": "Vedella amb salsa de bolets",
+                "ingredients": ["vedella", "bolets", "vi blanc", "oli", "sal"],
+                "curs": "segon",
+                "estil_tags": ["tradicional", "formal"],
+                "preu": 18.0
+            },
+            "postres": {
+                "nom": "Pastís de noces",
+                "ingredients": ["farina", "sucre", "ous", "mantega"],
+                "curs": "postres",
+                "estil_tags": ["formal"],
+                "preu": 5.0
+            },
+            "begudes": ["Vi negre", "Aigua", "Cava"],
+            "preu_total": 74.0,
+            "descripcio": "Menú tradicional espanyol ideal per casaments elegants."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+
+    {
+        "id_cas": 3,
+        "problema": {
+            "tipus_esdeveniment": "bateig",
+            "estil_culinari": "mediterrani_fresc",
+            "n_comensals": 60,
+            "temporada": "estiu",
+            "pressupost_max": 30.0,
+            "restriccions": [],
+            "formalitat": "mitjana"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Gaspatxo",
+                "ingredients": ["tomàquet", "cogombre", "pebrot", "pa", "oli"],
+                "curs": "primer",
+                "estil_tags": ["mediterrani", "fred"],
+                "preu": 3.0
+            },
+            "segon_plat": {
+                "nom": "Pollastre al forn amb herbes",
+                "ingredients": ["pollastre", "romaní", "oli", "sal"],
+                "curs": "segon",
+                "estil_tags": ["mediterrani"],
+                "preu": 8.0
+            },
+            "postres": {
+                "nom": "Flam de vainilla",
+                "ingredients": ["llet", "ous", "sucre"],
+                "curs": "postres",
+                "estil_tags": [],
+                "preu": 2.0
+            },
+            "begudes": ["Aigua"],
+            "preu_total": 17.0,
+            "descripcio": "Menú senzill i fresc per batejos d’estiu."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 4,
+        "problema": {
+            "tipus_esdeveniment": "comunió",
+            "estil_culinari": "tradicional_espanyol",
+            "n_comensals": 80,
+            "temporada": "primavera",
+            "pressupost_max": 40.0,
+            "restriccions": [],
+            "formalitat": "mitjana"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Amanida russa",
+                "ingredients": ["patata", "pastanaga", "pèsols", "tunyina", "maionesa"],
+                "curs": "primer",
+                "estil_tags": ["tradicional"],
+                "preu": 3.0
+            },
+            "segon_plat": {
+                "nom": "Fricandó de vedella",
+                "ingredients": ["vedella", "bolets", "ceba", "oli", "farina"],
+                "curs": "segon",
+                "estil_tags": ["tradicional"],
+                "preu": 10.0
+            },
+            "postres": {
+                "nom": "Gelat de vainilla",
+                "ingredients": ["llet", "vainilla", "sucre"],
+                "curs": "postres",
+                "estil_tags": [],
+                "preu": 3.0
+            },
+            "begudes": ["Aigua", "Refresc", "Vi blanc"],
+            "preu_total": 23.0,
+            "descripcio": "Menú tradicional per a comunions, senzill i equilibrat."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+
+    {
+        "id_cas": 5,
+        "problema": {
+            "tipus_esdeveniment": "empresa",
+            "estil_culinari": "internacional_basic",
+            "n_comensals": 200,
+            "temporada": "indiferent",
+            "pressupost_max": 25.0,
+            "restriccions": [],
+            "formalitat": "baixa"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Amanida Cèsar",
+                "ingredients": ["enciam", "pollastre", "parmesà", "croutons", "salsa cèsar"],
+                "curs": "primer",
+                "estil_tags": ["internacional"],
+                "preu": 3.0
+            },
+            "segon_plat": {
+                "nom": "Pasta al pesto",
+                "ingredients": ["pasta", "alfàbrega", "oli", "parmesà"],
+                "curs": "segon",
+                "estil_tags": ["italiana"],
+                "preu": 4.0
+            },
+            "postres": {
+                "nom": "Iogurt amb mel",
+                "ingredients": ["iogurt", "mel"],
+                "curs": "postres",
+                "estil_tags": [],
+                "preu": 1.5
+            },
+            "begudes": ["Aigua"],
+            "preu_total": 11.0,
+            "descripcio": "Menú internacional senzill per dinars d’empresa."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+
+    {
+        "id_cas": 6,
+        "problema": {
+            "tipus_esdeveniment": "empresa",
+            "estil_culinari": "mediterrani_fresc",
+            "n_comensals": 50,
+            "temporada": "tardor",
+            "pressupost_max": 32.0,
+            "restriccions": [],
+            "formalitat": "mitjana"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Crema de carbassa",
+                "ingredients": ["carbassa", "ceba", "nata", "oli", "sal"],
+                "curs": "primer",
+                "estil_tags": ["mediterrani"],
+                "preu": 3.0
+            },
+            "segon_plat": {
+                "nom": "Truita de patates",
+                "ingredients": ["patates", "ous", "oli", "sal"],
+                "curs": "segon",
+                "estil_tags": ["tradicional"],
+                "preu": 2.5
+            },
+            "postres": {
+                "nom": "Poma al forn",
+                "ingredients": ["poma", "sucre", "canella"],
+                "curs": "postres",
+                "estil_tags": [],
+                "preu": 1.5
+            },
+            "begudes": ["Aigua", "Vi blanc", "Refresc"],
+            "preu_total": 18.0,
+            "descripcio": "Menú mediterrani suau ideal per reunions d’empresa."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 7,
+        "problema": {
+            "tipus_esdeveniment": "aniversari",
+            "estil_culinari": "comfort_food",
+            "n_comensals": 40,
+            "temporada": "indiferent",
+            "pressupost_max": 20.0,
+            "restriccions": [],
+            "formalitat": "baixa"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Macarrons amb tomàquet",
+                "ingredients": ["macarrons", "tomàquet", "oli", "all"],
+                "curs": "primer",
+                "estil_tags": ["comfort_food"],
+                "preu": 2.5
+            },
+            "segon_plat": {
+                "nom": "Hamburguesa casolana",
+                "ingredients": ["carn picada", "pa", "enciams", "tomàquet"],
+                "curs": "segon",
+                "estil_tags": ["casolà"],
+                "preu": 4.0
+            },
+            "postres": {
+                "nom": "Brownie de xocolata",
+                "ingredients": ["xocolata", "farina", "ous", "mantega"],
+                "curs": "postres",
+                "estil_tags": ["dolç"],
+                "preu": 2.0
+            },
+            "begudes": ["Refresc"],
+            "preu_total": 15.0,
+            "descripcio": "Menú de comfort food ideal per aniversaris informals."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+
+    {
+    "id_cas": 8,
+    "problema": {
+        "tipus_esdeveniment": "altres",
+        "estil_culinari": "japones",
+        "n_comensals": 60,
+        "temporada": "hivern",
+        "pressupost_max": 25.0,
+        "restriccions": [],
+        "formalitat": "baixa"
+    },
+    "solucio": {
+        "primer_plat": {
+            "nom": "Miso shiru amb tofu i wakame",
+            "ingredients": ["misso", "tofu", "wakame", "ceba tendra", "aigua"],
+            "curs": "primer",
+            "estil_tags": ["sopa", "japones"],
+            "preu": 3.0
+        },
+        "segon_plat": {
+            "nom": "Yakitori de pollastre amb verdures",
+            "ingredients": ["pollastre", "pebrot", "ceba", "salsa soja", "mirin"],
+            "curs": "segon",
+            "estil_tags": ["japones", "a la brasa"],
+            "preu": 6.0
+        },
+        "postres": {
+            "nom": "Mochi de te verd",
+            "ingredients": ["farina de arròs", "sucre", "te verd matcha", "aigua"],
+            "curs": "postres",
+            "estil_tags": ["dolç", "japones"],
+            "preu": 2.0
+        },
+        "begudes": ["Té verd", "Aigua", "Sake"],
+        "preu_total": 22.0,
+        "descripcio": "Menú japonès lleuger i calent ideal per esdeveniments d’hivern."
+    },
+    "avaluacio": {
+        "derivacio": "Generat automàticament",
+        "feedback_textual": "",
+        "validat": true,
+        "utilitat": 1.0
+    }
+    },
+
+    {
+        "id_cas": 9,
+        "problema": {
+            "tipus_esdeveniment": "congrés",
+            "estil_culinari": "finger_food",
+            "n_comensals": 300,
+            "temporada": "indiferent",
+            "pressupost_max": 18.0,
+            "restriccions": [],
+            "formalitat": "baixa"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Mini sandvitx de pernil i formatge",
+                "ingredients": ["pa", "pernil dolç", "formatge"],
+                "curs": "primer",
+                "estil_tags": ["finger_food"],
+                "preu": 1.5
+            },
+            "segon_plat": {
+                "nom": "Croquetes variades",
+                "ingredients": ["farina", "llet", "pollastre", "bolets"],
+                "curs": "segon",
+                "estil_tags": ["finger_food"],
+                "preu": 2.5
+            },
+            "postres": {
+                "nom": "Galetes de mantega",
+                "ingredients": ["farina", "sucre", "mantega"],
+                "curs": "postres",
+                "estil_tags": [],
+                "preu": 1.0
+            },
+            "begudes": ["Aigua"],
+            "preu_total": 12.0,
+            "descripcio": "Menú econòmic i ràpid per congressos multitudinaris."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 10,
+        "problema": {
+            "tipus_esdeveniment": "casament",
+            "estil_culinari": "mediterrani_fresc",
+            "n_comensals": 100,
+            "temporada": "primavera",
+            "pressupost_max": 65.0,
+            "restriccions": [],
+            "formalitat": "alta"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Carpaccio de remolatxa i formatge de cabra",
+                "ingredients": ["remolatxa", "formatge de cabra", "nous", "rúcula", "oli"],
+                "curs": "primer",
+                "estil_tags": ["mediterrani", "fresc"],
+                "preu": 6.0
+            },
+            "segon_plat": {
+                "nom": "Orada al forn amb verdures",
+                "ingredients": ["orada", "carbassó", "pebrot", "oli", "llimona"],
+                "curs": "segon",
+                "estil_tags": ["mediterrani"],
+                "preu": 14.0
+            },
+            "postres": {
+                "nom": "Mousse de maduixa",
+                "ingredients": ["maduixa", "nata", "sucre", "gelatina"],
+                "curs": "postres",
+                "estil_tags": ["fresc", "dolç"],
+                "preu": 4.0
+            },
+            "begudes": ["Vi blanc", "Aigua"],
+            "preu_total": 61.0,
+            "descripcio": "Menú primaveral fresc i mediterrani per casaments elegants."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 11,
+        "problema": {
+            "tipus_esdeveniment": "bateig",
+            "estil_culinari": "tradicional_espanyol",
+            "n_comensals": 50,
+            "temporada": "tardor",
+            "pressupost_max": 35.0,
+            "restriccions": [],
+            "formalitat": "mitjana"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Crema de carbassó",
+                "ingredients": ["carbassó", "patata", "ceba", "oli", "sal"],
+                "curs": "primer",
+                "estil_tags": ["tradicional"],
+                "preu": 4.0
+            },
+            "segon_plat": {
+                "nom": "Pollastre rostit amb herbes",
+                "ingredients": ["pollastre", "romaní", "oli", "sal"],
+                "curs": "segon",
+                "estil_tags": ["tradicional"],
+                "preu": 10.0
+            },
+            "postres": {
+                "nom": "Pastís de poma",
+                "ingredients": ["poma", "farina", "ous", "sucre", "mantega"],
+                "curs": "postres",
+                "estil_tags": ["dolç", "casolà"],
+                "preu": 4.0
+            },
+            "begudes": ["Aigua", "Suc de taronja"],
+            "preu_total": 18.0,
+            "descripcio": "Menú tradicional per bateigs amb plats senzills i casolans."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 12,
+        "problema": {
+            "tipus_esdeveniment": "empresa",
+            "estil_culinari": "internacional_basic",
+            "n_comensals": 120,
+            "temporada": "estiu",
+            "pressupost_max": 28.0,
+            "restriccions": [],
+            "formalitat": "baixa"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Tabulé de quinoa",
+                "ingredients": ["quinoa", "tomàquet", "cogombre", "menta", "oli"],
+                "curs": "primer",
+                "estil_tags": ["internacional", "fresc"],
+                "preu": 3.0
+            },
+            "segon_plat": {
+                "nom": "Pollastre a la planxa amb verdures",
+                "ingredients": ["pollastre", "carbassó", "pebrot", "oli", "sal"],
+                "curs": "segon",
+                "estil_tags": ["internacional"],
+                "preu": 5.0
+            },
+            "postres": {
+                "nom": "Iogurt amb fruites del bosc",
+                "ingredients": ["iogurt", "maduixes", "móres", "fruita del bosc"],
+                "curs": "postres",
+                "estil_tags": ["fresc", "dolç"],
+                "preu": 2.0
+            },
+            "begudes": ["Aigua", "Suc natural"],
+            "preu_total": 10.0,
+            "descripcio": "Menú internacional lleuger i econòmic per dinars d’empresa a l’estiu."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 13,
+        "problema": {
+            "tipus_esdeveniment": "aniversari",
+            "estil_culinari": "comfort_food",
+            "n_comensals": 30,
+            "temporada": "hivern",
+            "pressupost_max": 22.0,
+            "restriccions": [],
+            "formalitat": "baixa"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Crema de carbassa i pastanaga",
+                "ingredients": ["carbassa", "pastanaga", "ceba", "oli", "sal"],
+                "curs": "primer",
+                "estil_tags": ["comfort_food", "crema"],
+                "preu": 3.0
+            },
+            "segon_plat": {
+                "nom": "Lasanya casolana",
+                "ingredients": ["pasta", "carn picada", "tomàquet", "formatge", "beixamel"],
+                "curs": "segon",
+                "estil_tags": ["comfort_food"],
+                "preu": 5.0
+            },
+            "postres": {
+                "nom": "Brownie amb glaçat",
+                "ingredients": ["xocolata", "farina", "ous", "mantega", "sucre"],
+                "curs": "postres",
+                "estil_tags": ["dolç"],
+                "preu": 3.0
+            },
+            "begudes": ["Refresc", "Aigua"],
+            "preu_total": 11.0,
+            "descripcio": "Menú reconfortant i casolà per aniversaris a l’hivern."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 14,
+        "problema": {
+            "tipus_esdeveniment": "congrés",
+            "estil_culinari": "finger_food",
+            "n_comensals": 250,
+            "temporada": "primavera",
+            "pressupost_max": 20.0,
+            "restriccions": [],
+            "formalitat": "baixa"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Mini brotxetes de pollastre",
+                "ingredients": ["pollastre", "pebrot", "ceba", "salsa teriyaki"],
+                "curs": "primer",
+                "estil_tags": ["finger_food"],
+                "preu": 1.5
+            },
+            "segon_plat": {
+                "nom": "Mini quiches variades",
+                "ingredients": ["farina", "ous", "formatge", "verdures"],
+                "curs": "segon",
+                "estil_tags": ["finger_food"],
+                "preu": 2.5
+            },
+            "postres": {
+                "nom": "Mini magdalenes",
+                "ingredients": ["farina", "ous", "sucre", "mantega"],
+                "curs": "postres",
+                "estil_tags": ["dolç"],
+                "preu": 1.0
+            },
+            "begudes": ["Aigua", "Suc"],
+            "preu_total": 12.0,
+            "descripcio": "Menú ràpid i econòmic de finger food per congressos primaverals."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    }
+]
