@@ -1,8 +1,89 @@
 import json
 import csv
+import unicodedata
+from typing import Optional, Set
 from estructura_cas import DescripcioProblema
 from retriever import Retriever
 from operadors_transformacio_realista import *
+from operador_ingredients import substituir_ingredients_prohibits, _get_info_ingredient, _check_compatibilitat
+
+
+def _normalize_restriccio_text(value: str) -> str:
+    if not value:
+        return ""
+    text = unicodedata.normalize("NFKD", str(value))
+    text = text.encode("ascii", "ignore").decode("ascii")
+    text = text.lower()
+    for ch in ("-", "_"):
+        text = text.replace(ch, " ")
+    text = " ".join(text.split())
+    return text
+
+
+_ALERGENS_ALIAS_RAW = {
+    "fruits secs": "nuts",
+    "frutos secos": "nuts",
+    "fruit secs": "nuts",
+    "fruit sec": "nuts",
+    "fruitos secs": "nuts",
+    "cacauet": "peanuts",
+    "cacahuet": "peanuts",
+    "cacahuete": "peanuts",
+    "cacahuetes": "peanuts",
+    "cacahuate": "peanuts",
+    "cacauets": "peanuts",
+    "marisc": "crustaceans",
+    "mariscos": "crustaceans",
+    "crustacis": "crustaceans",
+    "crustaceos": "crustaceans",
+    "molusc": "molluscs",
+    "moluscs": "molluscs",
+    "moluscos": "molluscs",
+    "peix": "fish",
+    "pescado": "fish",
+    "peixos": "fish",
+    "lactosa": "milk",
+    "lacti": "milk",
+    "llet": "milk",
+    "dairy": "milk",
+    "caseina": "milk",
+    "ou": "egg",
+    "ous": "egg",
+    "huevo": "egg",
+    "huevos": "egg",
+    "soja": "soy",
+    "sesam": "sesame",
+    "sesamo": "sesame",
+    "fructe sec": "nuts",
+    "gluten": "gluten",
+}
+ALERGENS_ALIAS = {
+    _normalize_restriccio_text(k): _normalize_restriccio_text(v)
+    for k, v in _ALERGENS_ALIAS_RAW.items()
+}
+
+DIETA_PATTERNS = [
+    ("vega", "vegan"),
+    ("vegetar", "vegetarian"),
+    ("plant based", "vegan"),
+    ("sense carn", "vegetarian"),
+    ("halal", "halal friendly"),
+    ("kosher", "kosher friendly"),
+]
+
+IGNORE_RESTRICCIO_TOKENS = {
+    "",
+    "cap",
+    "cap alergia",
+    "cap allergia",
+    "cap al.lergia",
+    "sense",
+    "res",
+    "no",
+    "ninguna",
+    "ningun",
+    "cap dieta",
+}
 
 # =========================
 #   CARREGA DE BASES
@@ -44,6 +125,91 @@ with open("data/estils_latents.json", "r", encoding="utf-8") as f:
 # =========================
 #   FUNCIONS AUXILIARS CLI
 # =========================
+
+def clonar_plat(plat: dict) -> dict:
+    nou = plat.copy()
+    if "ingredients" in plat:
+        nou["ingredients"] = list(plat["ingredients"])
+    if "ingredients_en" in plat:
+        nou["ingredients_en"] = list(plat["ingredients_en"])
+    return nou
+
+
+def _map_dieta_token(token: str) -> str | None:
+    for prefix, canonical in DIETA_PATTERNS:
+        if token.startswith(prefix):
+            return canonical
+    return None
+
+
+def _construir_perfil_restriccions(text: str) -> dict | None:
+    if not text:
+        return None
+    tokens = [t for t in text.split(",") if t.strip()]
+    alergies = []
+    dieta = None
+    for raw in tokens:
+        token = _normalize_restriccio_text(raw)
+        if not token or token in IGNORE_RESTRICCIO_TOKENS:
+            continue
+        if token.startswith("sense "):
+            token = token.replace("sense ", "", 1).strip()
+        if token.startswith("no "):
+            token = token.replace("no ", "", 1).strip()
+        if token.startswith("alergia "):
+            token = token.replace("alergia ", "", 1).strip()
+        if token.startswith("allergia "):
+            token = token.replace("allergia ", "", 1).strip()
+        diet = _map_dieta_token(token)
+        if diet:
+            dieta = diet
+            continue
+        alergia = ALERGENS_ALIAS.get(token, token)
+        if alergia:
+            alergies.append(alergia)
+    perfil = {}
+    if alergies:
+        perfil["alergies"] = set(alergies)
+    if dieta:
+        perfil["dieta"] = dieta
+    return perfil if perfil else None
+
+
+def _ingredients_incompatibles_perfil(ingredients: list[str], perfil: dict | None) -> set[str]:
+    if not perfil:
+        return set()
+    prohibits = set()
+    for ing in ingredients:
+        info = _get_info_ingredient(ing, base_ingredients_en)
+        if not info:
+            continue
+        if not _check_compatibilitat(info, perfil):
+            prohibits.add(info.get("ingredient_name", ing))
+    return prohibits
+
+
+def adaptar_plat_a_restriccions(plat: dict, perfil: dict | None, ingredients_usats: Optional[set[str]] = None) -> tuple[dict, list[str]]:
+    if not perfil:
+        return plat, []
+    ingredients_en = list(plat.get("ingredients_en") or [])
+    if not ingredients_en:
+        return plat, []
+    prohibits = _ingredients_incompatibles_perfil(ingredients_en, perfil)
+    if not prohibits:
+        return plat, []
+    plat_tmp = {"nom": plat.get("nom", ""), "ingredients": ingredients_en}
+    adaptat = substituir_ingredients_prohibits(
+        plat_tmp,
+        prohibits,
+        base_ingredients_en,
+        perfil_usuari=perfil,
+        ingredients_usats=ingredients_usats
+    )
+    nou_plat = plat.copy()
+    nou_plat["ingredients"] = list(adaptat["ingredients"])
+    nou_plat["ingredients_en"] = list(adaptat["ingredients"])
+    return nou_plat, adaptat.get("log_transformacio", [])
+
 
 def input_default(prompt, default):
     """Demana un input amb valor per defecte."""
@@ -111,6 +277,17 @@ def imprimir_menu_final(
         print(f"  Base del plat: {', '.join(plat['ingredients'])}")
         print(f"  Descripció de carta: {desc}")
         print(f"  Presentació del plat: {proposta}")
+
+
+def demanar_restriccions_usuari() -> dict | None:
+    resposta = input_default(
+        "Hi ha alguna al·lèrgia, ingredient prohibit o dieta específica? (separa per comes)",
+        ""
+    ).strip()
+    perfil = _construir_perfil_restriccions(resposta)
+    if perfil:
+        print(f"[INFO] Perfil dietètic detectat: {perfil}")
+    return perfil
 
 
 
@@ -185,12 +362,40 @@ def main():
         cas_seleccionat = resultats[idx - 1]["cas"]
         sol = cas_seleccionat["solucio"]
         
-        plat1, plat2, postres = sol["primer_plat"], sol["segon_plat"], sol["postres"]
+        plat1 = clonar_plat(sol["primer_plat"])
+        plat2 = clonar_plat(sol["segon_plat"])
+        postres = clonar_plat(sol["postres"])
 
         print("\nHas triat el menú base:")
         print(f"  - Primer plat: {plat1['nom']}")
         print(f"  - Segon plat:  {plat2['nom']}")
         print(f"  - Postres:     {postres['nom']}")
+
+        perfil_restriccions = demanar_restriccions_usuari()
+        if perfil_restriccions:
+            print("\n=== ADAPTACIÓ PER RESTRICCIONS D'AL·LÈRGIES/DIETES ===")
+            plats_actualitzats = []
+            hi_ha_canvis = False
+            ingredients_usats_restriccions: Set[str] = set()
+            for etiqueta, plat in [
+                ("Primer plat", plat1),
+                ("Segon plat", plat2),
+                ("Postres", postres),
+            ]:
+                plat_adaptat, logs = adaptar_plat_a_restriccions(
+                    plat, perfil_restriccions, ingredients_usats_restriccions
+                )
+                if logs:
+                    hi_ha_canvis = True
+                    print(f"  {etiqueta} ({plat['nom']}):")
+                    for lin in logs:
+                        print(f"    - {lin}")
+                plats_actualitzats.append(plat_adaptat)
+            if not hi_ha_canvis:
+                print("  Cap ingredient requeria canvis; el menú ja complia les restriccions.")
+            plat1, plat2, postres = plats_actualitzats
+        else:
+            perfil_restriccions = None
 
         # ---------------------------
         # ADAPTACIÓ LATENT (FlavorGraph)
@@ -233,15 +438,21 @@ def main():
             ingredients_usats_latent = set()
             plat1_mod = substituir_ingredient(
                 p1_prep, estil_latent, base_ingredients_en, base_estils_latents,
-                mode="latent", intensitat=intensitat, ingredients_usats_latent=ingredients_usats_latent
+                mode="latent", intensitat=intensitat,
+                ingredients_usats_latent=ingredients_usats_latent,
+                perfil_usuari=perfil_restriccions
             )
             plat2_mod = substituir_ingredient(
                 p2_prep, estil_latent, base_ingredients_en, base_estils_latents,
-                mode="latent", intensitat=intensitat, ingredients_usats_latent=ingredients_usats_latent
+                mode="latent", intensitat=intensitat,
+                ingredients_usats_latent=ingredients_usats_latent,
+                perfil_usuari=perfil_restriccions
             )
             postres_mod = substituir_ingredient(
                 pp_prep, estil_latent, base_ingredients_en, base_estils_latents,
-                mode="latent", intensitat=intensitat, ingredients_usats_latent=ingredients_usats_latent
+                mode="latent", intensitat=intensitat,
+                ingredients_usats_latent=ingredients_usats_latent,
+                perfil_usuari=perfil_restriccions
             )
 
             # Debug: mostra els plats resultants i ingredients en anglès

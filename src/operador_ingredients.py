@@ -127,6 +127,169 @@ def _get_candidats_per_categoria(categoria: str, base_ingredients: List[Dict]) -
         and ing.get('ingredient_name')
     ]
 
+
+_PROTEINA_CATEGORIES = {
+    _normalize_text("protein_animal"),
+    _normalize_text("protein vegetal"),
+    _normalize_text("protein_vegetal"),
+    _normalize_text("fish_white"),
+    _normalize_text("fish_oily"),
+    _normalize_text("proteina_animal"),
+    _normalize_text("proteina vegetal"),
+}
+_DAIRY_CATEGORIES = {
+    _normalize_text("dairy"),
+    _normalize_text("lacti"),
+    _normalize_text("dairy_cheese"),
+    _normalize_text("dairy_cream"),
+}
+_EGG_CATEGORIES = {_normalize_text("egg")}
+_GRAIN_CATEGORIES = {
+    _normalize_text("grain"),
+    _normalize_text("processed_cereal"),
+    _normalize_text("cereal_feculent"),
+}
+_PLANT_PROTEIN_FALLBACKS = [
+    _normalize_text("plant_vegetal"),
+    _normalize_text("protein_vegetal"),
+    _normalize_text("grain"),
+]
+_DAIRY_FALLBACKS = [
+    _normalize_text("plant_vegetal"),
+    _normalize_text("other"),
+    _normalize_text("fat"),
+]
+_EGG_FALLBACKS = [
+    _normalize_text("plant_vegetal"),
+    _normalize_text("grain"),
+]
+
+_MAIN_ROLES = {
+    _normalize_text("main"),
+    _normalize_text("principal"),
+    _normalize_text("main course"),
+}
+_SIDE_ROLES = {
+    _normalize_text("side"),
+    _normalize_text("base"),
+}
+
+_FAMILY_SOY = {
+    _normalize_text("soy"),
+    _normalize_text("soy_derivative"),
+    _normalize_text("tempeh"),
+    _normalize_text("tofu"),
+}
+_FAMILY_LEGUME = {
+    _normalize_text("legume"),
+    _normalize_text("chickpea"),
+    _normalize_text("lentil"),
+}
+_FAMILY_DAIRY_ALT = {
+    _normalize_text("dairy_substitute"),
+    _normalize_text("coconut"),
+    _normalize_text("oat"),
+    _normalize_text("rice"),
+    _normalize_text("soy"),
+    _normalize_text("soy_derivative"),
+}
+_FAMILY_NUT_ALTERNATIVE = {
+    _normalize_text("almond_nut"),
+    _normalize_text("cashew"),
+    _normalize_text("hazelnut_nut"),
+    _normalize_text("macadamia"),
+}
+
+
+def _categoria_fallbacks(categoria_norm: str, perfil_usuari: Optional[Dict]) -> List[str]:
+    if not perfil_usuari:
+        return []
+    dieta = _normalize_text(perfil_usuari.get('dieta'))
+    alergies = {
+        _normalize_text(a) for a in perfil_usuari.get('alergies', []) if a
+    }
+    fallbacks: List[str] = []
+
+    if dieta in {"vegan", "vegetarian"}:
+        if categoria_norm in _PROTEINA_CATEGORIES:
+            fallbacks.extend(_PLANT_PROTEIN_FALLBACKS)
+        if categoria_norm in _DAIRY_CATEGORIES:
+            fallbacks.extend(_DAIRY_FALLBACKS)
+        if categoria_norm in _EGG_CATEGORIES:
+            fallbacks.extend(_EGG_FALLBACKS)
+    if "gluten" in alergies and categoria_norm in _GRAIN_CATEGORIES:
+        fallbacks.extend([
+            _normalize_text("plant_vegetal"),
+            _normalize_text("vegetable"),
+        ])
+
+    result = []
+    seen = set()
+    for cat in fallbacks:
+        if cat and cat not in seen and cat != categoria_norm:
+            seen.add(cat)
+            result.append(cat)
+    return result
+
+
+def _rol_principal(role: str) -> bool:
+    return _normalize_text(role) in _MAIN_ROLES
+
+
+def _rol_acceptable(role: str) -> bool:
+    role_norm = _normalize_text(role)
+    return role_norm in _MAIN_ROLES or role_norm in _SIDE_ROLES
+
+
+def _es_candidat_coherent(info_original: Dict, info_candidat: Dict, categoria_original_norm: str) -> bool:
+    role_orig = _normalize_text(
+        info_original.get('typical_role') or info_original.get('rol_tipic') or ""
+    )
+    role_cand = _normalize_text(
+        info_candidat.get('typical_role') or info_candidat.get('rol_tipic') or ""
+    )
+
+    if categoria_original_norm in _PROTEINA_CATEGORIES or role_orig in _MAIN_ROLES:
+        return role_cand in _MAIN_ROLES
+
+    if role_orig in _SIDE_ROLES and role_cand:
+        return role_cand in _SIDE_ROLES or role_cand in _MAIN_ROLES
+
+    return True
+
+
+def _prioritat_reempla(info_original: Dict, info_candidat: Dict, categoria_original_norm: str) -> int:
+    cat_cand = _normalize_text(
+        info_candidat.get('macro_category') or info_candidat.get('categoria_macro') or ""
+    )
+    if cat_cand == categoria_original_norm:
+        return 100
+
+    family = _normalize_text(info_candidat.get('family'))
+
+    if categoria_original_norm in _PROTEINA_CATEGORIES:
+        if family in _FAMILY_SOY:
+            return 5
+        if family in _FAMILY_LEGUME:
+            return 3
+        return 1
+
+    if categoria_original_norm in _DAIRY_CATEGORIES:
+        if family in _FAMILY_DAIRY_ALT:
+            return 5
+        if family in _FAMILY_NUT_ALTERNATIVE:
+            return 3
+        return 1
+
+    if categoria_original_norm in _EGG_CATEGORIES:
+        if family in _FAMILY_SOY:
+            return 4
+        if family in _FAMILY_LEGUME:
+            return 2
+        return 1
+
+    return 1
+
 def _ordenar_candidats_per_afinitat(
     candidats: List[str],
     base_ingredients: List[Dict],
@@ -190,7 +353,8 @@ def substituir_ingredients_prohibits(
     ingredients_prohibits: Set[str], 
     base_ingredients: List[Dict],
     perfil_usuari: Optional[Dict] = None,
-    llista_blanca: Optional[Set[str]] = None
+    llista_blanca: Optional[Set[str]] = None,
+    ingredients_usats: Optional[Set[str]] = None,
 ) -> Dict[str, Any]:
     """
     Revisa els ingredients del plat. Si en troba un de prohibit, el substitueix
@@ -226,8 +390,20 @@ def substituir_ingredients_prohibits(
                 print(f"[AVÍS] No tenim informació per substituir '{ingredient_actual}'. Es manté.")
                 continue
 
-            # 2. Generem candidats vàlids (Ontologia)
-            possibles_candidats = _get_candidats_per_categoria(categoria, base_ingredients)
+            categoria_norm = _normalize_text(categoria)
+            categories_considerar = []
+            cats_seen = set()
+
+            def _afegeix_categoria(cat_txt: str):
+                cat_norm = _normalize_text(cat_txt)
+                if cat_norm and cat_norm not in cats_seen:
+                    cats_seen.add(cat_norm)
+                    categories_considerar.append(cat_norm)
+
+            _afegeix_categoria(categoria_norm)
+            for extra_cat in _categoria_fallbacks(categoria_norm, perfil_usuari):
+                _afegeix_categoria(extra_cat)
+
             candidats_map = {}
             ingredients_actuals_norm = {
                 _normalize_text(nou_plat['ingredients'][idx])
@@ -235,24 +411,31 @@ def substituir_ingredients_prohibits(
                 if idx != i
             }
 
-            for candidat in possibles_candidats:
-                cand_norm = _normalize_text(candidat)
-                if not cand_norm:
-                    continue
-                if cand_norm == ing_actual_norm:
-                    continue
-                if cand_norm in prohibits_norm:
-                    continue
-                if cand_norm in ingredients_actuals_norm:
-                    continue
-                if whitelist_norm and cand_norm not in whitelist_norm:
-                    continue
-                info_cand = _get_info_ingredient(candidat, base_ingredients)
-                if not info_cand:
-                    continue
-                if not _check_compatibilitat(info_cand, perfil_context):
-                    continue
-                candidats_map[cand_norm] = candidat
+            for categoria_target in categories_considerar:
+                possibles_candidats = _get_candidats_per_categoria(categoria_target, base_ingredients)
+                for candidat in possibles_candidats:
+                    cand_norm = _normalize_text(candidat)
+                    if not cand_norm:
+                        continue
+                    if cand_norm == ing_actual_norm:
+                        continue
+                    if cand_norm in prohibits_norm:
+                        continue
+                    if cand_norm in ingredients_actuals_norm:
+                        continue
+                    if ingredients_usats and cand_norm in ingredients_usats:
+                        continue
+                    if whitelist_norm and cand_norm not in whitelist_norm:
+                        continue
+                    info_cand = _get_info_ingredient(candidat, base_ingredients)
+                    if not info_cand:
+                        continue
+                    if not _check_compatibilitat(info_cand, perfil_context):
+                        continue
+                    if not _es_candidat_coherent(info, info_cand, categoria_norm):
+                        continue
+                    if cand_norm not in candidats_map:
+                        candidats_map[cand_norm] = candidat
 
             candidats_filtrats = list(candidats_map.values())
 
@@ -275,15 +458,22 @@ def substituir_ingredients_prohibits(
             # Intersecció: Volem el millor del rànquing que TAMBÉ sigui de la categoria correcta
             millor_substitut = None
             justificacio = None
-            
+            millor_tuple = (-1, -999.0)
+
             # Primer intent: El millor candidat segons FlavorGraph que respecti l'ontologia
             for nom_candidat, score in ranking:
                 cand_norm = _normalize_text(nom_candidat)
-                if cand_norm in candidats_map:
-                    millor_substitut = candidats_map[cand_norm]
+                candidat = candidats_map.get(cand_norm)
+                if not candidat:
+                    continue
+                info_cand = _get_info_ingredient(candidat, base_ingredients)
+                priority = _prioritat_reempla(info, info_cand, categoria_norm)
+                tup = (priority, score)
+                if tup > millor_tuple:
+                    millor_tuple = tup
+                    millor_substitut = candidat
                     justificacio = f"FlavorGraph (score {score:.2f})"
-                    break
-            
+
             # Segon intent (Fallback): Si FlavorGraph no troba res proper a la categoria,
             # ordenem per família/rol per mantenir coherència gastronòmica.
             if not millor_substitut:
@@ -309,6 +499,8 @@ def substituir_ingredients_prohibits(
             log_canvis.append(
                 f"Substitució: {ingredient_actual} -> {millor_substitut} (Categoria: {categoria}, {justificacio})"
             )
+            if ingredients_usats is not None:
+                ingredients_usats.add(_normalize_text(millor_substitut))
 
     # Guardem el registre de canvis al plat per explicar-ho a l'usuari després
     nou_plat['log_transformacio'] = log_canvis
