@@ -398,6 +398,22 @@ def adaptar_plat_a_estil_latent(
                 continue
             sim = FG_WRAPPER.similarity_with_vector(ing_style, vector_estil) or 0.0
             dessert_candidates_style.append((ing_style, info_cand, sim))
+        if not dessert_candidates_style:
+            candidate_pool = [
+                ing.get('ingredient_name') for ing in base_ingredients
+                if (ing.get('macro_category') or "").lower() in dessert_categories
+            ]
+            representants = FG_WRAPPER.get_style_representatives(
+                vector_estil,
+                n=6,
+                exclude_names=plat.get('ingredients', []),
+                candidate_pool=candidate_pool
+            )
+            for cand, score in representants:
+                info_cand = _get_info_ingredient(cand, base_ingredients)
+                if not info_cand:
+                    continue
+                dessert_candidates_style.append((cand, info_cand, score))
         dessert_candidates_style.sort(key=lambda x: x[2], reverse=True)
 
     nou_plat = plat.copy()
