@@ -2,11 +2,10 @@ import random
 import os
 from typing import List, Dict
 import google.generativeai as genai
-# ⬇︎ AFEGEIX AIXÒ
 import base64
 import requests
 
-
+from operador_ingredients import adaptar_plat_a_estil, adaptar_plat_a_estil_latent
 # Crida única de configuració (posa-la al principi del fitxer d'operadors)
 API_KEY = os.environ.get("GEMINI_API_KEY")
 if not API_KEY:
@@ -306,11 +305,32 @@ def _score_tecnica_per_plat(tecnica_row, plat, info_ings):
 #  OPERADOR 1: SUBSTITUCIÓ D'INGREDIENT
 # ---------------------------------------------------------------------
 
-def substituir_ingredient(plat, tipus_cuina, base_ingredients, base_cuina):
+def substituir_ingredient(
+    plat,
+    tipus_cuina,
+    base_ingredients,
+    base_cuina,
+    mode="regles",
+    intensitat=0.4,
+):
     """
     Substitueix un ingredient d'un plat que NO sigui de l'estil de cuina desitjat
     per un altre ingredient amb el mateix rol i present a la base d'aquell estil.
     """
+    if mode == "latent":
+        # Mode creatiu basat en vectors de FlavorGraph
+        try:
+            return adaptar_plat_a_estil_latent(
+                plat=plat,
+                nom_estil=tipus_cuina,
+                base_estils=base_cuina,
+                base_ingredients=base_ingredients,
+                intensitat=intensitat,
+            )
+        except Exception as exc:
+            print(f"[INGREDIENTS] Error en adaptació latent '{tipus_cuina}': {exc}. S'usa mètode clàssic.")
+            # Si hi ha qualsevol problema, fem servir la lògica simple.
+
     # Ingredients propis de l'estil
     ingredients_estil = set(base_cuina.get(tipus_cuina, {}).get('ingredients', []))
 

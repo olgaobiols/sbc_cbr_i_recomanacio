@@ -10,28 +10,28 @@ from operadors_transformacio_realista import *
 
 # Base d'ingredients
 base_ingredients = []
-with open("ingredients.csv", "r", encoding="utf-8") as f:
+with open("data/ingredients.csv", "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         base_ingredients.append(row)
 
-# Base de tipus de cuina (ingredients propis de cada estil)
-with open("tipus_cuina.json", "r", encoding="utf-8") as f:
-    base_cuina = json.load(f)
-
 # Base d'estils culinaris (per tècniques)
 base_estils = {}
-with open("estils.csv", "r", encoding="utf-8") as f:
+with open("data/estils.csv", "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         base_estils[row["nom_estil"]] = row
 
 # Base de tècniques
 base_tecnniques = {}
-with open("tecniques.csv", "r", encoding="utf-8") as f:
+with open("data/tecniques.csv", "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         base_tecnniques[row["nom_tecnica"]] = row
+
+# Carreguem els nous estils latents des del JSON (substitueix provisional.py)
+with open("data/estils_latents.json", "r", encoding="utf-8") as f:
+    base_estils_latents = json.load(f)
 
 
 # =========================
@@ -72,8 +72,7 @@ def imprimir_casos(candidats, top_k=5):
         print(f"   Estil original: {cas['problema']['estil_culinari']} ({cas['problema']['tipus_esdeveniment']})")
         print(f"   Preu total: {sol['preu_total']}€  |  Comensals: {cas['problema']['n_comensals']}")
         print(f"   Menú: {sol['primer_plat']['nom']} + {sol['segon_plat']['nom']} + {sol['postres']['nom']}")
-        print(f"   Detall similitud -> Semàntica: {detall['sim_semantica']:.4f} | Numèrica: {detall['sim_numerica']:.4f}")
-
+        print(f"   Detall similitud -> Semàntica: {detall['sim_semantica_global']:.4f} | Numèrica: {detall['sim_num']:.4f}")
 
 def imprimir_menu_final(
     plat1, transf_1, info_llm_1,
@@ -119,7 +118,7 @@ def main():
     print("===========================================\n")
 
     # 1) Inicialitzem primer el retriever (carrega model + embeddings)
-    retriever = Retriever("base_de_casos.json")
+    retriever = Retriever("data/base_de_casos.json")
 
     # 2) Després fem la intro "humana"
     print("Benvingut/da al recomanador de menús!")
@@ -140,47 +139,23 @@ def main():
         print("\n--- Nova petició ---")
 
         # 3) Preguntes tipus RicoRico (sense preu)
-        tipus_esdeveniment = input_default(
-            "Quin tipus d’esdeveniment estàs organitzant? (casament/aniversari/comunio/empresa/congres/altres)",
-            "casament",
-        )
-
-        temporada = input_default(
-            "En quina època de l’any se celebrarà? (primavera/estiu/tardor/hivern)",
-            "primavera",
-        )
-
-        espai = input_default(
-            "Es farà en un espai interior o exterior? (interior/exterior)",
-            "interior",
-        )
-
-        n_comensals = input_int_default(
-            "Quants comensals assistiran aproximadament? (nombre enter)",
-            80,
-        )
-
-        formalitat = input_default(
-            "Quin grau de formalitat busques? (formal/informal)",
-            "formal",
-        )
+        tipus_esdeveniment = input_default("Quin tipus d’esdeveniment estàs organitzant? (casament/aniversari/comunio/empresa/congres/altres)", "casament")
+        temporada = input_default("En quina època de l’any se celebrarà? (primavera/estiu/tardor/hivern)", "primavera")
+        espai = input_default("Es farà en un espai interior o exterior? (interior/exterior)", "interior")
+        n_comensals = input_int_default("Quants comensals assistiran aproximadament? (nombre enter)", 80)
+        formalitat = input_default("Quin grau de formalitat busques? (formal/informal)", "formal")
 
         # No preguntem ja l'estil de cuina: el marquem com "indiferent"
-        pressupost_max = 999.0
-        restriccions = []  # de moment buit
-
-        estil_cas = f"indiferent (espai {espai})"
-
         problema = DescripcioProblema(
-            tipus_esdeveniment=tipus_esdeveniment,
-            estil_culinari=estil_cas,
-            n_comensals=n_comensals,
-            temporada=temporada,
-            pressupost_max=pressupost_max,
-            restriccions=restriccions,
-            formalitat=formalitat,
-        )
-
+                    tipus_esdeveniment=tipus_esdeveniment,
+                    estil_culinari=f"indiferent",
+                    n_comensals=n_comensals,
+                    temporada=temporada,
+                    pressupost_max=999.0,
+                    restriccions=[],
+                    formalitat="formal",
+                )
+        
         # 4) Recuperem casos similars
         resultats = retriever.recuperar_casos_similars(problema)
         imprimir_casos(resultats, top_k=5)
@@ -201,11 +176,9 @@ def main():
             idx = 1
         idx = max(1, min(idx, len(resultats)))
         cas_seleccionat = resultats[idx - 1]["cas"]
-
         sol = cas_seleccionat["solucio"]
-        plat1 = sol["primer_plat"]
-        plat2 = sol["segon_plat"]
-        postres = sol["postres"]
+        
+        plat1, plat2, postres = sol["primer_plat"], sol["segon_plat"], sol["postres"]
 
         print("\nHas triat el menú base:")
         print(f"  - Primer plat: {plat1['nom']}")
@@ -213,29 +186,61 @@ def main():
         print(f"  - Postres:     {postres['nom']}")
 
         # ---------------------------
-        # 6) ADAPTACIÓ D'INGREDIENTS
+        # ADAPTACIÓ LATENT (FlavorGraph)
         # ---------------------------
-        print("\nAra podem adaptar els INGREDIENTS a un estil concret (tipus de cuina).")
-        print("Estils d'ingredients disponibles a tipus_cuina.json:")
-        print("  - " + ", ".join(sorted(base_cuina.keys())))
-
-        estil_ingredients = input_default(
-            "\nEstil d'ingredients per adaptar (clau de tipus_cuina.json, buit per NO adaptar)",
-            "",
-        ).strip()
-
-        if estil_ingredients:
-            if estil_ingredients not in base_cuina:
-                print(f"  [AVÍS] L'estil d'ingredients '{estil_ingredients}' no existeix a tipus_cuina.json. No s'adaptaran ingredients.")
-                plat1_mod, plat2_mod, postres_mod = plat1, plat2, postres
+        print("\n=== ADAPTACIÓ D'INGREDIENTS (LATENT) ===")
+        print("Conceptes disponibles: " + ", ".join(sorted(base_estils_latents.keys())))
+        
+        def preparar_plat_per_transformacio(plat):
+            """
+            Prepara el plat per a l'adaptació latent.
+            Si el plat té 'ingredients_en', els posa com a 'ingredients' principals
+            perquè FlavorGraph treballi amb ells.
+            """
+            plat_prep = plat.copy()
+            if 'ingredients_en' in plat and plat['ingredients_en']:
+                # Usem la llista en anglès per a la transformació
+                plat_prep['ingredients'] = list(plat['ingredients_en'])
             else:
-                print(f"\nAdaptant ingredients a l'estil: {estil_ingredients}")
-                plat1_mod = substituir_ingredient(plat1, estil_ingredients, base_ingredients, base_cuina)
-                plat2_mod = substituir_ingredient(plat2, estil_ingredients, base_ingredients, base_cuina)
-                postres_mod = substituir_ingredient(postres, estil_ingredients, base_ingredients, base_cuina)
-        else:
-            print("\nNo s'adapten ingredients (es manté el menú original).")
-            plat1_mod, plat2_mod, postres_mod = plat1, plat2, postres
+                # Fallback: si no hi ha anglès, usem el que hi hagi, però avisem
+                # (FlavorGraph pot fallar si rep català)
+                pass 
+            return plat_prep
+
+        estil_latent = input_default("\nConcepte a aplicar (buit per saltar)", "").strip()
+
+        plat1_mod, plat2_mod, postres_mod = plat1, plat2, postres
+
+        if estil_latent and estil_latent in base_estils_latents:
+            intensitat = float(input_default("Intensitat (0.1 subtil - 0.9 radical)", "0.5"))
+            
+            print(f"\n🔄 Transformant menú cap a '{estil_latent}' (usant ingredients en anglès)...")
+            
+            # PREPARACIÓ: Passem a anglès perquè FlavorGraph entengui els ingredients
+            p1_prep = preparar_plat_per_transformacio(plat1)
+            p2_prep = preparar_plat_per_transformacio(plat2)
+            pp_prep = preparar_plat_per_transformacio(postres)
+            
+            # TRANSFORMACIÓ
+            # Mode 'latent' fixat, usant la base d'estils latents
+            plat1_mod = substituir_ingredient(p1_prep, estil_latent, base_ingredients, base_estils_latents, mode="latent", intensitat=intensitat)
+            plat2_mod = substituir_ingredient(p2_prep, estil_latent, base_ingredients, base_estils_latents, mode="latent", intensitat=intensitat)
+            postres_mod = substituir_ingredient(pp_prep, estil_latent, base_ingredients, base_estils_latents, mode="latent", intensitat=intensitat)
+
+            # Debug: mostra els plats resultants i ingredients en anglès
+            print("\n[DEBUG] Resultat de la transformació latent:")
+            for etiqueta, plat_mod in [
+                ("Primer plat", plat1_mod),
+                ("Segon plat", plat2_mod),
+                ("Postres", postres_mod),
+            ]:
+                nom = plat_mod.get("nom", "Sense nom")
+                ingredients = ", ".join(plat_mod.get("ingredients", [])) or "sense ingredients"
+                print(f"  - {etiqueta}: {nom} -> {ingredients}")
+            
+            # NOTA: Els plats modificats ara tenen 'ingredients' en anglès (fruit del FlavorGraph)
+            # Això està bé per mostrar el resultat "creatiu".
+
 
         # ------------------------
         # 7) ADAPTACIÓ DE TÈCNIQUES

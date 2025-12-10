@@ -1,0 +1,22 @@
+{
+  "italia": {
+    "ingredients": ["tomato", "basil", "mozzarella", "oregano", "pasta"],
+    "tipus": "geografic"
+  },
+  "mexica": {
+    "ingredients": ["corn", "bean", "avocado", "lime", "chili"],
+    "tipus": "geografic"
+  },
+  "picant": {
+    "ingredients": ["chili", "red_chili", "green_chili", "paprika", "cayenne", "salami"],
+    "tipus": "latent"
+  },
+  "fumat": {
+    "ingredients": ["smoked_paprika", "smoked_salmon", "smoked_tofu", "bacon"],
+    "tipus": "latent"
+  },
+  "citric": {
+    "ingredients": ["lemon", "lime", "yuzu", "orange", "lemongrass"],
+    "tipus": "latent"
+  }
+}

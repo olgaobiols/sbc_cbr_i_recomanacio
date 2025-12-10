@@ -14,6 +14,7 @@
             "primer_plat": {
                 "nom": "Amanida de tomàquet i mozzarella",
                 "ingredients": ["tomàquet", "mozarella", "alfàbrega", "oli", "sal"],
+                "ingredients_en": ["tomato", "mozzarella", "basil", "oil", "salt"],
                 "curs": "primer",
                 "estil_tags": ["mediterrani"],
                 "preu": 5.0
@@ -21,6 +22,7 @@
             "segon_plat": {
                 "nom": "Lluç al forn amb patates",
                 "ingredients": ["lluç", "patates", "ceba", "oli", "llimona"],
+                "ingredients_en": ["hake", "potatoes", "onion", "oil", "lemon"],
                 "curs": "segon",
                 "estil_tags": ["mediterrani"],
                 "preu": 12.0
@@ -28,6 +30,7 @@
             "postres": {
                 "nom": "Sorbet de llimona",
                 "ingredients": ["llimona", "sucre", "aigua"],
+                "ingredients_en": ["lemon", "sugar", "water"],
                 "curs": "postres",
                 "estil_tags": ["fresc"],
                 "preu": 3.0
@@ -59,6 +62,7 @@
             "primer_plat": {
                 "nom": "Crema de marisc",
                 "ingredients": ["gamba", "peix blanc", "pastanaga", "ceba", "nata"],
+                "ingredients_en": ["prawn", "white fish", "carrot", "onion", "cream"],      
                 "curs": "primer",
                 "estil_tags": ["tradicional"],
                 "preu": 6.0
@@ -66,6 +70,7 @@
             "segon_plat": {
                 "nom": "Vedella amb salsa de bolets",
                 "ingredients": ["vedella", "bolets", "vi blanc", "oli", "sal"],
+                "ingredients_en": ["beef", "mushrooms", "white wine", "oil", "salt"],
                 "curs": "segon",
                 "estil_tags": ["tradicional", "formal"],
                 "preu": 18.0
@@ -73,6 +78,7 @@
             "postres": {
                 "nom": "Pastís de noces",
                 "ingredients": ["farina", "sucre", "ous", "mantega"],
+                "ingredients_en": ["flour", "sugar", "eggs", "butter"],
                 "curs": "postres",
                 "estil_tags": ["formal"],
                 "preu": 5.0
@@ -104,6 +110,7 @@
             "primer_plat": {
                 "nom": "Gaspatxo",
                 "ingredients": ["tomàquet", "cogombre", "pebrot", "pa", "oli"],
+                "ingredients_en": ["tomato", "cucumber", "pepper", "bread", "oil"],
                 "curs": "primer",
                 "estil_tags": ["mediterrani", "fred"],
                 "preu": 3.0
@@ -111,6 +118,7 @@
             "segon_plat": {
                 "nom": "Pollastre al forn amb herbes",
                 "ingredients": ["pollastre", "romaní", "oli", "sal"],
+                "ingredients_en": ["chicken", "rosemary", "oil", "salt"],
                 "curs": "segon",
                 "estil_tags": ["mediterrani"],
                 "preu": 8.0
@@ -118,6 +126,7 @@
             "postres": {
                 "nom": "Flam de vainilla",
                 "ingredients": ["llet", "ous", "sucre"],
+                "ingredients_en": ["milk", "eggs", "sugar"],
                 "curs": "postres",
                 "estil_tags": [],
                 "preu": 2.0
@@ -148,6 +157,7 @@
             "primer_plat": {
                 "nom": "Amanida russa",
                 "ingredients": ["patata", "pastanaga", "pèsols", "tunyina", "maionesa"],
+                "ingredients_en": ["potato", "carrot", "peas", "tuna", "mayonnaise"],
                 "curs": "primer",
                 "estil_tags": ["tradicional"],
                 "preu": 3.0
@@ -155,6 +165,7 @@
             "segon_plat": {
                 "nom": "Fricandó de vedella",
                 "ingredients": ["vedella", "bolets", "ceba", "oli", "farina"],
+                "ingredients_en": ["beef", "mushrooms", "onion", "oil", "flour"],
                 "curs": "segon",
                 "estil_tags": ["tradicional"],
                 "preu": 10.0
@@ -162,6 +173,7 @@
             "postres": {
                 "nom": "Gelat de vainilla",
                 "ingredients": ["llet", "vainilla", "sucre"],
+                "ingredients_en": ["milk", "vanilla", "sugar"],
                 "curs": "postres",
                 "estil_tags": [],
                 "preu": 3.0
@@ -193,6 +205,7 @@
             "primer_plat": {
                 "nom": "Amanida Cèsar",
                 "ingredients": ["enciam", "pollastre", "parmesà", "croutons", "salsa cèsar"],
+                "ingredients_en": ["lettuce", "chicken", "parmesan", "croutons", "caesar sauce"],
                 "curs": "primer",
                 "estil_tags": ["internacional"],
                 "preu": 3.0
@@ -200,6 +213,7 @@
             "segon_plat": {
                 "nom": "Pasta al pesto",
                 "ingredients": ["pasta", "alfàbrega", "oli", "parmesà"],
+                "ingredients_en": ["pasta", "basil", "oil", "parmesan"],
                 "curs": "segon",
                 "estil_tags": ["italiana"],
                 "preu": 4.0
@@ -207,6 +221,7 @@
             "postres": {
                 "nom": "Iogurt amb mel",
                 "ingredients": ["iogurt", "mel"],
+                "ingredients_en": ["yogurt", "honey"],
                 "curs": "postres",
                 "estil_tags": [],
                 "preu": 1.5
@@ -222,7 +237,6 @@
             "utilitat": 1.0
         }
     },
-
     {
         "id_cas": 6,
         "problema": {
@@ -238,6 +252,7 @@
             "primer_plat": {
                 "nom": "Crema de carbassa",
                 "ingredients": ["carbassa", "ceba", "nata", "oli", "sal"],
+                "ingredients_en": ["pumpkin", "onion", "cream", "oil", "salt"],
                 "curs": "primer",
                 "estil_tags": ["mediterrani"],
                 "preu": 3.0
@@ -245,6 +260,7 @@
             "segon_plat": {
                 "nom": "Truita de patates",
                 "ingredients": ["patates", "ous", "oli", "sal"],
+                "ingredients_en": ["potatoes", "eggs", "oil", "salt"],
                 "curs": "segon",
                 "estil_tags": ["tradicional"],
                 "preu": 2.5
@@ -252,6 +268,7 @@
             "postres": {
                 "nom": "Poma al forn",
                 "ingredients": ["poma", "sucre", "canella"],
+                "ingredients_en": ["apple", "sugar", "cinnamon"],
                 "curs": "postres",
                 "estil_tags": [],
                 "preu": 1.5
@@ -282,6 +299,7 @@
             "primer_plat": {
                 "nom": "Macarrons amb tomàquet",
                 "ingredients": ["macarrons", "tomàquet", "oli", "all"],
+                "ingredients_en": ["macaroni", "tomato", "oil", "garlic"],
                 "curs": "primer",
                 "estil_tags": ["comfort_food"],
                 "preu": 2.5
@@ -289,6 +307,7 @@
             "segon_plat": {
                 "nom": "Hamburguesa casolana",
                 "ingredients": ["carn picada", "pa", "enciams", "tomàquet"],
+                "ingredients_en": ["minced meat", "bread", "lettuce", "tomato"],
                 "curs": "segon",
                 "estil_tags": ["casolà"],
                 "preu": 4.0
@@ -296,6 +315,7 @@
             "postres": {
                 "nom": "Brownie de xocolata",
                 "ingredients": ["xocolata", "farina", "ous", "mantega"],
+                "ingredients_en": ["chocolate", "flour", "eggs", "butter"],
                 "curs": "postres",
                 "estil_tags": ["dolç"],
                 "preu": 2.0
@@ -327,6 +347,7 @@
         "primer_plat": {
             "nom": "Miso shiru amb tofu i wakame",
             "ingredients": ["misso", "tofu", "wakame", "ceba tendra", "aigua"],
+            "ingredients_en": ["miso", "tofu", "wakame", "spring onion", "water"],
             "curs": "primer",
             "estil_tags": ["sopa", "japones"],
             "preu": 3.0
@@ -334,6 +355,7 @@
         "segon_plat": {
             "nom": "Yakitori de pollastre amb verdures",
             "ingredients": ["pollastre", "pebrot", "ceba", "salsa soja", "mirin"],
+            "ingredients_en": ["chicken", "pepper", "onion", "soy sauce", "mirin"],
             "curs": "segon",
             "estil_tags": ["japones", "a la brasa"],
             "preu": 6.0
@@ -341,6 +363,7 @@
         "postres": {
             "nom": "Mochi de te verd",
             "ingredients": ["farina de arròs", "sucre", "te verd matcha", "aigua"],
+            "ingredients_en": ["rice flour", "sugar", "green tea matcha", "water"],
             "curs": "postres",
             "estil_tags": ["dolç", "japones"],
             "preu": 2.0
@@ -356,7 +379,6 @@
         "utilitat": 1.0
     }
     },
-
     {
         "id_cas": 9,
         "problema": {
@@ -372,6 +394,7 @@
             "primer_plat": {
                 "nom": "Mini sandvitx de pernil i formatge",
                 "ingredients": ["pa", "pernil dolç", "formatge"],
+                "ingredients_en": ["bread", "ham", "cheese"],
                 "curs": "primer",
                 "estil_tags": ["finger_food"],
                 "preu": 1.5
@@ -379,6 +402,7 @@
             "segon_plat": {
                 "nom": "Croquetes variades",
                 "ingredients": ["farina", "llet", "pollastre", "bolets"],
+                "ingredients_en": ["flour", "milk", "chicken", "mushrooms"],
                 "curs": "segon",
                 "estil_tags": ["finger_food"],
                 "preu": 2.5
@@ -386,6 +410,7 @@
             "postres": {
                 "nom": "Galetes de mantega",
                 "ingredients": ["farina", "sucre", "mantega"],
+                "ingredients_en": ["flour", "sugar", "butter"],
                 "curs": "postres",
                 "estil_tags": [],
                 "preu": 1.0
@@ -416,6 +441,7 @@
             "primer_plat": {
                 "nom": "Carpaccio de remolatxa i formatge de cabra",
                 "ingredients": ["remolatxa", "formatge de cabra", "nous", "rúcula", "oli"],
+                "ingredients_en": ["beetroot", "goat cheese", "walnuts", "arugula", "oil"],
                 "curs": "primer",
                 "estil_tags": ["mediterrani", "fresc"],
                 "preu": 6.0
@@ -423,6 +449,7 @@
             "segon_plat": {
                 "nom": "Orada al forn amb verdures",
                 "ingredients": ["orada", "carbassó", "pebrot", "oli", "llimona"],
+                "ingredients_en": ["sea bream", "zucchini", "pepper", "oil", "lemon"],
                 "curs": "segon",
                 "estil_tags": ["mediterrani"],
                 "preu": 14.0
@@ -430,6 +457,7 @@
             "postres": {
                 "nom": "Mousse de maduixa",
                 "ingredients": ["maduixa", "nata", "sucre", "gelatina"],
+                "ingredients_en": ["strawberry", "cream", "sugar", "gelatin"],
                 "curs": "postres",
                 "estil_tags": ["fresc", "dolç"],
                 "preu": 4.0
@@ -460,6 +488,7 @@
             "primer_plat": {
                 "nom": "Crema de carbassó",
                 "ingredients": ["carbassó", "patata", "ceba", "oli", "sal"],
+                "ingredients_en": ["zucchini", "potato", "onion", "oil", "salt"],
                 "curs": "primer",
                 "estil_tags": ["tradicional"],
                 "preu": 4.0
@@ -467,6 +496,7 @@
             "segon_plat": {
                 "nom": "Pollastre rostit amb herbes",
                 "ingredients": ["pollastre", "romaní", "oli", "sal"],
+                "ingredients_en": ["chicken", "rosemary", "oil", "salt"],
                 "curs": "segon",
                 "estil_tags": ["tradicional"],
                 "preu": 10.0
@@ -474,6 +504,7 @@
             "postres": {
                 "nom": "Pastís de poma",
                 "ingredients": ["poma", "farina", "ous", "sucre", "mantega"],
+                "ingredients_en": ["apple", "flour", "eggs", "sugar", "butter"],
                 "curs": "postres",
                 "estil_tags": ["dolç", "casolà"],
                 "preu": 4.0
@@ -504,6 +535,7 @@
             "primer_plat": {
                 "nom": "Tabulé de quinoa",
                 "ingredients": ["quinoa", "tomàquet", "cogombre", "menta", "oli"],
+                "ingredients_en": ["quinoa", "tomato", "cucumber", "mint", "oil"],
                 "curs": "primer",
                 "estil_tags": ["internacional", "fresc"],
                 "preu": 3.0
@@ -511,6 +543,7 @@
             "segon_plat": {
                 "nom": "Pollastre a la planxa amb verdures",
                 "ingredients": ["pollastre", "carbassó", "pebrot", "oli", "sal"],
+                "ingredients_en": ["chicken", "zucchini", "pepper", "oil", "salt"],
                 "curs": "segon",
                 "estil_tags": ["internacional"],
                 "preu": 5.0
@@ -518,6 +551,7 @@
             "postres": {
                 "nom": "Iogurt amb fruites del bosc",
                 "ingredients": ["iogurt", "maduixes", "móres", "fruita del bosc"],
+                "ingredients_en": ["yogurt", "strawberries", "blackberries", "berries"],
                 "curs": "postres",
                 "estil_tags": ["fresc", "dolç"],
                 "preu": 2.0
@@ -548,6 +582,7 @@
             "primer_plat": {
                 "nom": "Crema de carbassa i pastanaga",
                 "ingredients": ["carbassa", "pastanaga", "ceba", "oli", "sal"],
+                "ingredients_en": ["pumpkin", "carrot", "onion", "oil", "salt"],
                 "curs": "primer",
                 "estil_tags": ["comfort_food", "crema"],
                 "preu": 3.0
@@ -555,6 +590,7 @@
             "segon_plat": {
                 "nom": "Lasanya casolana",
                 "ingredients": ["pasta", "carn picada", "tomàquet", "formatge", "beixamel"],
+                "ingredients_en": ["pasta", "minced meat", "tomato", "cheese", "béchamel"],
                 "curs": "segon",
                 "estil_tags": ["comfort_food"],
                 "preu": 5.0
@@ -562,6 +598,7 @@
             "postres": {
                 "nom": "Brownie amb glaçat",
                 "ingredients": ["xocolata", "farina", "ous", "mantega", "sucre"],
+                "ingredients_en": ["chocolate", "flour", "eggs", "butter", "sugar"],
                 "curs": "postres",
                 "estil_tags": ["dolç"],
                 "preu": 3.0
@@ -592,6 +629,7 @@
             "primer_plat": {
                 "nom": "Mini brotxetes de pollastre",
                 "ingredients": ["pollastre", "pebrot", "ceba", "salsa teriyaki"],
+                "ingredients_en": ["chicken", "pepper", "onion", "teriyaki sauce"],
                 "curs": "primer",
                 "estil_tags": ["finger_food"],
                 "preu": 1.5
@@ -599,6 +637,7 @@
             "segon_plat": {
                 "nom": "Mini quiches variades",
                 "ingredients": ["farina", "ous", "formatge", "verdures"],
+                "ingredients_en": ["flour", "eggs", "cheese", "vegetables"],
                 "curs": "segon",
                 "estil_tags": ["finger_food"],
                 "preu": 2.5
@@ -606,6 +645,7 @@
             "postres": {
                 "nom": "Mini magdalenes",
                 "ingredients": ["farina", "ous", "sucre", "mantega"],
+                "ingredients_en": ["flour", "eggs", "sugar", "butter"],
                 "curs": "postres",
                 "estil_tags": ["dolç"],
                 "preu": 1.0
