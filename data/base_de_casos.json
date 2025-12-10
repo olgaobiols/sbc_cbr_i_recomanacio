@@ -62,7 +62,7 @@
             "primer_plat": {
                 "nom": "Crema de marisc",
                 "ingredients": ["gamba", "peix blanc", "pastanaga", "ceba", "nata"],
-                "ingredients_en": ["prawn", "white fish", "carrot", "onion", "cream"],      
+                "ingredients_en": ["prawn", "white_fish", "carrot", "onion", "cream"],      
                 "curs": "primer",
                 "estil_tags": ["tradicional"],
                 "preu": 6.0
@@ -70,7 +70,7 @@
             "segon_plat": {
                 "nom": "Vedella amb salsa de bolets",
                 "ingredients": ["vedella", "bolets", "vi blanc", "oli", "sal"],
-                "ingredients_en": ["beef", "mushrooms", "white wine", "oil", "salt"],
+                "ingredients_en": ["beef", "mushrooms", "white_wine", "oil", "salt"],
                 "curs": "segon",
                 "estil_tags": ["tradicional", "formal"],
                 "preu": 18.0
@@ -307,7 +307,7 @@
             "segon_plat": {
                 "nom": "Hamburguesa casolana",
                 "ingredients": ["carn picada", "pa", "enciams", "tomàquet"],
-                "ingredients_en": ["minced meat", "bread", "lettuce", "tomato"],
+                "ingredients_en": ["minced_meat", "bread", "lettuce", "tomato"],
                 "curs": "segon",
                 "estil_tags": ["casolà"],
                 "preu": 4.0
@@ -347,7 +347,7 @@
         "primer_plat": {
             "nom": "Miso shiru amb tofu i wakame",
             "ingredients": ["misso", "tofu", "wakame", "ceba tendra", "aigua"],
-            "ingredients_en": ["miso", "tofu", "wakame", "spring onion", "water"],
+            "ingredients_en": ["miso", "tofu", "wakame", "spring_onion", "water"],
             "curs": "primer",
             "estil_tags": ["sopa", "japones"],
             "preu": 3.0
@@ -355,7 +355,7 @@
         "segon_plat": {
             "nom": "Yakitori de pollastre amb verdures",
             "ingredients": ["pollastre", "pebrot", "ceba", "salsa soja", "mirin"],
-            "ingredients_en": ["chicken", "pepper", "onion", "soy sauce", "mirin"],
+            "ingredients_en": ["chicken", "pepper", "onion", "soy_sauce", "mirin"],
             "curs": "segon",
             "estil_tags": ["japones", "a la brasa"],
             "preu": 6.0
@@ -363,7 +363,7 @@
         "postres": {
             "nom": "Mochi de te verd",
             "ingredients": ["farina de arròs", "sucre", "te verd matcha", "aigua"],
-            "ingredients_en": ["rice flour", "sugar", "green tea matcha", "water"],
+            "ingredients_en": ["rice_flour", "sugar", "green tea matcha", "water"],
             "curs": "postres",
             "estil_tags": ["dolç", "japones"],
             "preu": 2.0
@@ -449,7 +449,7 @@
             "segon_plat": {
                 "nom": "Orada al forn amb verdures",
                 "ingredients": ["orada", "carbassó", "pebrot", "oli", "llimona"],
-                "ingredients_en": ["sea bream", "zucchini", "pepper", "oil", "lemon"],
+                "ingredients_en": ["sea_bream", "zucchini", "pepper", "oil", "lemon"],
                 "curs": "segon",
                 "estil_tags": ["mediterrani"],
                 "preu": 14.0
@@ -590,7 +590,7 @@
             "segon_plat": {
                 "nom": "Lasanya casolana",
                 "ingredients": ["pasta", "carn picada", "tomàquet", "formatge", "beixamel"],
-                "ingredients_en": ["pasta", "minced meat", "tomato", "cheese", "béchamel"],
+                "ingredients_en": ["pasta", "minced_meat", "tomato", "cheese", "béchamel"],
                 "curs": "segon",
                 "estil_tags": ["comfort_food"],
                 "preu": 5.0
@@ -629,7 +629,7 @@
             "primer_plat": {
                 "nom": "Mini brotxetes de pollastre",
                 "ingredients": ["pollastre", "pebrot", "ceba", "salsa teriyaki"],
-                "ingredients_en": ["chicken", "pepper", "onion", "teriyaki sauce"],
+                "ingredients_en": ["chicken", "pepper", "onion", "teriyaki_sauce"],
                 "curs": "primer",
                 "estil_tags": ["finger_food"],
                 "preu": 1.5

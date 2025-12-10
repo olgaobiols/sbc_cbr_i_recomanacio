@@ -1,4 +1,42 @@
 ingredient_name,macro_category,family,base_flavors,contains_gluten,contains_lactose,is_animal,typical_role,processing_level,product_form,allergens,allowed_diets
+arugula,plant_vegetal,green_leaf,herbaceous|slightly_bitter|green,false,False,False,base,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+beef,protein_animal,meat_cured,rich|umami|fatty,false,False,True,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly
+beetroot,vegetable,root,earthy|sweet,false,False,False,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+berries,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+blackberries,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+béchamel,sauce,emulsion,creamy|mild|savory,true,True,False,sauce,cooked,cream,gluten|milk,omnivore|vegetarian
+caesar sauce,sauce,emulsion,creamy|savory|salty,false,True,False,sauce,processed,emulsion,egg|fish|milk,omnivore
+croutons,grain,processed_cereal,crusty|toasted|slightly_salty,true,False,False,side,baked,cubes,gluten,omnivore|vegetarian|vegan
+eggs,protein_animal,egg,rich|mild,false,False,True,main,fresh,raw,egg,omnivore
+flour,grain,processed_cereal,neutral|grainy,true,False,False,base,ground,flour,gluten,omnivore|vegetarian|vegan
+garlic,vegetable,allium,pungent|aromatic|sharp,false,False,False,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+gelatin,other,animal_gelatin,neutral,False,False,True,structure,processed,powder,animal_gelatin,omnivore|halal_friendly
+goat cheese,dairy,dairy_cheese,creamy|lactic|salty,false,True,False,side,ripened,block,milk,omnivore|vegetarian
+green tea matcha,plant_vegetal,aromatic_leaf,bitter|earthy|slightly_bitter,false,False,False,base,ground,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+hake,protein_animal,fish_white,lean|mild|umami,false,False,True,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly
+ham,protein_animal,meat_cured,salty|cured|savory,false,False,True,side,cured,cold_cut,none,omnivore
+honey,sweet,confectionery,sweet|floral,false,False,False,seasoning,raw,liquid,none,omnivore|vegetarian|halal_friendly|kosher_friendly
+lettuce,plant_vegetal,green_leaf,fresh|watery|crisp,false,False,False,base,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+minced_meat,protein_animal,meat_poultry|meat_cured,umami|fatty,false,False,True,main,cooked,minced,none,omnivore
+parmesan,dairy,dairy_cheese,salty|umami|nutty,false,True,False,side,ripened,grated,milk,omnivore|vegetarian
+pasta,grain,processed_cereal,neutral|grainy,true,False,False,base,cooked,noodle,gluten,omnivore|vegetarian|vegan
+potato,vegetable,root,earthy|starchy|neutral,false,False,False,base,raw,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+potatoes,vegetable,root,earthy|starchy|neutral,false,False,False,base,raw,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+prawn,protein_animal,crustacean,umami|briny|sweet,false,False,True,main,cooked,whole,crustaceans,omnivore|halal_friendly
+pumpkin,vegetable,root,sweet|earthy,false,False,False,base,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+quinoa,grain,rice,nutty|earthy,false,False,False,base,cooked,grain,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+rice_flour,grain,rice,neutral|grainy,true,False,False,base,ground,flour,gluten,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+sea_bream,protein_animal,fish_white,lean|mild|umami,false,False,True,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly
+soy_sauce,sauce,asian_acetic,salty|umami|fermented,false,False,False,seasoning,fermented,liquid,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+spring_onion,vegetable,allium,fresh|aromatic|slightly_pungent,false,False,False,seasoning,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+strawberries,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+strawberry,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+teriyaki_sauce,sauce,asian_acetic,sweet|salty|umami,false,False,False,sauce,processed,liquid,soy,omnivore|vegetarian|vegan
+vegetables,vegetable,root|green_leaf|cucurbit,neutral|fresh,false,False,False,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+water,other,emulsion,neutral,false,False,False,base,raw,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
+white_fish,protein_animal,fish_white,lean|mild|umami,false,False,True,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly
+white_wine,other,acetic,acidic|fruity|aromatic,false,False,False,seasoning,fermented,liquid,sulfites,omnivore|vegetarian|vegan
+yogurt,dairy,dairy_yogurt,creamy|lactic,false,True,False,base,fermented,cream,milk,omnivore|vegetarian
 seaweed,plant_vegetal,algae,umami|salty|marine,false,false,false,side,dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
 basil,spice,aromatic_herb,fresh|herbaceous,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
 eggplant,vegetable,solanaceae,mild_bitter|earthy,false,false,false,main|side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
