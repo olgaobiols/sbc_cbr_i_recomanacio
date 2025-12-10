@@ -1,30 +1,72 @@
 {
   "italia": {
-    "ingredients": ["tomato", "basil", "mozzarella", "oregano", "pasta"],
+    "ingredients": [
+      "tomato", "basil", "mozzarella", "oregano", "pasta",
+      "parmesan", "pecorino", "prosciutto", "pancetta",
+      "ricotta", "gorgonzola", "burrata", "anchovy",
+      "artichoke", "olive_oil", "garlic", "tagliatelle",
+      "penne", "farfalle", "arborio_rice", "porcini"
+    ],
     "tipus": "geografic"
   },
+
   "mexica": {
-    "ingredients": ["corn", "bean", "avocado", "lime", "chili"],
+    "ingredients": [
+      "corn", "bean", "avocado", "lime", "chili",
+      "jalapeno", "chipotle", "tomatillo", "cilantro",
+      "queso_fresco", "sour_cream", "epazote",
+      "pinto_beans", "black_beans", "habanero",
+      "tortilla", "achiote", "cumin"
+    ],
     "tipus": "geografic"
   },
+
   "picant": {
-    "ingredients": ["chili", "red_chili", "green_chili", "paprika", "cayenne", "salami"],
+    "ingredients": [
+      "chili", "red_chili", "green_chili", "paprika", "cayenne", "salami",
+      "habanero", "serrano", "chipotle", "gochugaru",
+      "sichuan_pepper", "harissa", "wasabi", "black_pepper",
+      "mustard_seed"
+    ],
     "tipus": "latent"
   },
+
   "fumat": {
-    "ingredients": ["smoked_paprika", "smoked_salmon", "smoked_tofu", "bacon", "smoked_tempeh", "smoked_seitan"],
+    "ingredients": [
+      "smoked_paprika", "smoked_salmon", "smoked_tofu", "bacon",
+      "smoked_tempeh", "smoked_seitan",
+      "smoked_cheese", "smoked_gouda", "smoked_chili",
+      "smoked_salt", "charcoal_oil", "smoked_eggplant"
+    ],
     "tipus": "latent"
   },
+
   "citric": {
-    "ingredients": ["lemon", "lime", "yuzu", "orange", "lemongrass", "tamarind"],
+    "ingredients": [
+      "lemon", "lime", "yuzu", "orange", "lemongrass", "tamarind",
+      "grapefruit", "bergamot", "kaffir_lime_leaf",
+      "mandarin", "lime_zest", "lemon_zest"
+    ],
     "tipus": "latent"
-  }, 
+  },
+
   "umami": {
-    "ingredients": ["miso", "soy_sauce", "shiitake", "seaweed", "kombu_broth"],
+    "ingredients": [
+      "miso", "soy_sauce", "shiitake", "seaweed", "kombu_broth",
+      "parmesan", "anchovy", "fish_sauce", "oyster_sauce",
+      "tomato_paste", "dried_tomato", "nutritional_yeast",
+      "bonito_flakes", "umeboshi"
+    ],
     "tipus": "latent"
-  }, 
+  },
+
   "tropical": {
-    "ingredients": ["fresh_pineapple", "mango", "pineapple", "coconut", "papaya", "coconut_milk", "passion_fruit", "lime"],
+    "ingredients": [
+      "fresh_pineapple", "mango", "pineapple", "coconut", "papaya",
+      "coconut_milk", "passion_fruit", "lime",
+      "banana", "guava", "lychee", "dragon_fruit",
+      "kiwi", "plantain"
+    ],
     "tipus": "latent"
   }
 }

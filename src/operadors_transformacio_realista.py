@@ -312,6 +312,7 @@ def substituir_ingredient(
     base_cuina,
     mode="regles",
     intensitat=0.4,
+    ingredients_usats_latent=None,
 ):
     """
     Substitueix un ingredient d'un plat que NO sigui de l'estil de cuina desitjat
@@ -326,6 +327,7 @@ def substituir_ingredient(
                 base_estils=base_cuina,
                 base_ingredients=base_ingredients,
                 intensitat=intensitat,
+                ingredients_usats_latent=ingredients_usats_latent,
             )
         except Exception as exc:
             print(f"[INGREDIENTS] Error en adaptació latent '{tipus_cuina}': {exc}. S'usa mètode clàssic.")

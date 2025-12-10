@@ -230,9 +230,19 @@ def main():
             
             # TRANSFORMACIÓ
             # Mode 'latent' fixat, usant la base d'estils latents
-            plat1_mod = substituir_ingredient(p1_prep, estil_latent, base_ingredients_en, base_estils_latents, mode="latent", intensitat=intensitat)
-            plat2_mod = substituir_ingredient(p2_prep, estil_latent, base_ingredients_en, base_estils_latents, mode="latent", intensitat=intensitat)
-            postres_mod = substituir_ingredient(pp_prep, estil_latent, base_ingredients_en, base_estils_latents, mode="latent", intensitat=intensitat)
+            ingredients_usats_latent = set()
+            plat1_mod = substituir_ingredient(
+                p1_prep, estil_latent, base_ingredients_en, base_estils_latents,
+                mode="latent", intensitat=intensitat, ingredients_usats_latent=ingredients_usats_latent
+            )
+            plat2_mod = substituir_ingredient(
+                p2_prep, estil_latent, base_ingredients_en, base_estils_latents,
+                mode="latent", intensitat=intensitat, ingredients_usats_latent=ingredients_usats_latent
+            )
+            postres_mod = substituir_ingredient(
+                pp_prep, estil_latent, base_ingredients_en, base_estils_latents,
+                mode="latent", intensitat=intensitat, ingredients_usats_latent=ingredients_usats_latent
+            )
 
             # Debug: mostra els plats resultants i ingredients en anglès
             print("\n[DEBUG] Resultat de la transformació latent:")
