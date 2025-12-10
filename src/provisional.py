@@ -1,40 +1,53 @@
-import pickle
-import sys
+import csv
+from operadors_transformacio_realista import substituir_ingredient_amb_pairing
+def carregar_base_ingredients(path="data/ingredients_en.csv"):
+    base_ingredients = []
+    with open(path, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            base_ingredients.append(row)
+    return base_ingredients
 
-PATH_MODEL = "models/FlavorGraph_Node_Embedding.pickle"
+if __name__ == "__main__":
+    print("\n\n>>> TEST SUBSTITUCIÓ D'INGREDIENT AMB PAIRING <<<")
 
-print(f"--- INSPECCIONANT: {PATH_MODEL} ---")
+    # 1. Carreguem la base d'ingredients del domini
+    base_ingredients = carregar_base_ingredients("data/ingredients_en.csv")
 
-try:
-    with open(PATH_MODEL, "rb") as f:
-        data = pickle.load(f)
-        
-    print(f"Tipus de dades carregades: {type(data)}")
-    
-    if isinstance(data, dict):
-        keys = list(data.keys())
-        print(f"Total de claus: {len(keys)}")
-        print("\n--- EXEMPLE DE LES PRIMERES 20 CLAUS (tal qual estan al fitxer) ---")
-        for k in keys[:20]:
-            print(f"'{k}'")
-            
-        print("\n--- BUSCANT 'chicken' ---")
-        found = False
-        for k in keys:
-            if "chicken" in str(k).lower():
-                print(f"Trobada coincidència parcial: '{k}'")
-                found = True
-                # Si en trobem molts, parem als 10 primers
-                if found and "chicken" in str(keys[:10]): break
-        
-        if not found:
-            print("NO S'HA TROBAT CAP CLAU QUE CONTINGUI 'chicken'.")
-            
-    else:
-        print("ALERTA: El fitxer no és un diccionari! És un:", type(data))
-        print("Això explicaria per què falla la cerca per nom.")
+    plat_amanida = {
+        "nom": "Amanida de pollastre amb sèsam",
+        "ingredients": [
+            "chicken",
+            "soy_sauce",
+            "ginger",
+            "brown_sugar",
+            "garlic",
+            "mayonnaise",
+            "sesame_oil",
+            "white_sugar",
+            "sesame",
+            "cabbage",
+            "carrot",
+            "crispy_noodles"
+        ],
+        "estil_tags": [],
+        "transformacions": []
+    }
 
-except FileNotFoundError:
-    print("Error: No trobo el fitxer. Revisa la ruta.")
-except Exception as e:
-    print(f"Error obrint el pickle: {e}")
+    print("\n=== TEST 2: Amanida, substitució vegana de chicken ===")
+    print("Original:", plat_amanida["ingredients"])
+
+    restriccions = {"vegetarian", "vegan"}  # ha de ser com a mínim una de les dues
+
+    plat_amanida_veg = substituir_ingredient_amb_pairing(
+        plat=plat_amanida.copy(),
+        nom_ing_original="chicken",
+        base_ingredients=base_ingredients,
+        restriccions_usuari=restriccions,
+        estil_objectiu=None, 
+        temperatura=0.0
+    )
+
+    print("Adaptat :", plat_amanida_veg["ingredients"])
+    for t in plat_amanida_veg.get("transformacions", []):
+        print("  -", t.get("descripcio", ""))
