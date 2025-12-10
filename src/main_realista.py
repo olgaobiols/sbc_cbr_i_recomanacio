@@ -10,27 +10,27 @@ from operadors_transformacio_realista import *
 
 # Base d'ingredients
 base_ingredients = []
-with open("ingredients.csv", "r", encoding="utf-8") as f:
+with open("data/ingredients.csv", "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         base_ingredients.append(row)
 
 # Base d'estils culinaris (per tècniques)
 base_estils = {}
-with open("estils.csv", "r", encoding="utf-8") as f:
+with open("data/estils.csv", "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         base_estils[row["nom_estil"]] = row
 
 # Base de tècniques
 base_tecnniques = {}
-with open("tecniques.csv", "r", encoding="utf-8") as f:
+with open("data/tecniques.csv", "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         base_tecnniques[row["nom_tecnica"]] = row
 
 # Carreguem els nous estils latents des del JSON (substitueix provisional.py)
-with open("estils_latents.json", "r", encoding="utf-8") as f:
+with open("data/estils_latents.json", "r", encoding="utf-8") as f:
     base_estils_latents = json.load(f)
 
 
@@ -118,7 +118,7 @@ def main():
     print("===========================================\n")
 
     # 1) Inicialitzem primer el retriever (carrega model + embeddings)
-    retriever = Retriever("base_de_casos.json")
+    retriever = Retriever("data/base_de_casos.json")
 
     # 2) Després fem la intro "humana"
     print("Benvingut/da al recomanador de menús!")
@@ -331,7 +331,7 @@ def main():
             plat2_final, transf_2, info_llm_2,
             postres_final, transf_post, info_llm_post
         )
-
+        
         # -------------------------------------------------
         # 8b) Preguntar si cal generar la imatge del menú
         # -------------------------------------------------
