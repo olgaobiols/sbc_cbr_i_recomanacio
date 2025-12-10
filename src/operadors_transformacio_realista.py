@@ -2,7 +2,9 @@ import random
 import os
 from typing import List, Dict
 import google.generativeai as genai
-
+# ⬇︎ AFEGEIX AIXÒ
+import base64
+import requests
 
 
 # Crida única de configuració (posa-la al principi del fitxer d'operadors)
@@ -564,6 +566,8 @@ def _extreu_camp_resposta(text: str, etiqueta: str) -> str | None:
     return None
 
 
+
+#CANVIADA!!!!!!!!
 def _format_transformacions_per_prompt(transformacions: list[dict]) -> str:
     """
     Genera un text breu i estructurat amb les tècniques aplicades,
@@ -576,16 +580,31 @@ def _format_transformacions_per_prompt(transformacions: list[dict]) -> str:
             "Descriu-lo com un plat ben executat dins l'estil, però sense mencionar tècniques."
         )
 
-    línies = ["Llista de tècniques aplicades (pots copiar literalment aquests noms):"]
+    linies = [
+        "TÈCNIQUES APLICADES AL PLAT (usa aquests textos exactes quan parlis de tècniques):"
+    ]
     for i, t in enumerate(transformacions, start=1):
-        nom = t.get("display") or t.get("nom")
-        # ingredient cru si el tenim, si no fem servir la frase
-        ing_nom = t.get("objectiu_ingredient") or t.get("objectiu_frase") or "un element del plat"
-        desc = t.get("descripcio", "") or ""
-        línies.append(
-            f"{i}) Tècnica: {nom} | Ingredient: {ing_nom} | Resum: {desc}"
-        )
-    return "\n".join(línies)
+        nom = t.get("display") or t.get("nom") or ""
+        ing_nom = t.get("objectiu_ingredient") or "un ingredient del plat"
+        linies.append(f"{i}) {nom} sobre {ing_nom}")
+
+    return "\n".join(linies)
+
+
+def _descripcio_conte_tecnica(descripcio: str, transformacions: list[dict]) -> bool:
+    """
+    Comprova si la descripció generada conté almenys un nom de tècnica.
+    Serveix per saber si el model ha fet cas a les transformacions.
+    """
+    if not descripcio or not transformacions:
+        return False
+
+    text_lower = descripcio.lower()
+    for t in transformacions:
+        nom_disp = (t.get("display") or t.get("nom") or "").lower()
+        if nom_disp and nom_disp in text_lower:
+            return True
+    return False
 
 
 def genera_descripcio_llm(
@@ -595,7 +614,8 @@ def genera_descripcio_llm(
     estil_row: dict | None = None,
 ) -> dict:
     """
-    Igual que abans, però fent servir Gemini en lloc d'Ollama.
+    Genera nom nou, descripció de carta i proposta de presentació
+    per a un plat, utilitzant Gemini.
     """
 
     nom_plat = plat.get("nom", "Plat sense nom")
@@ -608,6 +628,7 @@ def genera_descripcio_llm(
         ingredients_txt = ", ".join(ingredients_llista)
     else:
         ingredients_txt = ", ".join(ingredients_llista[:6]) + ", ..."
+
     curs = plat.get("curs", "")
 
     # Info de l'estil (si ve de estils.csv)
@@ -630,8 +651,8 @@ def genera_descripcio_llm(
 
     prompt = f"""
 Ets un xef català amb experiència en cuina d'autor i menús de banquet.
-Has de proposar un nom i dues frases curtes per descriure UN SOL PLAT.
-Treballes sempre en català estàndard, clar i sense floritures.
+Has de proposar un nom i dues frases per descriure UN SOL PLAT.
+Treballes sempre en català estàndard, clar i sense floritures innecessàries.
 
 INFORMACIÓ DEL PLAT
 - Nom original del plat: {nom_plat}
@@ -652,29 +673,30 @@ TASCA
 Escriu EXACTAMENT tres línies, amb aquest format exacte:
 
 NOM: <nom nou del plat, relacionat amb "{nom_plat}" i l'estil {estil_tecnic}.
-      Ha de contenir com a mínim una paraula del nom original i, com a màxim,
-      un adjectiu tècnic senzill (per exemple "gelificat", "esferificat", "en escuma").
-      Màxim 4 o 5 paraules en total. No facis servir paraules com "molecular", "ultratècnica", "sensorial", "experiència".>
+      Ha de sonar com un nom de carta de restaurant (per exemple "Tomàquet farcit i Esferificació", "Pinya en gelée fina").
+      Pot tenir entre 2 i 6 paraules, sense paraules grandiloqüents com "molecular", "sensorial", "experiència", "viatge".>
 
-DESCRIPCIO: <una sola frase (màxim 28 paraules) que expliqui de què va el plat.
-             SI HI HA tècniques aplicades, la frase HA DE COMENÇAR amb "Es fa" o "S'aplica"
-             i HA D'INDICAR EXPLÍCITAMENT almenys una parella "Tècnica X sobre Ingredient Y",
-             copiant literalment els noms de "Tècnica" i "Ingredient" de la llista de tècniques.
-             Si hi ha dues tècniques, idealment menciona les dues.
+DESCRIPCIO: <una sola frase (màxim 30 paraules) que soni com una descripció de carta de restaurant.
+             Si hi ha tècniques aplicades, la frase HA D'ESMENTAR TOTES LES TÈCNIQUES de la llista,
+             indicant clarament sobre quin ingredient s'aplica cadascuna.
+             Fes servir literalment els textos "Tècnica sobre Ingredient" de la secció de tècniques aplicades
+             (per exemple "Esferificació sobre salsa de soja", "Puntillisme de salsa sobre pinya natural"),
+             integrant-los de manera natural dins la frase.
              Prohibit usar paraules com: explosió, sorpresa, viatge, emoció, experiència.>
 
-PRESENTACIO: <una sola frase (màxim 20 paraules) explicant ÚNICAMENT com es disposa el plat al plat:
-              parla de la col·locació i aspecte visual (esferes, gel, crema, línies, punts...),
-              i de com es veuen els ingredients principals.
-              No parlis del que sentirà el comensal ni utilitzis metàfores.>
+PRESENTACIO: <una sola frase (màxim 35 paraules) explicant ÚNICAMENT com es disposa el plat al plat:
+              descriu la posició dels elements (centre, línia, racó), l'alçada (pla, elevat), les formes (esferes, cubs, làmines, espirals),
+              la presència de salses (en punts, línies, nappé) i els colors principals dels ingredients visibles.
+              No parlis del que sentirà el comensal, no facis metàfores, no parlis d'emocions.>
 
 RESTRICCIONS IMPORTANTS
 - Català estàndard, sense castellanismes ni paraules inventades.
-- No inventis ingredients nous ni salses o guarnicions que no surtin dels ingredients indicats.
+- No inventis ingredients nous, tècniques noves ni salses o guarnicions que no surtin dels ingredients o de la llista de tècniques aplicades.
+- No inventis termes artístics addicionals (com "puntillisme", "fulla cruixent", "pinzellades", "geometries") que no apareguin a la llista de tècniques.
 - No acabis cap frase amb punts suspensius "..." ni facis servir punts suspensius.
 - Si el text de tècniques diu que el plat es manté clàssic (sense tècniques especials), NO en parlis:
   descriu el plat com una versió ben executada dins l'estil {estil_tecnic}.
-- To d'alta cuina però simple i entenedor, frases directes.
+- Estil funcional i minimalista: frases descriptives, concretes i objectives, sense poesia.
 - Escriu només aquestes tres línies, sense text addicional ni explicacions.
 """
 
@@ -692,6 +714,16 @@ RESTRICCIONS IMPORTANTS
     nom_nou = _extreu_camp_resposta(text, "NOM")
     descripcio = _extreu_camp_resposta(text, "DESCRIPCIO")
     presentacio = _extreu_camp_resposta(text, "PRESENTACIO")
+
+    # Safety net: si hi ha tècniques però la descripció no n'esmenta cap,
+    # hi afegim una frase senzilla del tipus "S'aplica X sobre Y".
+    if transformacions and descripcio:
+        if not _descripcio_conte_tecnica(descripcio, transformacions):
+            t0 = transformacions[0]
+            nom_tecnica = (t0.get("display") or t0.get("nom") or "")
+            obj = t0.get("objectiu_ingredient") or t0.get("objectiu_frase") or "un element del plat"
+            descripcio = descripcio.rstrip(".")
+            descripcio = f"{descripcio}. S'aplica {nom_tecnica} sobre {obj}."
 
     if not nom_nou:
         nom_nou = f"{nom_plat} (versió {estil_tecnic})"
@@ -713,6 +745,187 @@ RESTRICCIONS IMPORTANTS
         "descripcio_carta": descripcio,
         "proposta_presentacio": presentacio,
     }
+
+def _construir_prompt_imatge_menu(
+    tipus_esdeveniment: str,
+    temporada: str,
+    espai: str,
+    formalitat: str,
+    estil_tecnic: str | None,
+    plats_final: list[dict],
+    info_llm_list: list[dict | None],
+) -> str:
+    """
+    Construeix un prompt de text per a generar una IMATGE del menú complet
+    en una taula, amb una mica d'ambient segons l'esdeveniment.
+    La idea és fer un plànol general de la taula, no macro dels plats.
+    """
+
+    # Normalitzem una mica els valors (però sense obsessionar-nos)
+    temporada = (temporada or "").lower()
+    espai = (espai or "").lower()
+    formalitat = (formalitat or "").lower()
+    tipus_esdeveniment = tipus_esdeveniment or ""
+
+    mapa_temporada = {
+        "primavera": "spring",
+        "estiu": "summer",
+        "tardor": "autumn",
+        "hivern": "winter",
+    }
+    temporada_en = mapa_temporada.get(temporada, "neutral season")
+
+    if espai == "exterior":
+        space_en = "outdoor"
+    elif espai == "interior":
+        space_en = "indoor"
+    else:
+        space_en = "indoor"
+
+    if formalitat == "informal":
+        style_en = "casual"
+    else:
+        style_en = "elegant"
+
+    # Descripció molt breu de l'esdeveniment
+    event_line = (
+        f"{style_en} {space_en} event in {temporada_en}, for a {tipus_esdeveniment}."
+    )
+
+    # Per a cada plat, agafem nom final i frase de presentació si n'hi ha
+    plat_lines = []
+    labels = ["starter", "main course", "dessert"]
+    for label, plat, info in zip(labels, plats_final, info_llm_list):
+        if info is not None:
+            nom = info.get("nom_nou") or plat.get("nom", "")
+            presentacio = info.get("proposta_presentacio") or ""
+        else:
+            nom = plat.get("nom", "")
+            presentacio = ""
+
+        # Fem una frase en anglès curta que descrigui el plat i la seva disposició
+        base_en = f"{label} called '{nom}' on a white plate"
+        if presentacio:
+            line = f"{base_en}, plated as: {presentacio}."
+        else:
+            line = f"{base_en}, simply and neatly plated."
+        plat_lines.append(line)
+
+    estil_txt = ""
+    if estil_tecnic:
+        estil_txt = (
+            f"The dishes follow a modern cooking style: {estil_tecnic.replace('_', ' ')}. "
+        )
+
+    # Prompt final en anglès (el model d’imatge acostuma a anar millor així),
+    # però mantenint els noms dels plats en català.
+    prompt = (
+        "Wide shot of a banquet table with three plated dishes and some context of the event. "
+        + event_line
+        + " "
+        + estil_txt
+        + "Show the table from a human eye level, 3/4 angle, with soft realistic lighting. "
+        "No people, no text, no logos.\n\n"
+        "Dishes on the table:\n- "
+        + "\n- ".join(plat_lines)
+        + "\n\nOverall style: realistic food photography, 16:9 aspect ratio, natural colors."
+    )
+
+    return prompt
+
+def genera_imatge_menu_event(
+    tipus_esdeveniment: str,
+    temporada: str,
+    espai: str,
+    formalitat: str,
+    estil_tecnic: str | None,
+    plats_final: list[dict],
+    info_llm_list: list[dict | None],
+    nom_fitxer: str = "menu_event.png",
+) -> str | None:
+    """
+    Genera una imatge del MENÚ COMPLET (tres plats) en una taula amb ambient
+    de l'esdeveniment, utilitzant la Gemini Image API (gemini-2.5-flash-image).
+
+    Retorna:
+        - ruta del fitxer PNG generat (nom_fitxer) si tot va bé
+        - None si hi ha algun error.
+    """
+
+    if not API_KEY:
+        print("[IMATGE] Falta GEMINI_API_KEY a les variables d'entorn.")
+        return None
+
+    # Construïm el prompt a partir del menú i de l'esdeveniment
+    prompt = _construir_prompt_imatge_menu(
+        tipus_esdeveniment=tipus_esdeveniment,
+        temporada=temporada,
+        espai=espai,
+        formalitat=formalitat,
+        estil_tecnic=estil_tecnic,
+        plats_final=plats_final,
+        info_llm_list=info_llm_list,
+    )
+
+    url = (
+        "https://generativelanguage.googleapis.com/"
+        "v1beta/models/gemini-2.5-flash-image:generateContent"
+    )
+    headers = {
+        "Content-Type": "application/json",
+        "x-goog-api-key": API_KEY,
+    }
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": prompt}
+                ]
+            }
+        ]
+    }
+
+    try:
+        resp = requests.post(url, headers=headers, json=payload, timeout=60)
+    except Exception as e:
+        print(f"[IMATGE] Error de connexió amb la Gemini API: {e}")
+        return None
+
+    if resp.status_code != 200:
+        print(f"[IMATGE] Resposta no OK de la Gemini API: {resp.status_code} - {resp.text[:200]}")
+        return None
+
+    data = resp.json()
+
+    # Busquem la primera part amb imatge (inlineData)
+    image_b64 = None
+    try:
+        candidates = data.get("candidates", [])
+        if candidates:
+            parts = candidates[0]["content"]["parts"]
+            for part in parts:
+                inline = part.get("inlineData")
+                if inline and "data" in inline:
+                    image_b64 = inline["data"]
+                    break
+    except Exception as e:
+        print(f"[IMATGE] Error processant la resposta JSON: {e}")
+        return None
+
+    if not image_b64:
+        print("[IMATGE] No s'ha trobat cap imatge a la resposta de la Gemini API.")
+        return None
+
+    try:
+        image_bytes = base64.b64decode(image_b64)
+        with open(nom_fitxer, "wb") as f:
+            f.write(image_bytes)
+    except Exception as e:
+        print(f"[IMATGE] Error desant la imatge a disc: {e}")
+        return None
+
+    return nom_fitxer
+
 
 # ---------------------------------------------------------------------
 #  ESQUELETS D'ALTRES OPERADORS (per si més endavant els implementes)
