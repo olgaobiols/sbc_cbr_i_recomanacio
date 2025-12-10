@@ -282,6 +282,9 @@ def main():
         transf_1, transf_2, transf_post = [], [], []
         info_llm_1 = info_llm_2 = info_llm_post = None
 
+        # Per defecte, el menú final usa els plats adaptats sense tocar els noms
+        plat1_final, plat2_final, postres_final = plat1_mod, plat2_mod, postres_mod
+
         if estil_tecnic:
             print(f"\n### ADAPTACIÓ DE TÈCNIQUES AL NOU ESTIL: '{estil_tecnic}' ###")
 
@@ -301,19 +304,25 @@ def main():
 
             # 2) LLM: nom nou, descripció i justificació per cada plat
             estil_row = base_estils.get(estil_tecnic)
-            info_llm_1 = genera_descripcio_llm(plat1_mod, transf_1, estil_tecnic, estil_row)
-            info_llm_2 = genera_descripcio_llm(plat2_mod, transf_2, estil_tecnic, estil_row)
-            info_llm_post = genera_descripcio_llm(postres_mod, transf_post, estil_tecnic, estil_row)
+            usar_llm = input_default(
+                "\nVols que Gemini generi noms nous i descripcions? (s/n)", "n"
+            ).strip().lower().startswith("s")
 
-            # Fem servir versions "modificades" per al menú final (el nom del LLM)
-            plat1_final, plat2_final, postres_final = plat1_mod.copy(), plat2_mod.copy(), postres_mod.copy()
-            plat1_final["nom"] = info_llm_1["nom_nou"]
-            plat2_final["nom"] = info_llm_2["nom_nou"]
-            postres_final["nom"] = info_llm_post["nom_nou"]
+            if usar_llm:
+                info_llm_1 = genera_descripcio_llm(plat1_mod, transf_1, estil_tecnic, estil_row)
+                info_llm_2 = genera_descripcio_llm(plat2_mod, transf_2, estil_tecnic, estil_row)
+                info_llm_post = genera_descripcio_llm(postres_mod, transf_post, estil_tecnic, estil_row)
+
+                # Fem servir versions "modificades" per al menú final (el nom del LLM)
+                plat1_final, plat2_final, postres_final = plat1_mod.copy(), plat2_mod.copy(), postres_mod.copy()
+                plat1_final["nom"] = info_llm_1["nom_nou"]
+                plat2_final["nom"] = info_llm_2["nom_nou"]
+                postres_final["nom"] = info_llm_post["nom_nou"]
+            else:
+                print("[DEBUG] Saltant la generació amb Gemini; es mantenen els noms originals.")
 
         else:
             print("\nNo s'apliquen tècniques noves (es manté el cas base / adaptat d'ingredients).")
-            plat1_final, plat2_final, postres_final = plat1_mod, plat2_mod, postres_mod
             # transf_1, transf_2, transf_post ja són [] per defecte
 
         # ------------------------
