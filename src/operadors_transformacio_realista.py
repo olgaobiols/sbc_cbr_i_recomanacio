@@ -765,186 +765,203 @@ RESTRICCIONS IMPORTANTS
         "descripcio_carta": descripcio,
         "proposta_presentacio": presentacio,
     }
+# ---------------------------------------------------------------------
+#  OPERADOR: GENERACIÓ D'IMATGE DEL MENÚ AMB HUGGING FACE (FLUX.1)
+# ---------------------------------------------------------------------
 
-def _construir_prompt_imatge_menu(
+def _resum_ambient_esdeveniment(
     tipus_esdeveniment: str,
     temporada: str,
     espai: str,
     formalitat: str,
-    estil_tecnic: str | None,
-    plats_final: list[dict],
-    info_llm_list: list[dict | None],
 ) -> str:
     """
-    Construeix un prompt de text per a generar una IMATGE del menú complet
-    en una taula, amb una mica d'ambient segons l'esdeveniment.
-    La idea és fer un plànol general de la taula, no macro dels plats.
+    Crea una descripció breu de l'ambient (en anglès) per al prompt d'imatge.
     """
-
-    # Normalitzem una mica els valors (però sense obsessionar-nos)
+    tipus = (tipus_esdeveniment or "").lower()
     temporada = (temporada or "").lower()
     espai = (espai or "").lower()
     formalitat = (formalitat or "").lower()
-    tipus_esdeveniment = tipus_esdeveniment or ""
 
-    mapa_temporada = {
-        "primavera": "spring",
-        "estiu": "summer",
-        "tardor": "autumn",
-        "hivern": "winter",
-    }
-    temporada_en = mapa_temporada.get(temporada, "neutral season")
+    # Tipus d'esdeveniment
+    if "casament" in tipus:
+        base = "an elegant wedding reception"
+    elif "aniversari" in tipus:
+        base = "a cheerful birthday celebration"
+    elif "comunio" in tipus:
+        base = "a refined family celebration"
+    elif "empresa" in tipus or "congres" in tipus:
+        base = "a corporate event dinner"
+    else:
+        base = "a stylish banquet event"
 
+    # Interior / exterior
     if espai == "exterior":
-        space_en = "outdoor"
-    elif espai == "interior":
-        space_en = "indoor"
+        lloc = "in an outdoor garden terrace"
     else:
-        space_en = "indoor"
+        lloc = "in an indoor dining room"
 
+    # Temporada
+    if temporada == "primavera":
+        temporada_txt = "with soft daylight, pastel flowers and fresh greenery"
+    elif temporada == "estiu":
+        temporada_txt = "with warm light, vivid colors and a summery atmosphere"
+    elif temporada == "tardor":
+        temporada_txt = "with warm amber tones, candles and autumn foliage"
+    elif temporada == "hivern":
+        temporada_txt = "with soft cool lighting and subtle winter decorations"
+    else:
+        temporada_txt = "with neutral elegant lighting and simple decorations"
+
+    # Formalitat
     if formalitat == "informal":
-        style_en = "casual"
+        formalitat_txt = "casual table setting, simple plates and a relaxed mood"
     else:
-        style_en = "elegant"
+        formalitat_txt = "formal table setting, white tablecloths, polished cutlery and a refined mood"
 
-    # Descripció molt breu de l'esdeveniment
-    event_line = (
-        f"{style_en} {space_en} event in {temporada_en}, for a {tipus_esdeveniment}."
+    return f"{base} {lloc}, {temporada_txt}, {formalitat_txt}"
+
+
+def construir_prompt_imatge_menu(
+    tipus_esdeveniment: str,
+    temporada: str,
+    espai: str,
+    formalitat: str,
+    plats_info: list[dict],
+) -> str:
+    """
+    Construeix un prompt perquè FLUX generi una imatge amb EXACTAMENT
+    tres plats del menú, en vista zenital (planta), alineats horitzontalment
+    i tots amb la mateixa importància visual.
+    """
+
+    ambient = _resum_ambient_esdeveniment(
+        tipus_esdeveniment, temporada, espai, formalitat
     )
 
-    # Per a cada plat, agafem nom final i frase de presentació si n'hi ha
-    plat_lines = []
-    labels = ["starter", "main course", "dessert"]
-    for label, plat, info in zip(labels, plats_final, info_llm_list):
-        if info is not None:
-            nom = info.get("nom_nou") or plat.get("nom", "")
-            presentacio = info.get("proposta_presentacio") or ""
-        else:
-            nom = plat.get("nom", "")
-            presentacio = ""
+    # Ens assegurem de tenir com a mínim 3 plats
+    plats_norm = []
+    for plat in plats_info:
+        plats_norm.append({
+            "curs": plat.get("curs", ""),
+            "nom": plat.get("nom", ""),
+            "descripcio": plat.get("descripcio", ""),
+            "presentacio": plat.get("presentacio", ""),
+        })
+    while len(plats_norm) < 3:
+        plats_norm.append({
+            "curs": "Extra",
+            "nom": "Neutral dish",
+            "descripcio": "",
+            "presentacio": "simple round portion in the centre of the plate",
+        })
 
-        # Fem una frase en anglès curta que descrigui el plat i la seva disposició
-        base_en = f"{label} called '{nom}' on a white plate"
-        if presentacio:
-            line = f"{base_en}, plated as: {presentacio}."
-        else:
-            line = f"{base_en}, simply and neatly plated."
-        plat_lines.append(line)
+    left, center, right = plats_norm[:3]
 
-    estil_txt = ""
-    if estil_tecnic:
-        estil_txt = (
-            f"The dishes follow a modern cooking style: {estil_tecnic.replace('_', ' ')}. "
-        )
+    # Text per a cada plat: ingredients/tècniques + presentació
+    def _descr(plat):
+        desc = plat["descripcio"].strip()
+        pres = plat["presentacio"].strip()
+        parts = []
+        if desc:
+            parts.append(f"main elements and techniques: {desc}")
+        if pres:
+            parts.append(f"plating style: {pres}")
+        return " ".join(parts) if parts else "simple clean plating."
 
-    # Prompt final en anglès (el model d’imatge acostuma a anar millor així),
-    # però mantenint els noms dels plats en català.
+    left_desc = _descr(left)
+    center_desc = _descr(center)
+    right_desc = _descr(right)
+
     prompt = (
-        "Wide shot of a banquet table with three plated dishes and some context of the event. "
-        + event_line
-        + " "
-        + estil_txt
-        + "Show the table from a human eye level, 3/4 angle, with soft realistic lighting. "
-        "No people, no text, no logos.\n\n"
-        "Dishes on the table:\n- "
-        + "\n- ".join(plat_lines)
-        + "\n\nOverall style: realistic food photography, 16:9 aspect ratio, natural colors."
+        f"Ultra realistic food photography for {ambient}. "
+
+        # Vista zenital
+        "Top-down flat lay view, perfectly overhead, no perspective lines, "
+        "as if the camera is exactly above the table. "
+
+        # Composició exacta
+        "Exactly THREE plates are visible, arranged in a single straight horizontal row "
+        "from left to right. All three plates are the same size and at the same distance "
+        "from the camera, with equal visual importance. "
+        "No other plates or dishes anywhere in the image. "
+
+        # Assignació de plats
+        f"LEFT plate: first course – {left['nom']}, {left_desc} "
+        f"CENTER plate: main course – {center['nom']}, {center_desc} "
+        f"RIGHT plate: dessert – {right['nom']}, {right_desc} "
+        "Each dish must look clearly different from the others. "
+
+        # Entorn de la taula
+        "Background: a clean white tablecloth. Minimal fine-dining table elements "
+        "(a fork and knife near each plate, maybe one or two simple glasses), "
+        "but the three dishes are the focus. "
+
+        # Coses que NO volem
+        "No people, no guests, no menu cards, no printed text, no decorations blocking the view. "
+        "No depth-of-field blur: everything in the frame is in sharp focus, "
+        "all three plates equally sharp. "
+
+        # Detalls tècnics
+        "High-quality realistic lighting, neutral tones, 16:9 aspect ratio."
     )
 
     return prompt
 
-def genera_imatge_menu_event(
-    tipus_esdeveniment: str,
-    temporada: str,
-    espai: str,
-    formalitat: str,
-    estil_tecnic: str | None,
-    plats_final: list[dict],
-    info_llm_list: list[dict | None],
-    nom_fitxer: str = "menu_event.png",
-) -> str | None:
-    """
-    Genera una imatge del MENÚ COMPLET (tres plats) en una taula amb ambient
-    de l'esdeveniment, utilitzant la Gemini Image API (gemini-2.5-flash-image).
 
-    Retorna:
-        - ruta del fitxer PNG generat (nom_fitxer) si tot va bé
-        - None si hi ha algun error.
+def genera_imatge_menu_hf(prompt_imatge: str, output_path: str = "menu_event.png") -> str | None:
     """
+    Envia el prompt al model d'imatge de Hugging Face (FLUX.1-dev)
+    i desa la imatge generada a 'output_path'.
 
-    if not API_KEY:
-        print("[IMATGE] Falta GEMINI_API_KEY a les variables d'entorn.")
+    Requereix la variable d'entorn HF_TOKEN amb un token de lectura de Hugging Face.
+    """
+    hf_token = os.environ.get("HF_TOKEN")
+    if not hf_token:
+        print("[IMATGE] ERROR: falta la variable d'entorn HF_TOKEN.")
         return None
 
-    # Construïm el prompt a partir del menú i de l'esdeveniment
-    prompt = _construir_prompt_imatge_menu(
-        tipus_esdeveniment=tipus_esdeveniment,
-        temporada=temporada,
-        espai=espai,
-        formalitat=formalitat,
-        estil_tecnic=estil_tecnic,
-        plats_final=plats_final,
-        info_llm_list=info_llm_list,
-    )
+    model_id = "black-forest-labs/FLUX.1-dev"
+    api_url = f"https://router.huggingface.co/hf-inference/models/{model_id}"
 
-    url = (
-        "https://generativelanguage.googleapis.com/"
-        "v1beta/models/gemini-2.5-flash-image:generateContent"
-    )
     headers = {
+        "Authorization": f"Bearer {hf_token}",
         "Content-Type": "application/json",
-        "x-goog-api-key": API_KEY,
     }
+
     payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt}
-                ]
-            }
-        ]
+        "inputs": prompt_imatge,
+        "parameters": {
+            "num_inference_steps": 28,
+            "guidance_scale": 3.5,
+        },
+        "options": {
+            "wait_for_model": True,
+        },
     }
 
     try:
-        resp = requests.post(url, headers=headers, json=payload, timeout=60)
+        resp = requests.post(api_url, headers=headers, json=payload, timeout=300)
     except Exception as e:
-        print(f"[IMATGE] Error de connexió amb la Gemini API: {e}")
+        print(f"[IMATGE] Error de connexió amb Hugging Face: {e}")
         return None
 
     if resp.status_code != 200:
-        print(f"[IMATGE] Resposta no OK de la Gemini API: {resp.status_code} - {resp.text[:200]}")
-        return None
-
-    data = resp.json()
-
-    # Busquem la primera part amb imatge (inlineData)
-    image_b64 = None
-    try:
-        candidates = data.get("candidates", [])
-        if candidates:
-            parts = candidates[0]["content"]["parts"]
-            for part in parts:
-                inline = part.get("inlineData")
-                if inline and "data" in inline:
-                    image_b64 = inline["data"]
-                    break
-    except Exception as e:
-        print(f"[IMATGE] Error processant la resposta JSON: {e}")
-        return None
-
-    if not image_b64:
-        print("[IMATGE] No s'ha trobat cap imatge a la resposta de la Gemini API.")
+        print(f"[IMATGE] ERROR: resposta {resp.status_code}")
+        try:
+            print(resp.json())
+        except Exception:
+            print(resp.content[:200])
         return None
 
     try:
-        image_bytes = base64.b64decode(image_b64)
-        with open(nom_fitxer, "wb") as f:
-            f.write(image_bytes)
+        with open(output_path, "wb") as f:
+            f.write(resp.content)
+        print(f"[IMATGE] Imatge del menú generada a: {output_path}")
+        return output_path
     except Exception as e:
-        print(f"[IMATGE] Error desant la imatge a disc: {e}")
+        print(f"[IMATGE] No s'ha pogut desar la imatge: {e}")
         return None
-
-    return nom_fitxer
 
 
 # ---------------------------------------------------------------------
