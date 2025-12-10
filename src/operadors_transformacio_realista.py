@@ -1,9 +1,20 @@
 import random
 import os
-import json
-import subprocess
+from typing import List, Dict
+import google.generativeai as genai
 
 
+
+# Crida única de configuració (posa-la al principi del fitxer d'operadors)
+API_KEY = os.environ.get("GEMINI_API_KEY")
+if not API_KEY:
+    raise RuntimeError("Falta la variable d'entorn GEMINI_API_KEY")
+
+genai.configure(api_key=API_KEY)
+
+# Model que farem servir (ràpid i força bo)
+GEMINI_MODEL_NAME = "gemini-2.5-flash"
+model_gemini = genai.GenerativeModel(GEMINI_MODEL_NAME)
 
 # ---------------------------------------------------------------------
 #  FUNCIONS AUXILIARS
@@ -21,6 +32,42 @@ def _info_ingredients_plat(plat, base_ingredients):
         if fila:
             info.append(fila)
     return info
+
+# maridatge.py
+
+def categoria_principal_plat(plat: dict, base_ingredients: List[Dict]) -> str:
+    """
+    Determina una categoria 'grossa' del plat a partir dels ingredients.
+    Retorna valors tipus: 'peix', 'carn', 'vegetal', 'pasta_arros', 'postres', etc.
+    És una heurística simple, suficient per a maridatge.
+    """
+    info_ings = _info_ingredients_plat(plat, base_ingredients)
+    cats = {row["categoria_macro"] for row in info_ings}
+
+    # Peix i marisc
+    if "peix" in cats:
+        return "peix"
+
+    # Proteïna animal (carn) sense peix
+    if "proteina_animal" in cats:
+        return "carn"
+
+    # Vegetarià/vegetal (verdura, cereal, lacti, etc.)
+    if "verdura" in cats:
+        return "vegetal"
+
+    if "cereal_feculent" in cats:
+        return "pasta_arros"
+
+    if "lacti" in cats or "fruita" in cats:
+        return "suau"
+
+    # Si és postres, potser tens plat["curs"] == "postres"
+    curs = plat.get("curs", "").lower()
+    if "postres" in curs:
+        return "postres"
+
+    return "neutre"
 
 
 def _troba_ingredient_aplicable(tecnica_row, plat, info_ings, ingredients_usats):
@@ -95,10 +142,13 @@ def _score_tecnica_per_plat(tecnica_row, plat, info_ings):
     Hi ha dues parts:
       1) SCORE BASE genèric (curs + categories + famílies)
       2) Ajustos específics segons categoria de la tècnica
-         (p.ex. 'molecular', 'minimalista', ...).
+         ('molecular', 'minimalista', 'nouvelle', 'classica',
+          'nordica', 'fusio', 'creativa', 'mercat', ...).
+
+    Com més alt el score, més coherent és aplicar la tècnica a aquest plat.
     """
     curs = plat.get("curs", "").lower()  # 'primer', 'segon', 'postres', ...
-    tags = set(tecnica_row.get("aplicable_a", "").split("|"))
+    tags = set(tecnica_row.get("aplicable_a", "").split("|")) if tecnica_row.get("aplicable_a") else set()
     categoria_tecnica = (tecnica_row.get("categoria") or "").lower()
 
     score = 0
@@ -132,6 +182,8 @@ def _score_tecnica_per_plat(tecnica_row, plat, info_ings):
         row["categoria_macro"] in ("proteina_animal", "peix", "proteina_vegetal", "verdura")
         for row in info_ings
     )
+    hi_ha_verdura = any(row["categoria_macro"] == "verdura" for row in info_ings)
+    num_ingredients = len(info_ings)
 
     # -------------------------
     # 2) AJUSTOS PER CATEGORIA
@@ -158,7 +210,7 @@ def _score_tecnica_per_plat(tecnica_row, plat, info_ings):
     # 2.2) Criteris específics per a tècniques MINIMALISTES / PLATING
     elif categoria_tecnica == "minimalista":
         # Plats amb pocs ingredients → més propensos a minimalisme
-        if len(info_ings) <= 4:
+        if num_ingredients <= 4:
             score += 2
 
         # En postres, minimalisme acostuma a quedar molt bé
@@ -174,12 +226,75 @@ def _score_tecnica_per_plat(tecnica_row, plat, info_ings):
         if not hi_ha_salsa:
             score += 1
 
-    # 2.3) Altres categories (si n'afegeixes en el futur)
-    # elif categoria_tecnica == "autor":
-    #     ...
-    # elif categoria_tecnica == "avantguarda":
-    #     ...
-    # etc.
+    # 2.3) NOUVELLE CUISINE
+    elif categoria_tecnica == "nouvelle":
+        # Plats lleugers, sovint primers/segons fins
+        if curs in ("primer", "segon"):
+            score += 2
+        # Fons clars / líquids lleugers
+        if hi_ha_liquid:
+            score += 2
+        # Verdures i proteïnes suaus → bons candidats
+        if hi_ha_verdura or hi_ha_proteina_o_verdura:
+            score += 2
+        # Plats no excessivament carregats
+        if num_ingredients <= 7:
+            score += 1
+
+    # 2.4) CUINA CLÀSSICA FRANCESA
+    elif categoria_tecnica == "classica":
+        # Segons amb proteïna o verdura → brasejats, glace, napar...
+        if hi_ha_proteina_o_verdura and curs in ("segon", "principal"):
+            score += 3
+        # Presència de líquids → bons candidats per fons, roux, glace
+        if hi_ha_liquid:
+            score += 2
+        # Feculents (gratinats, salses espessides, etc.)
+        if hi_ha_feculent:
+            score += 1
+
+    # 2.5) NOVA CUINA NÒRDICA
+    elif categoria_tecnica == "nordica":
+        # Molt centrada en verdura, arrels, cereals, peix
+        if hi_ha_verdura:
+            score += 2
+        if any(row["categoria_macro"] == "peix" for row in info_ings):
+            score += 2
+        # Plats relativament nets, sense massa ingredients
+        if num_ingredients <= 8:
+            score += 1
+
+    # 2.6) CUINA FUSIÓ CONTEMPORÀNIA
+    elif categoria_tecnica == "fusio":
+        # Proteïna + líquid → ideal per lacats, infusions, gelee, etc.
+        if hi_ha_proteina_o_verdura and hi_ha_liquid:
+            score += 3
+        # Fruita o feculent → ajuden a contrast dolç/salat/picant
+        if hi_ha_fruta or hi_ha_feculent:
+            score += 1
+
+    # 2.7) CUINA CREATIVA
+    elif categoria_tecnica == "creativa":
+        # Forta orientació a líquids i textura
+        if hi_ha_liquid:
+            score += 3
+        # Plats amb 3–8 ingredients → prou material per jugar, però sense caos
+        if 3 <= num_ingredients <= 8:
+            score += 2
+
+    # 2.8) CUINA DE MERCAT
+    elif categoria_tecnica == "mercat":
+        # Pocs ingredients, producte protagonista
+        if num_ingredients <= 6:
+            score += 2
+        # Verdura i proteïna fresques
+        if hi_ha_verdura or hi_ha_proteina_o_verdura:
+            score += 2
+        # Primers/segons senzills
+        if curs in ("primer", "segon", "principal"):
+            score += 1
+
+    # Altres categories es queden només amb el score base
 
     return score
 
@@ -250,11 +365,20 @@ def triar_tecniques_per_plat(
     base_ingredients,
     max_tecniques=2,
     min_score=5,
+    tecniques_ja_usades=None,
     debug=False,
 ):
     """
     Selecciona fins a `max_tecniques` tècniques de l'estil donat que encaixen
     amb el plat. Per a cada tècnica, associa un ingredient (o el curs) on aplicar-la.
+
+    NOVETATS:
+      - Penalitza tècniques ja usades en altres plats del menú (si es passa
+        el paràmetre `tecniques_ja_usades` com un set de noms).
+      - Prioritza la diversitat de textures: evita tècniques massa semblants
+        dins del mateix plat (impacte_textura gairebé igual).
+      - Manté la restricció de no repetir ingredients entre tècniques,
+        mitjançant `ingredients_usats`.
 
     Retorna:
         list[dict]: cada element té:
@@ -266,6 +390,9 @@ def triar_tecniques_per_plat(
             - impacte_textura: llista de tags de textura
             - impacte_sabor: llista de tags de sabor
     """
+    if tecniques_ja_usades is None:
+        tecniques_ja_usades = set()
+
     nom_plat = plat.get("nom", "<sense_nom>")
     info_ings = _info_ingredients_plat(plat, base_ingredients)
 
@@ -290,28 +417,71 @@ def triar_tecniques_per_plat(
         if tec_row is None:
             continue
 
-        score = _score_tecnica_per_plat(tec_row, plat, info_ings)
-        if debug:
-            print(f"[SCORE] Plat '{nom_plat}', tècnica '{nom_tecnica}' → {score}")
+        base_score = _score_tecnica_per_plat(tec_row, plat, info_ings)
 
-        if score >= min_score:
-            scored.append({"nom": nom_tecnica, "score": score})
+        # Penalització suau per tècniques ja usades en altres plats del menú
+        if nom_tecnica in tecniques_ja_usades:
+            base_score -= 2  # ajustable: 2 = penalitza però no prohibeix
+
+        if debug:
+            print(f"[SCORE] Plat '{nom_plat}', tècnica '{nom_tecnica}' → {base_score}")
+
+        if base_score >= min_score:
+            scored.append({"nom": nom_tecnica, "score": base_score})
 
     if not scored:
         if debug:
             print(f"[TEC] Cap tècnica de '{nom_estil}' supera el mínim per a '{nom_plat}'.")
         return []
 
-    # 2) Ordenem de millor a pitjor i triem fins a max_tecniques
+    # 2) Ordenem de millor a pitjor
     scored.sort(key=lambda x: x["score"], reverse=True)
-    if max_tecniques is not None:
-        scored = scored[:max_tecniques]
+
+    # 2b) Selecció amb diversitat de textures dins del plat
+    def _textures_de_tecnica(nom_tecnica: str) -> set:
+        row = base_tecnniques.get(nom_tecnica) or {}
+        return {t for t in (row.get("impacte_textura") or "").split("|") if t}
+
+    seleccionades_raw = []
+    # Fem servir un pool una mica més ampli que max_tecniques per poder triar diversitat
+    pool_limit = max(len(scored), max_tecniques * 3)
+    pool = scored[:pool_limit]
+
+    for cand in pool:
+        if len(seleccionades_raw) >= max_tecniques:
+            break
+
+        nom_tecnica = cand["nom"]
+        textures_cand = _textures_de_tecnica(nom_tecnica)
+
+        # Evitem tècniques molt semblants en textura a les ja triades
+        massa_semblant = False
+        for sel in seleccionades_raw:
+            textures_sel = _textures_de_tecnica(sel["nom"])
+            unio = textures_cand | textures_sel
+            if not unio:
+                continue
+            interseccio = textures_cand & textures_sel
+            jaccard = len(interseccio) / len(unio)
+            # Si la coincidència és molt alta (>= 0.7), les considerem massa semblants
+            if jaccard >= 0.7:
+                massa_semblant = True
+                break
+
+        if massa_semblant:
+            continue
+
+        seleccionades_raw.append(cand)
+
+    # Si no hem pogut triar res per diversitat però hi havia candidates, agafem la millor
+    if not seleccionades_raw and scored:
+        seleccionades_raw = [scored[0]]
 
     # 3) Assignem ingredient/curs a cada tècnica
     transformacions = []
     ingredients_usats = set()
 
-    for r in scored:
+    for r in seleccionades_raw:
         nom_tecnica = r["nom"]
         tec_row = base_tecnniques.get(nom_tecnica)
         if tec_row is None:
@@ -322,10 +492,10 @@ def triar_tecniques_per_plat(
         )
 
         impacte_textura = [
-            t for t in tec_row.get("impacte_textura", "").split("|") if t
+            t for t in (tec_row.get("impacte_textura") or "").split("|") if t
         ]
         impacte_sabor = [
-            s for s in tec_row.get("impacte_sabor", "").split("|") if s
+            s for s in (tec_row.get("impacte_sabor") or "").split("|") if s
         ]
 
         transformacions.append(
@@ -342,74 +512,42 @@ def triar_tecniques_per_plat(
 
     return transformacions
 
-def descriu_transformacions(plat, transformacions):
+#afegit!!!!!!!!!!!!!!!!!!
+def triar_tecniques_per_menu(
+    plats,              # llista de dicts [primer, segon, postres]
+    nom_estil,
+    base_estils,
+    base_tecnniques,
+    base_ingredients,
+    max_tecniques_per_plat=2,
+    min_score=5,
+    debug=False,
+):
     """
-    Genera un text explicatiu de les transformacions aplicades a un plat.
-
-    Args:
-        plat (dict): plat original (amb camp 'nom').
-        transformacions (list[dict]): resultat de triar_tecniques_per_plat.
-
-    Retorna:
-        str: bloc de text en Markdown.
+    Donada una llista de plats i un estil, tria tècniques per a cada plat
+    intentant maximitzar la varietat a nivell de menú.
+    Retorna una llista paral·lela de llistes de transformacions.
     """
-    nom_plat = plat.get("nom", "<sense_nom>")
+    tecniques_ja_usades = set()
+    resultats = []
 
-    if not transformacions:
-        return (
-            f"Al plat **{nom_plat}** no s'ha aplicat cap tècnica molecular concreta; "
-            "es manté en una presentació més clàssica."
+    for plat in plats:
+        transf = triar_tecniques_per_plat(
+            plat=plat,
+            nom_estil=nom_estil,
+            base_estils=base_estils,
+            base_tecnniques=base_tecnniques,
+            base_ingredients=base_ingredients,
+            max_tecniques=max_tecniques_per_plat,
+            min_score=min_score,
+            tecniques_ja_usades=tecniques_ja_usades,
+            debug=debug,
         )
+        tecniques_ja_usades.update(t["nom"] for t in transf)
+        resultats.append(transf)
 
-    línies = [f"Al plat **{nom_plat}** es proposen les següents transformacions:"]
+    return resultats
 
-    for t in transformacions:
-        # Objectiu: ingredient o curs
-        obj = t["objectiu_frase"] or "un element del plat"
-
-        # Impactes
-        txt_textura = ", ".join(t["impacte_textura"]) if t["impacte_textura"] else "—"
-        txt_sabor = ", ".join(t["impacte_sabor"]) if t["impacte_sabor"] else "—"
-
-        línia = (
-            f"- **{t['display']}** aplicada sobre {obj}: "
-            f"{t['descripcio']}. "
-        )
-        if txt_textura != "—":
-            línia += f"Aporta una textura *{txt_textura}*"
-        if txt_sabor != "—":
-            if txt_textura != "—":
-                línia += " i "
-            else:
-                línia += "Amb això "
-            línia += f"un efecte de sabor *{txt_sabor}*."
-
-        línies.append(línia)
-
-    return "\n".join(línies)
-
-# operadors_transformacio_realista.py
-
-def _crida_ollama(prompt, model="llama3.2"):
-    """
-    Envia un prompt a un model local d'Ollama i retorna el text cru generat.
-    Cal tenir Ollama instal·lat i el model descarregat (p.ex. `ollama pull llama3.2`).
-    """
-    try:
-        result = subprocess.run(
-            ["ollama", "run", model],
-            input=prompt,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        text = result.stdout.strip()
-        if not text:
-            raise RuntimeError("Ollama no ha retornat cap text.")
-        return text
-    except Exception as e:
-        print(f"[LLM] Error cridant Ollama: {e}")
-        return ""
 
 
 def _extreu_camp_resposta(text: str, etiqueta: str) -> str | None:
@@ -455,20 +593,9 @@ def genera_descripcio_llm(
     transformacions: list[dict],
     estil_tecnic: str,
     estil_row: dict | None = None,
-    model: str = "llama3.2",
 ) -> dict:
     """
-    Usa un LLM LOCAL (Ollama) per:
-      - proposar un nou nom de plat
-      - descriure'l com a text de carta (frase curta)
-      - proposar una frase de presentació / plating
-
-    Tot el contingut depèn únicament del LLM.
-
-    Retorna:
-      - nom_nou
-      - descripcio_carta
-      - proposta_presentacio
+    Igual que abans, però fent servir Gemini en lloc d'Ollama.
     """
 
     nom_plat = plat.get("nom", "Plat sense nom")
@@ -481,7 +608,7 @@ def genera_descripcio_llm(
         ingredients_txt = ", ".join(ingredients_llista)
     else:
         ingredients_txt = ", ".join(ingredients_llista[:6]) + ", ..."
-    curs = plat.get("curs", "")  # primer / segon / postres...
+    curs = plat.get("curs", "")
 
     # Info de l'estil (si ve de estils.csv)
     tipus = ""
@@ -501,7 +628,6 @@ def genera_descripcio_llm(
 
     txt_transformacions = _format_transformacions_per_prompt(transformacions)
 
-    # ---------- PROMPT ÚNIC GENERALITZAT ----------
     prompt = f"""
 Ets un xef català amb experiència en cuina d'autor i menús de banquet.
 Has de proposar un nom i dues frases curtes per descriure UN SOL PLAT.
@@ -535,8 +661,7 @@ DESCRIPCIO: <una sola frase (màxim 28 paraules) que expliqui de què va el plat
              i HA D'INDICAR EXPLÍCITAMENT almenys una parella "Tècnica X sobre Ingredient Y",
              copiant literalment els noms de "Tècnica" i "Ingredient" de la llista de tècniques.
              Si hi ha dues tècniques, idealment menciona les dues.
-             Exemple d'estil:
-             "Es fa Esferificació sobre salsa de soja i Gelificació sobre pastanaga per aportar textura i contrast al plat.">
+             Prohibit usar paraules com: explosió, sorpresa, viatge, emoció, experiència.>
 
 PRESENTACIO: <una sola frase (màxim 20 paraules) explicant ÚNICAMENT com es disposa el plat al plat:
               parla de la col·locació i aspecte visual (esferes, gel, crema, línies, punts...),
@@ -547,30 +672,27 @@ RESTRICCIONS IMPORTANTS
 - Català estàndard, sense castellanismes ni paraules inventades.
 - No inventis ingredients nous ni salses o guarnicions que no surtin dels ingredients indicats.
 - No acabis cap frase amb punts suspensius "..." ni facis servir punts suspensius.
-- No facis servir paraules com "molecular", "ultratècnica", "experiència", "sensorial", "explosió", "explosives", "exploten",
-  ni expressions com "seqüència sensorial", "sorpresa", "descobrirà", "emoció", "viatge".
 - Si el text de tècniques diu que el plat es manté clàssic (sense tècniques especials), NO en parlis:
   descriu el plat com una versió ben executada dins l'estil {estil_tecnic}.
 - To d'alta cuina però simple i entenedor, frases directes.
 - Escriu només aquestes tres línies, sense text addicional ni explicacions.
 """
 
-    resposta = _crida_ollama(prompt, model=model)
-
-    # Si el model no retorna res, fem fallback directe
-    if not resposta:
+    try:
+        resp = model_gemini.generate_content(prompt)
+        text = resp.text or ""
+    except Exception as e:
+        print(f"[LLM] Error cridant Gemini: {e}")
         return {
             "nom_nou": f"{nom_plat} (versió {estil_tecnic})",
             "descripcio_carta": f"Versió adaptada del plat en clau {estil_tecnic.replace('_', ' ')}.",
             "proposta_presentacio": "Presentació neta i ordenada, ressaltant el producte principal.",
         }
 
-    # ---------- PARSING SIMPLE PER ETIQUETES ----------
-    nom_nou = _extreu_camp_resposta(resposta, "NOM")
-    descripcio = _extreu_camp_resposta(resposta, "DESCRIPCIO")
-    presentacio = _extreu_camp_resposta(resposta, "PRESENTACIO")
+    nom_nou = _extreu_camp_resposta(text, "NOM")
+    descripcio = _extreu_camp_resposta(text, "DESCRIPCIO")
+    presentacio = _extreu_camp_resposta(text, "PRESENTACIO")
 
-    # Fallbacks si el model no respecta del tot el format
     if not nom_nou:
         nom_nou = f"{nom_plat} (versió {estil_tecnic})"
     if not descripcio:
@@ -578,7 +700,6 @@ RESTRICCIONS IMPORTANTS
     if not presentacio:
         presentacio = "Presentació neta i ordenada, ressaltant el producte principal."
 
-    # Neteja mínima: eliminar punts suspensius i espais estranys
     def _neteja(txt: str) -> str:
         txt = txt.strip()
         txt = txt.replace("...", "")
@@ -592,8 +713,6 @@ RESTRICCIONS IMPORTANTS
         "descripcio_carta": descripcio,
         "proposta_presentacio": presentacio,
     }
-
-
 
 # ---------------------------------------------------------------------
 #  ESQUELETS D'ALTRES OPERADORS (per si més endavant els implementes)
