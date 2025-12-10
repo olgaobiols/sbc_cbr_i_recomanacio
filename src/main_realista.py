@@ -8,19 +8,12 @@ from operadors_transformacio_realista import *
 #   CARREGA DE BASES
 # =========================
 
-# Base d'ingredients (Català, per heurístiques clàssiques)
+# Base d'ingredients
 base_ingredients = []
 with open("data/ingredients.csv", "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         base_ingredients.append(row)
-
-# Base d'ingredients en anglès (per FlavorGraph i adaptació latent)
-base_ingredients_en = []
-with open("data/ingredients_en.csv", "r", encoding="utf-8") as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        base_ingredients_en.append(row)
 
 # Base d'estils culinaris (per tècniques)
 base_estils = {}
@@ -230,6 +223,7 @@ def main():
             
             # TRANSFORMACIÓ
             # Mode 'latent' fixat, usant la base d'estils latents
+<<<<<<< HEAD
             ingredients_usats_latent = set()
             plat1_mod = substituir_ingredient(
                 p1_prep, estil_latent, base_ingredients_en, base_estils_latents,
@@ -243,6 +237,11 @@ def main():
                 pp_prep, estil_latent, base_ingredients_en, base_estils_latents,
                 mode="latent", intensitat=intensitat, ingredients_usats_latent=ingredients_usats_latent
             )
+=======
+            plat1_mod = substituir_ingredient(p1_prep, estil_latent, base_ingredients, base_estils_latents, mode="latent", intensitat=intensitat)
+            plat2_mod = substituir_ingredient(p2_prep, estil_latent, base_ingredients, base_estils_latents, mode="latent", intensitat=intensitat)
+            postres_mod = substituir_ingredient(pp_prep, estil_latent, base_ingredients, base_estils_latents, mode="latent", intensitat=intensitat)
+>>>>>>> b14537823eca24e5c9c1a2c8c0f174f93dd7daea
 
             # Debug: mostra els plats resultants i ingredients en anglès
             print("\n[DEBUG] Resultat de la transformació latent:")
@@ -293,8 +292,6 @@ def main():
                 except ValueError:
                     print("  [AVÍS] Entrada no vàlida. No s'aplicaran tècniques noves.")
 
-        MAX_TEC_PER_PLAT = 2  # màxim 2 tècniques per plat per fer-ho creïble
-
         # Inicialitzem llistes de transformacions i info del LLM
         transf_1, transf_2, transf_post = [], [], []
         info_llm_1 = info_llm_2 = info_llm_post = None
@@ -308,15 +305,15 @@ def main():
             # 1) Triem tècniques
             transf_1 = triar_tecniques_per_plat(
                 plat1_mod, estil_tecnic, base_estils, base_tecnniques, base_ingredients,
-                max_tecniques=MAX_TEC_PER_PLAT
+                
             )
             transf_2 = triar_tecniques_per_plat(
                 plat2_mod, estil_tecnic, base_estils, base_tecnniques, base_ingredients,
-                max_tecniques=MAX_TEC_PER_PLAT
+                
             )
             transf_post = triar_tecniques_per_plat(
                 postres_mod, estil_tecnic, base_estils, base_tecnniques, base_ingredients,
-                max_tecniques=MAX_TEC_PER_PLAT
+                
             )
 
             # 2) LLM: nom nou, descripció i justificació per cada plat
@@ -350,6 +347,51 @@ def main():
             plat2_final, transf_2, info_llm_2,
             postres_final, transf_post, info_llm_post
         )
+        
+        # -------------------------------------------------
+        # 8b) Preguntar si cal generar la imatge del menú
+        # -------------------------------------------------
+        resp_img = input_default("\nVols generar una imatge realista del menú? (s/n)", "n")
+        if resp_img.lower().startswith("s"):
+            try:
+                # Preparem la info dels plats per al prompt d'imatge
+                plats_info = []
+
+                plats_info.append({
+                    "curs": "First course",
+                    "nom": info_llm_1["nom_nou"] if info_llm_1 else plat1_final["nom"],
+                    "descripcio": info_llm_1.get("descripcio_carta", "") if info_llm_1 else "",
+                    "presentacio": info_llm_1.get("proposta_presentacio", "") if info_llm_1 else "",
+                })
+
+                plats_info.append({
+                    "curs": "Main course",
+                    "nom": info_llm_2["nom_nou"] if info_llm_2 else plat2_final["nom"],
+                    "descripcio": info_llm_2.get("descripcio_carta", "") if info_llm_2 else "",
+                    "presentacio": info_llm_2.get("proposta_presentacio", "") if info_llm_2 else "",
+                })
+
+                plats_info.append({
+                    "curs": "Dessert",
+                    "nom": info_llm_post["nom_nou"] if info_llm_post else postres_final["nom"],
+                    "descripcio": info_llm_post.get("descripcio_carta", "") if info_llm_post else "",
+                    "presentacio": info_llm_post.get("proposta_presentacio", "") if info_llm_post else "",
+                })
+
+                # Construcció del prompt d'imatge
+                prompt_imatge = construir_prompt_imatge_menu(
+                    tipus_esdeveniment=tipus_esdeveniment,
+                    temporada=temporada,
+                    espai=espai,
+                    formalitat=formalitat,
+                    plats_info=plats_info,
+                )
+
+                # Generació de la imatge
+                genera_imatge_menu_hf(prompt_imatge, output_path="menu_event_actual.png")
+
+            except Exception as e:
+                print(f"[IMATGE] No s'ha pogut generar la imatge: {e}")
 
         # 9) Tornar a començar?
         continuar = input_default("\nVols demanar una altra recomanació? (s/n)", "s")
