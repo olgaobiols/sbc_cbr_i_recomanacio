@@ -384,10 +384,30 @@ def adaptar_plat_a_estil_latent(
         return plat
 
     perfil_global = perfil_usuari or info_estil.get('perfil_usuari') or {}
+    curs = (plat.get("curs") or "").lower()
+    es_postres = "postres" in curs or "dessert" in curs
+    dessert_categories = {"sweet", "fruit", "dairy", "sweetener"}
+    dessert_candidates_style: list[tuple[str, Dict, float]] = []
+    if es_postres:
+        for ing_style in ingredients_estil:
+            info_cand = _get_info_ingredient(ing_style, base_ingredients)
+            if not info_cand:
+                continue
+            macro = (info_cand.get('macro_category') or "").lower()
+            if macro not in dessert_categories:
+                continue
+            sim = FG_WRAPPER.similarity_with_vector(ing_style, vector_estil) or 0.0
+            dessert_candidates_style.append((ing_style, info_cand, sim))
+        dessert_candidates_style.sort(key=lambda x: x[2], reverse=True)
 
     nou_plat = plat.copy()
     nou_plat['ingredients'] = list(plat['ingredients'])
     log = []
+    ingredients_normals = {_normalize_text(ing) for ing in nou_plat['ingredients']}
+    max_substitucions = max(1, int(len(nou_plat['ingredients']) * (0.25 + intensitat * 0.4)))
+    if es_postres:
+        max_substitucions = min(max_substitucions, 1)
+    substitucions_realitzades = 0
 
     min_millora = 0.05 + intensitat * 0.3
     temperatura = min(0.9, 0.2 + intensitat)
@@ -396,6 +416,8 @@ def adaptar_plat_a_estil_latent(
         log.append(f"Similitud inicial amb '{nom_estil}': {similitud_inicial:.2f}")
 
     for i, ing_original in enumerate(nou_plat['ingredients']):
+        if substitucions_realitzades >= max_substitucions:
+            break
         # Mirem si l'ingredient original ja és "prou proper" a l'estil
         vec_original = FG_WRAPPER.get_vector(ing_original)
         if vec_original is None: continue
@@ -421,6 +443,7 @@ def adaptar_plat_a_estil_latent(
         # Filtrem el millor candidat que sigui vàlid per restriccions i millori la similitud
         info_orig = _get_info_ingredient(ing_original, base_ingredients)
         cat_orig = info_orig.get('macro_category') if info_orig else None
+        ing_norm = _normalize_text(ing_original)
 
         millor = None
         millor_gain = min_millora
@@ -429,6 +452,20 @@ def adaptar_plat_a_estil_latent(
             if not info_cand:
                 continue
             if not _check_compatibilitat(info_cand, perfil_global):
+                continue
+
+            macro_cand = info_cand.get('macro_category')
+            cand_norm = _normalize_text(info_cand.get('ingredient_name', cand))
+            if not cand_norm:
+                continue
+            if cand_norm != ing_norm and cand_norm in ingredients_normals:
+                continue
+
+            if es_postres:
+                if (macro_cand or "").lower() not in {"sweet", "fruit", "dairy", "sweetener"}:
+                    continue
+            elif cat_orig and macro_cand and macro_cand != cat_orig and intensitat < 0.7:
+                # En plats salats mantenim la categoria llevat d'intensitats altes
                 continue
 
             sim_cand = FG_WRAPPER.similarity_with_vector(cand, vector_estil)
@@ -446,14 +483,30 @@ def adaptar_plat_a_estil_latent(
             info_cand = _get_info_ingredient(millor, base_ingredients)
             nom_final = info_cand.get('ingredient_name', millor) if info_cand else millor
             nou_plat['ingredients'][i] = nom_final
+            ingredients_normals.discard(ing_norm)
+            ingredients_normals.add(_normalize_text(nom_final))
             log.append(f"Estil {nom_estil}: {ing_original} -> {nom_final} (+{millor_gain:.2f} similitud)")
+            substitucions_realitzades += 1
+
+    if es_postres and dessert_candidates_style:
+        for cand_name, info_cand, sim in dessert_candidates_style:
+            nom_cand = info_cand.get('ingredient_name', cand_name)
+            cand_norm = _normalize_text(nom_cand)
+            if cand_norm in ingredients_normals:
+                continue
+            if not _check_compatibilitat(info_cand, perfil_global):
+                continue
+            nou_plat['ingredients'].append(nom_cand)
+            ingredients_normals.add(cand_norm)
+            log.append(f"Estil {nom_estil}: afegit {nom_cand} com a toc dolç ({sim:.2f})")
+            break
 
     similitud_post_subs = _similitud_plat_estil(nou_plat['ingredients'], vector_estil) or 0.0
     target_sim = min(0.85, 0.6 + intensitat * 0.25)
 
     if similitud_post_subs < target_sim:
         deficit = target_sim - similitud_post_subs
-        max_afegits = 1
+        max_afegits = 0 if es_postres else 1
         ingredients_normals = {_normalize_text(ing) for ing in nou_plat['ingredients']}
         candidate_pool = [ing.get('ingredient_name') for ing in base_ingredients if ing.get('ingredient_name')]
         representants = FG_WRAPPER.get_style_representatives(
@@ -473,6 +526,8 @@ def adaptar_plat_a_estil_latent(
             nom_cand = info_cand.get('ingredient_name', cand)
             cand_norm = _normalize_text(nom_cand)
             if cand_norm in ingredients_normals:
+                continue
+            if es_postres and (info_cand.get('macro_category') or "").lower() not in {"sweet", "fruit", "dairy", "sweetener"}:
                 continue
             if not _check_compatibilitat(info_cand, perfil_global):
                 continue

@@ -8,12 +8,19 @@ from operadors_transformacio_realista import *
 #   CARREGA DE BASES
 # =========================
 
-# Base d'ingredients
+# Base d'ingredients (Català, per heurístiques clàssiques)
 base_ingredients = []
 with open("data/ingredients.csv", "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         base_ingredients.append(row)
+
+# Base d'ingredients en anglès (per FlavorGraph i adaptació latent)
+base_ingredients_en = []
+with open("data/ingredients_en.csv", "r", encoding="utf-8") as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        base_ingredients_en.append(row)
 
 # Base d'estils culinaris (per tècniques)
 base_estils = {}
@@ -223,9 +230,9 @@ def main():
             
             # TRANSFORMACIÓ
             # Mode 'latent' fixat, usant la base d'estils latents
-            plat1_mod = substituir_ingredient(p1_prep, estil_latent, base_ingredients, base_estils_latents, mode="latent", intensitat=intensitat)
-            plat2_mod = substituir_ingredient(p2_prep, estil_latent, base_ingredients, base_estils_latents, mode="latent", intensitat=intensitat)
-            postres_mod = substituir_ingredient(pp_prep, estil_latent, base_ingredients, base_estils_latents, mode="latent", intensitat=intensitat)
+            plat1_mod = substituir_ingredient(p1_prep, estil_latent, base_ingredients_en, base_estils_latents, mode="latent", intensitat=intensitat)
+            plat2_mod = substituir_ingredient(p2_prep, estil_latent, base_ingredients_en, base_estils_latents, mode="latent", intensitat=intensitat)
+            postres_mod = substituir_ingredient(pp_prep, estil_latent, base_ingredients_en, base_estils_latents, mode="latent", intensitat=intensitat)
 
             # Debug: mostra els plats resultants i ingredients en anglès
             print("\n[DEBUG] Resultat de la transformació latent:")

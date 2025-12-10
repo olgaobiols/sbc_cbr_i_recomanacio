@@ -12,11 +12,19 @@
     "tipus": "latent"
   },
   "fumat": {
-    "ingredients": ["smoked_paprika", "smoked_salmon", "smoked_tofu", "bacon"],
+    "ingredients": ["smoked_paprika", "smoked_salmon", "smoked_tofu", "bacon", "smoked_tempeh", "smoked_seitan"],
     "tipus": "latent"
   },
   "citric": {
-    "ingredients": ["lemon", "lime", "yuzu", "orange", "lemongrass"],
+    "ingredients": ["lemon", "lime", "yuzu", "orange", "lemongrass", "tamarind"],
+    "tipus": "latent"
+  }, 
+  "umami": {
+    "ingredients": ["miso", "soy_sauce", "shiitake", "seaweed", "kombu_broth"],
+    "tipus": "latent"
+  }, 
+  "tropical": {
+    "ingredients": ["fresh_pineapple", "mango", "pineapple", "coconut", "papaya", "coconut_milk", "passion_fruit", "lime"],
     "tipus": "latent"
   }
 }
