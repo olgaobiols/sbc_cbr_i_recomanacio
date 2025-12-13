@@ -119,7 +119,7 @@ with open("data/tecniques.csv", "r", encoding="utf-8") as f:
 
 # Base de begudes
 base_begudes = []
-with open("begudes_en.csv", "r", encoding="utf-8") as f:
+with open("data/begudes_en.csv", "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         base_begudes.append(row)
