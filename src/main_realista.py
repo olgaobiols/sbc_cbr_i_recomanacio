@@ -117,6 +117,13 @@ with open("data/tecniques.csv", "r", encoding="utf-8") as f:
     for row in reader:
         base_tecnniques[row["nom_tecnica"]] = row
 
+# Base de begudes
+base_begudes = []
+with open("begudes_en.csv", "r", encoding="utf-8") as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        base_begudes.append(row)
+
 # Carreguem els nous estils latents des del JSON (substitueix provisional.py)
 with open("data/estils_latents.json", "r", encoding="utf-8") as f:
     base_estils_latents = json.load(f)
