@@ -554,7 +554,22 @@ def main():
             # transf_1, transf_2, transf_post ja són [] per defecte
 
         # ------------------------
-        # 8) MENÚ FINAL RESUMIT
+        # 9) ADDICIÓ BEGUDES
+        # ------------------------
+        
+        print("\n Procedim a l'addició de begudes...")
+        print(plat1_final)
+        beguda1, score1 = recomana_beguda_per_plat(plat1_final, base_begudes, base_ingredients)
+        beguda2, score2 = recomana_beguda_per_plat(plat2_final, base_begudes, base_ingredients)
+        beguda_post, scorep = recomana_beguda_per_plat(postres_final, base_begudes, base_ingredients)
+
+        print("\n--- BEGUDES RECOMANADES ---")
+        print(f"Beguda per al primer plat:  {beguda1['nom']} (score {score1})")
+        print(f"Beguda per al segon plat:   {beguda2['nom']} (score {score2})")
+        print(f"Beguda per a les postres:   {beguda_post['nom']} (score {scorep})")
+
+        # ------------------------
+        # 10) MENÚ FINAL RESUMIT
         # ------------------------
         imprimir_menu_final(
             plat1_final, transf_1, info_llm_1,
@@ -562,7 +577,7 @@ def main():
             postres_final, transf_post, info_llm_post
         )
 
-        # 9) Tornar a començar?
+        # 11) Tornar a començar?
         continuar = input_default("\nVols demanar una altra recomanació? (s/n)", "s")
         if not continuar.lower().startswith("s"):
             print("\nGràcies per fer servir el recomanador! 👋")
