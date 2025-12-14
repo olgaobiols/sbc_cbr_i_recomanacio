@@ -312,8 +312,6 @@ def substituir_ingredient(
     base_cuina,
     mode="regles",
     intensitat=0.4,
-    ingredients_usats_latent=None,
-    perfil_usuari=None,
 ):
     """
     Substitueix un ingredient d'un plat que NO sigui de l'estil de cuina desitjat
@@ -328,8 +326,6 @@ def substituir_ingredient(
                 base_estils=base_cuina,
                 base_ingredients=base_ingredients,
                 intensitat=intensitat,
-                ingredients_usats_latent=ingredients_usats_latent,
-                perfil_usuari=perfil_usuari,
             )
         except Exception as exc:
             print(f"[INGREDIENTS] Error en adaptació latent '{tipus_cuina}': {exc}. S'usa mètode clàssic.")
@@ -635,94 +631,167 @@ def genera_descripcio_llm(
     plat: dict,
     transformacions: list[dict],
     estil_tecnic: str,
+    servei: str,
     estil_row: dict | None = None,
 ) -> dict:
     """
-    Genera nom nou, descripció de carta i proposta de presentació
-    per a un plat, utilitzant Gemini.
+    Genera NOM, DESCRIPCIO i PRESENTACIO pensats per:
+      - sonar bé en carta
+      - però sobretot ser útils per generar una imatge acurada
     """
 
     nom_plat = plat.get("nom", "Plat sense nom")
     ingredients_llista = plat.get("ingredients", []) or []
+    curs = (plat.get("curs", "") or "").strip().lower()
+    servei_norm = (servei or "indiferent").strip().lower()
 
-    # Resum d'ingredients per no fer el prompt etern
+    # Ingredients (sense fer-ho etern)
     if not ingredients_llista:
         ingredients_txt = "ingredients diversos"
-    elif len(ingredients_llista) <= 6:
-        ingredients_txt = ", ".join(ingredients_llista)
+        ingredients_full = ""
     else:
-        ingredients_txt = ", ".join(ingredients_llista[:6]) + ", ..."
+        ingredients_txt = ", ".join(ingredients_llista[:8])
+        ingredients_full = ", ".join(ingredients_llista)
 
-    curs = plat.get("curs", "")
-
-    # Info de l'estil (si ve de estils.csv)
+    # Info estil (estils.csv)
     tipus = ""
-    sabors_clau: list[str] = []
-    caracteristiques: list[str] = []
-    evita: list[str] = []
-
+    sabors_clau = []
+    caracteristiques = []
+    evita = []
     if isinstance(estil_row, dict):
-        tipus = estil_row.get("tipus", "")
-        sabors_clau = (estil_row.get("sabors_clau") or "").split("|")
-        caracteristiques = (estil_row.get("caracteristiques") or "").split("|")
-        evita = (estil_row.get("evita") or "").split("|")
+        tipus = estil_row.get("tipus", "") or ""
+        sabors_clau = [x for x in (estil_row.get("sabors_clau") or "").split("|") if x]
+        caracteristiques = [x for x in (estil_row.get("caracteristiques") or "").split("|") if x]
+        evita = [x for x in (estil_row.get("evita") or "").split("|") if x]
 
-    txt_sabors = ", ".join([s for s in sabors_clau if s]) or "no especificats"
-    txt_caract = ", ".join([c for c in caracteristiques if c]) or "no especificades"
-    txt_evita = ", ".join([e for e in evita if e]) or "—"
+    txt_sabors = ", ".join(sabors_clau) if sabors_clau else "—"
+    txt_caract = ", ".join(caracteristiques) if caracteristiques else "—"
+    txt_evita = ", ".join(evita) if evita else "—"
 
-    txt_transformacions = _format_transformacions_per_prompt(transformacions)
+    # -------------------------
+    # Helpers: format servei
+    # -------------------------
+    def _guia_servei(s: str) -> tuple[str, str]:
+        if s == "assegut":
+            return (
+                "FORMAT SERVEI: ASSEGUT (plat individual gran, emplatament de restaurant).",
+                "Prohibit descriure-ho com mini, mos, cullera, broqueta, vaset, safata o peces repetides."
+            )
+        if s == "cocktail":
+            return (
+                "FORMAT SERVEI: COCKTAIL (peça petita 1–2 mossegades, servida en cullera/vaset/mini platet o broqueta).",
+                "Prohibit descriure-ho com un plat gran complet o una ració principal."
+            )
+        if s == "finger_food":
+            return (
+                "FORMAT SERVEI: FINGER FOOD (unitats que es poden agafar amb la mà: tartaleta, croqueta, mini entrepà, wrap, broqueta...).",
+                "Evita formats que requereixin ganivet i forquilla; parla d'unitats petites repetibles."
+            )
+        return (
+            "FORMAT SERVEI: INDIFERENT (sigues coherent amb el plat, sense forçar format).",
+            "—"
+        )
 
+    guia_servei, prohibit_servei = _guia_servei(servei_norm)
+
+    # -------------------------
+    # Helpers: tècniques -> spec
+    # -------------------------
+    def _resum_transformacions_specs(transformacions: list[dict]) -> str:
+        """
+        Construeix un bloc curt però molt informatiu:
+        - Display + objectiu ingredient
+        - Descripcio tècnica
+        - Impacte textura i sabor (per convertir-ho en visuals)
+        """
+        if not transformacions:
+            return (
+                "TÈCNIQUES:\n"
+                "- Cap tècnica especial aplicada (plat clàssic)."
+            )
+
+        lines = ["TÈCNIQUES (usa-les i fes-les visibles):"]
+        for i, t in enumerate(transformacions, 1):
+            disp = (t.get("display") or t.get("nom") or "").strip()
+            obj = (t.get("objectiu_ingredient") or "").strip()
+            if not obj:
+                # si no hi ha ingredient concret, fem servir objectiu_frase curt
+                obj = (t.get("objectiu_frase") or "un element del plat").strip()
+
+            desc_tec = (t.get("descripcio") or "").strip()
+
+            tx = t.get("impacte_textura", [])
+            sb = t.get("impacte_sabor", [])
+
+            if isinstance(tx, str):
+                tx = [x for x in tx.split("|") if x]
+            if isinstance(sb, str):
+                sb = [x for x in sb.split("|") if x]
+
+            tx_txt = ", ".join(tx) if tx else "—"
+            sb_txt = ", ".join(sb) if sb else "—"
+
+            lines.append(
+                f"{i}) {disp} sobre {obj} | textura: {tx_txt} | sabor: {sb_txt} | definició: {desc_tec}"
+            )
+        return "\n".join(lines)
+
+    txt_transformacions_specs = _resum_transformacions_specs(transformacions)
+
+    # També mantenim el teu format curt “Tècnica sobre ingredient” perquè Gemini ho copiï literalment
+    txt_transformacions_literal = _format_transformacions_per_prompt(transformacions)
+
+    # -------------------------
+    # Prompt nou: més curt però més precís
+    # -------------------------
     prompt = f"""
-Ets un xef català amb experiència en cuina d'autor i menús de banquet.
-Has de proposar un nom i dues frases per descriure UN SOL PLAT.
-Treballes sempre en català estàndard, clar i sense floritures innecessàries.
+Ets un xef català i també un estilista gastronòmic per fotografia.
+Objectiu: descriure el plat perquè algú el pugui EMPLATAR i FOTOGRAFIAR amb precisió.
 
-INFORMACIÓ DEL PLAT
-- Nom original del plat: {nom_plat}
-- Curs (primer/segon/postres): {curs or "no especificat"}
-- Ingredients principals: {ingredients_txt}
+DADES DEL PLAT
+- Nom original: {nom_plat}
+- Curs: {curs or "—"}
+- Ingredients (llista): {ingredients_txt}
+- Ingredients (complet, per no inventar): {ingredients_full or ingredients_txt}
 
-INFORMACIÓ DE L'ESTIL
-- Nom tècnic de l'estil: {estil_tecnic}
-- Tipus d'estil: {tipus or "no especificat"}
+ESTIL
+- Estil tècnic: {estil_tecnic}
+- Tipus: {tipus or "—"}
 - Sabors clau: {txt_sabors}
-- Característiques generals de l'estil: {txt_caract}
-- Coses que aquest estil acostuma a evitar: {txt_evita}
+- Característiques: {txt_caract}
+- Evita: {txt_evita}
 
-INFORMACIÓ SOBRE LES TÈCNIQUES APLICADES
-{txt_transformacions}
+{guia_servei}
 
-TASCA
-Escriu EXACTAMENT tres línies, amb aquest format exacte:
+TÈCNIQUES APLICADES (importantíssim per la imatge)
+A) LITERAL (copia exactament aquests noms quan les mencionis):
+{txt_transformacions_literal}
 
-NOM: <nom nou del plat, relacionat amb "{nom_plat}" i l'estil {estil_tecnic}.
-      Ha de sonar com un nom de carta de restaurant (per exemple "Tomàquet farcit i Esferificació", "Pinya en gelée fina").
-      Pot tenir entre 2 i 6 paraules, sense paraules grandiloqüents com "molecular", "sensorial", "experiència", "viatge".>
+B) ESPECIFICACIÓ (fes que siguin visibles i coherents amb la definició i impactes):
+{txt_transformacions_specs}
 
-DESCRIPCIO: <una sola frase (màxim 30 paraules) que soni com una descripció de carta de restaurant.
-             Si hi ha tècniques aplicades, la frase HA D'ESMENTAR TOTES LES TÈCNIQUES de la llista,
-             indicant clarament sobre quin ingredient s'aplica cadascuna.
-             Fes servir literalment els textos "Tècnica sobre Ingredient" de la secció de tècniques aplicades
-             (per exemple "Esferificació sobre salsa de soja", "Puntillisme de salsa sobre pinya natural"),
-             integrant-los de manera natural dins la frase.
-             Prohibit usar paraules com: explosió, sorpresa, viatge, emoció, experiència.>
+TASCA (retorna EXACTAMENT 3 línies, sense text extra):
 
-PRESENTACIO: <una sola frase (màxim 35 paraules) explicant ÚNICAMENT com es disposa el plat al plat:
-              descriu la posició dels elements (centre, línia, racó), l'alçada (pla, elevat), les formes (esferes, cubs, làmines, espirals),
-              la presència de salses (en punts, línies, nappé) i els colors principals dels ingredients visibles.
-              No parlis del que sentirà el comensal, no facis metàfores, no parlis d'emocions.>
+NOM: (2 a 6 paraules) nom de carta coherent amb el servei "{servei_norm}" i l'estil, sense paraules grandiloqüents.
 
-RESTRICCIONS IMPORTANTS
-- Català estàndard, sense castellanismes ni paraules inventades.
-- No inventis ingredients nous, tècniques noves ni salses o guarnicions que no surtin dels ingredients o de la llista de tècniques aplicades.
-- No inventis termes artístics addicionals (com "puntillisme", "fulla cruixent", "pinzellades", "geometries") que no apareguin a la llista de tècniques.
-- No acabis cap frase amb punts suspensius "..." ni facis servir punts suspensius.
-- Si el text de tècniques diu que el plat es manté clàssic (sense tècniques especials), NO en parlis:
-  descriu el plat com una versió ben executada dins l'estil {estil_tecnic}.
-- Estil funcional i minimalista: frases descriptives, concretes i objectives, sense poesia.
-- Escriu només aquestes tres línies, sense text addicional ni explicacions.
-"""
+DESCRIPCIO: (1 frase, màx 38 paraules) descripció de carta PERÒ útil per imatge:
+- menciona ingredient principal + 1-2 elements secundaris visibles,
+- si hi ha tècniques, HAS D'ESMENTAR TOTES les tècniques del bloc A, indicant sobre quin ingredient s'aplica cadascuna,
+- inclou 1 pista visual de textura (p.ex. gel/cubs/escuma/laminat/cruixent/pols) sense inventar ingredients.
+
+PRESENTACIO: (1 frase, màx 55 paraules) instruccions VISUALS per dibuixar el plat:
+- posició (centre/anell/línia/racó), alçada (pla/elevat), formes (cubs, làmines, esferes, quenelle, gotes, pols),
+- nombre aproximat d'elements repetits (p.ex. 6 gotes, 10 esferes, 3 làmines),
+- colors principals i a quin ingredient corresponen,
+- coherent amb el servei "{servei_norm}" (assegut = plat gran; cocktail = peça mini; finger = unitats).
+
+RESTRICCIONS DURes
+- No inventis ingredients que no siguin a la llista.
+- No inventis tècniques ni noms artístics addicionals.
+- No parlis d'emocions, viatges, sorpresa, experiència, explosió.
+- No posis punts suspensius.
+- {prohibit_servei}
+""".strip()
 
     try:
         resp = model_gemini.generate_content(prompt)
@@ -739,15 +808,14 @@ RESTRICCIONS IMPORTANTS
     descripcio = _extreu_camp_resposta(text, "DESCRIPCIO")
     presentacio = _extreu_camp_resposta(text, "PRESENTACIO")
 
-    # Safety net: si hi ha tècniques però la descripció no n'esmenta cap,
-    # hi afegim una frase senzilla del tipus "S'aplica X sobre Y".
+    # Safety net: si hi ha tècniques però la descripció no en cita cap, forcem la primera
     if transformacions and descripcio:
         if not _descripcio_conte_tecnica(descripcio, transformacions):
             t0 = transformacions[0]
             nom_tecnica = (t0.get("display") or t0.get("nom") or "")
             obj = t0.get("objectiu_ingredient") or t0.get("objectiu_frase") or "un element del plat"
             descripcio = descripcio.rstrip(".")
-            descripcio = f"{descripcio}. S'aplica {nom_tecnica} sobre {obj}."
+            descripcio = f"{descripcio}. {nom_tecnica} sobre {obj}."
 
     if not nom_nou:
         nom_nou = f"{nom_plat} (versió {estil_tecnic})"
@@ -757,18 +825,67 @@ RESTRICCIONS IMPORTANTS
         presentacio = "Presentació neta i ordenada, ressaltant el producte principal."
 
     def _neteja(txt: str) -> str:
-        txt = txt.strip()
+        txt = (txt or "").strip()
         txt = txt.replace("...", "")
         return txt
 
-    descripcio = _neteja(descripcio)
-    presentacio = _neteja(presentacio)
-
     return {
-        "nom_nou": nom_nou,
-        "descripcio_carta": descripcio,
-        "proposta_presentacio": presentacio,
+        "nom_nou": _neteja(nom_nou),
+        "descripcio_carta": _neteja(descripcio),
+        "proposta_presentacio": _neteja(presentacio),
     }
+
+def _resum_plat_en_angles_per_imatge(plat: dict) -> str:
+    """
+    Fa una crida curta a Gemini per obtenir UNA frase en anglès
+    que descrigui el plat només a nivell visual (formes, colors i ingredients).
+
+    La frase és pensada per alimentar un model d'imatge (FLUX),
+    així que ha de ser molt concreta i sense emocions.
+    """
+    nom = plat.get("nom", "") or ""
+    curs = plat.get("curs", "") or ""
+    ingredients = plat.get("ingredients", []) or []
+    descripcio = plat.get("descripcio", "") or ""
+    presentacio = plat.get("presentacio", "") or ""
+
+    if isinstance(ingredients, (list, tuple)):
+        ingredients_txt = ", ".join(str(x) for x in ingredients)
+    else:
+        ingredients_txt = str(ingredients)
+
+    prompt = f"""
+You help to build text prompts for an image generation model.
+
+DISH INFORMATION
+- Course: {curs}
+- Dish name: {nom}
+- Ingredients (Catalan words are fine): {ingredients_txt}
+- Menu description in Catalan: {descripcio}
+- Plating description in Catalan: {presentacio}
+
+TASK
+Write EXACTLY ONE sentence in simple English (max 30 words)
+describing ONLY what is visible on the plate:
+
+- mention shapes, colours, approximate number of elements and positions on the plate,
+- mention ONLY ingredients from the list, do NOT add new ingredients,
+- do NOT talk about emotions, taste, smell, guests, table, background, cutlery or decorations.
+
+Return ONLY the English sentence, without quotes or any extra text.
+"""
+
+    try:
+        resp = model_gemini.generate_content(prompt)
+        text = (resp.text or "").strip()
+        # Per seguretat, ens quedem amb la primera línia només
+        return text.splitlines()[0].strip()
+    except Exception as e:
+        print(f"[IMATGE] Error resumint plat per a la imatge: {e}")
+        # Fallback molt simple
+        return f"A single white round plate with {ingredients_txt} arranged in a neat, modern composition."
+
+
 # ---------------------------------------------------------------------
 #  OPERADOR: GENERACIÓ D'IMATGE DEL MENÚ AMB HUGGING FACE (FLUX.1)
 # ---------------------------------------------------------------------
@@ -778,53 +895,67 @@ def _resum_ambient_esdeveniment(
     temporada: str,
     espai: str,
     formalitat: str,
-) -> str:
+) -> dict:
     """
-    Crea una descripció breu de l'ambient (en anglès) per al prompt d'imatge.
+    Resumeix l'ambient en termes d'esdeveniment, decoració i llum.
+    Retorna un dict amb:
+      - event_desc: frase breu de context
+      - decor_desc: decoració específica de la taula
+    (tot en anglès, perquè el model d'imatges s'hi entén millor)
     """
     tipus = (tipus_esdeveniment or "").lower()
     temporada = (temporada or "").lower()
     espai = (espai or "").lower()
     formalitat = (formalitat or "").lower()
 
-    # Tipus d'esdeveniment
+    # --- Tipus d'esdeveniment ---
     if "casament" in tipus:
-        base = "an elegant wedding reception"
+        event_desc = "an intimate wedding dinner for a small group"
+        decor_desc = "one small glass vase with soft pastel flowers and a couple of tiny candles near the top edge of the table"
     elif "aniversari" in tipus:
-        base = "a cheerful birthday celebration"
-    elif "comunio" in tipus:
-        base = "a refined family celebration"
+        event_desc = "a cosy birthday dinner"
+        decor_desc = "a tiny birthday candle decoration and a few small colorful confetti dots near the top corners of the table"
+    elif "comunio" in tipus or "baptisme" in tipus or "bateig" in tipus:
+        event_desc = "a refined family celebration dinner"
+        decor_desc = "a small vase with white flowers and a single small candle near the top edge of the table"
     elif "empresa" in tipus or "congres" in tipus:
-        base = "a corporate event dinner"
+        event_desc = "a neat corporate dinner"
+        decor_desc = "one slim water glass and a closed dark notebook placed near the top of the table"
     else:
-        base = "a stylish banquet event"
+        event_desc = "a stylish small banquet dinner"
+        decor_desc = "one simple vase with green leaves or a single candle near the top edge of the table"
 
-    # Interior / exterior
-    if espai == "exterior":
-        lloc = "in an outdoor garden terrace"
-    else:
-        lloc = "in an indoor dining room"
-
-    # Temporada
+    # --- Temporada: ajustem la llum i el to ---
     if temporada == "primavera":
-        temporada_txt = "with soft daylight, pastel flowers and fresh greenery"
+        season_txt = "soft daylight and a fresh, slightly pastel color mood"
     elif temporada == "estiu":
-        temporada_txt = "with warm light, vivid colors and a summery atmosphere"
+        season_txt = "warm daylight and a bright summery color mood"
     elif temporada == "tardor":
-        temporada_txt = "with warm amber tones, candles and autumn foliage"
+        season_txt = "warm amber light with a slightly autumnal color mood"
     elif temporada == "hivern":
-        temporada_txt = "with soft cool lighting and subtle winter decorations"
+        season_txt = "soft cool light with a subtle winter mood"
     else:
-        temporada_txt = "with neutral elegant lighting and simple decorations"
+        season_txt = "neutral soft light"
 
-    # Formalitat
+    # --- Interior / exterior ---
+    if espai == "exterior":
+        place_txt = "on a single outdoor dining table"
+    else:
+        place_txt = "on a single indoor dining table next to a soft background"
+
+    # --- Formalitat → tipus de superfície ---
     if formalitat == "informal":
-        formalitat_txt = "casual table setting, simple plates and a relaxed mood"
+        table_surface = "a light wooden table without a tablecloth"
     else:
-        formalitat_txt = "formal table setting, white tablecloths, polished cutlery and a refined mood"
+        table_surface = "a white tablecloth covering the table"
 
-    return f"{base} {lloc}, {temporada_txt}, {formalitat_txt}"
-
+    return {
+        "event_desc": event_desc,
+        "decor_desc": decor_desc,
+        "season_txt": season_txt,
+        "place_txt": place_txt,
+        "table_surface": table_surface,
+    }
 
 def construir_prompt_imatge_menu(
     tipus_esdeveniment: str,
@@ -834,81 +965,102 @@ def construir_prompt_imatge_menu(
     plats_info: list[dict],
 ) -> str:
     """
-    Construeix un prompt perquè FLUX generi una imatge amb EXACTAMENT
-    tres plats del menú, en vista zenital (planta), alineats horitzontalment
-    i tots amb la mateixa importància visual.
+    Prompt perquè FLUX generi EXACTAMENT tres plats en vista zenital:
+
+      - 1 plat a la part superior (centre horitzontal),
+      - 2 plats a la part inferior (esquerra i dreta),
+      - cap altre plat ni bol.
     """
 
     ambient = _resum_ambient_esdeveniment(
         tipus_esdeveniment, temporada, espai, formalitat
     )
 
-    # Ens assegurem de tenir com a mínim 3 plats
-    plats_norm = []
-    for plat in plats_info:
-        plats_norm.append({
-            "curs": plat.get("curs", ""),
-            "nom": plat.get("nom", ""),
-            "descripcio": plat.get("descripcio", ""),
-            "presentacio": plat.get("presentacio", ""),
+    # Garantim que cada entrada tingui la info que ens cal
+    plats = []
+    for p in plats_info[:3]:
+        plats.append({
+            "curs": p.get("curs", "") or "",
+            "nom": p.get("nom", "") or "",
+            "ingredients": p.get("ingredients", []) or [],
+            "descripcio": p.get("descripcio", "") or "",
+            "presentacio": p.get("presentacio", "") or "",
         })
-    while len(plats_norm) < 3:
-        plats_norm.append({
-            "curs": "Extra",
+
+    while len(plats) < 3:
+        plats.append({
+            "curs": "extra",
             "nom": "Neutral dish",
-            "descripcio": "",
+            "ingredients": ["neutral ingredient"],
+            "descripcio": "simple balanced dish",
             "presentacio": "simple round portion in the centre of the plate",
         })
 
-    left, center, right = plats_norm[:3]
+    top_plate, bottom_left, bottom_right = plats
 
-    # Text per a cada plat: ingredients/tècniques + presentació
-    def _descr(plat):
-        desc = plat["descripcio"].strip()
-        pres = plat["presentacio"].strip()
-        parts = []
-        if desc:
-            parts.append(f"main elements and techniques: {desc}")
-        if pres:
-            parts.append(f"plating style: {pres}")
-        return " ".join(parts) if parts else "simple clean plating."
+    # Resum curt en anglès per a cada plat
+    top_desc = _resum_plat_en_angles_per_imatge(top_plate)
+    bl_desc = _resum_plat_en_angles_per_imatge(bottom_left)
+    br_desc = _resum_plat_en_angles_per_imatge(bottom_right)
 
-    left_desc = _descr(left)
-    center_desc = _descr(center)
-    right_desc = _descr(right)
+    prompt = f"""
+Ultra realistic top-down food photography of a single dining table.
+Scene: {ambient['place_txt']} set for {ambient['event_desc']}, with {ambient['season_txt']}.
+The table surface is {ambient['table_surface']}.
 
-    prompt = (
-        f"Ultra realistic food photography for {ambient}. "
+CAMERA AND VIEW:
+- Strict 90 degree overhead view (perfectly vertical), no perspective.
+- Orthographic feeling, no visible vanishing lines.
+- Everything in sharp focus, no blur.
 
-        # Vista zenital
-        "Top-down flat lay view, perfectly overhead, no perspective lines, "
-        "as if the camera is exactly above the table. "
+ABSOLUTE RULES ABOUT PLATES:
+- There must be EXACTLY THREE LARGE ROUND WHITE PLATES WITH FOOD on the table, no more and no less.
+- These are the ONLY dishes on the table. There are NO other plates, NO small side plates,
+  NO bowls, NO saucers and NO extra serving dishes, even if they are empty.
+- ONE of the three plates is placed in the UPPER HALF of the image, centred horizontally.
+- The space between the two lower plates must remain EMPTY tablecloth:
+  do NOT place any plate, bowl, dish or food in the central lower area.
+- The top left and top right corners of the image MUST NOT contain plates, bowls or any round dish shapes.
+- Do NOT add a fourth plate anywhere.
 
-        # Composició exacta
-        "Exactly THREE plates are visible, arranged in a single straight horizontal row "
-        "from left to right. All three plates are the same size and at the same distance "
-        "from the camera, with equal visual importance. "
-        "No other plates or dishes anywhere in the image. "
 
-        # Assignació de plats
-        f"LEFT plate: first course – {left['nom']}, {left_desc} "
-        f"CENTER plate: main course – {center['nom']}, {center_desc} "
-        f"RIGHT plate: dessert – {right['nom']}, {right_desc} "
-        "Each dish must look clearly different from the others. "
+LAYOUT OF THE THREE PLATES:
 
-        # Entorn de la taula
-        "Background: a clean white tablecloth. Minimal fine-dining table elements "
-        "(a fork and knife near each plate, maybe one or two simple glasses), "
-        "but the three dishes are the focus. "
+TOP PLATE (first course: {top_plate['nom']}):
+- {top_desc}
 
-        # Coses que NO volem
-        "No people, no guests, no menu cards, no printed text, no decorations blocking the view. "
-        "No depth-of-field blur: everything in the frame is in sharp focus, "
-        "all three plates equally sharp. "
+BOTTOM LEFT PLATE (main course: {bottom_left['nom']}):
+- {bl_desc}
 
-        # Detalls tècnics
-        "High-quality realistic lighting, neutral tones, 16:9 aspect ratio."
-    )
+BOTTOM RIGHT PLATE (dessert: {bottom_right['nom']}):
+- {br_desc}
+- This is the ONLY DESSERT plate: it must clearly look sweet (cake, cream or chocolate),
+  while the other two plates must look savoury and not like desserts.
+
+TABLE DECORATION AND EVENT DETAILS:
+- Add EXACTLY ONE small table decoration related to the event: {ambient['decor_desc']}.
+- Place this decoration near the TOP edge of the table, between the plates,
+  clearly smaller than the plates and NOT circular.
+- The decoration must NOT be confused with food or plates.
+
+OTHER OBJECTS:
+- You may add at most one small fork or knife near each plate,
+  but they must be subtle and must not draw attention away from the dishes.
+- No menus, no phones, no people or hands, no text.
+
+STRICT NEGATIVES:
+- Do NOT generate more than three plates.
+- Do NOT show a 2x2 grid of plates.
+- Do NOT add any extra plates, bowls, saucers or serving dishes, even if they look empty.
+- Do NOT show wine glasses, water glasses, coffee cups or any other drink containers.
+- Do NOT add bread baskets, butter plates or any side dishes not implied by the three plate descriptions.
+- Do NOT place decorations between the camera and the plates.
+- Do NOT use strong depth-of-field blur.
+
+TECHNICAL:
+- Neutral natural lighting, realistic colours.
+- 16:9 aspect ratio, high resolution.
+""".strip()
 
     return prompt
 
@@ -967,130 +1119,6 @@ def genera_imatge_menu_hf(prompt_imatge: str, output_path: str = "menu_event.png
         print(f"[IMATGE] No s'ha pogut desar la imatge: {e}")
         return None
 
-
-def get_ingredient_principal(plat, base_ingredients):
-    """Retorna l'ingredient del plat amb typical_role = main."""
-    ingredient_principal = None
-    llista_ingredients = []
-    
-    for ing in plat.get("ingredients_en", []):
-        print(f"Revisant ingredient del plat: '{ing}'")
-        for ing_row in base_ingredients:
-            if ing_row['ingredient_name'] == ing:
-                print(f"Coincidència trobada a base_ingredients: {ing_row['ingredient_name']}")
-                llista_ingredients.append(ing_row)
-                if ing_row['typical_role'] == "main":
-                    print(f"Ingredient '{ing}' és MAIN!")
-                    ingredient_principal = ing_row
-
-    if ingredient_principal:
-        print(f"Info ingredient principal del plat: {ingredient_principal}")
-    else:
-        print("No s'ha trobat ingredient principal")
-
-    return ingredient_principal, llista_ingredients
-
-def passa_filtre_dur(plat, beguda_row):
-    curs = plat.get("curs", "")
-    ordre = beguda_row["maridatge_ordre"]
-    print(ordre)
-    
-    # Si la beguda és general passa directament
-    if beguda_row.get("es_general", "").strip().lower() == "si":
-            return True
-        
-    # ORDRE obligatori
-    if curs == "primer":
-        if ordre == "ordre-primer":
-            return True
-        else: False
-    elif curs == "segon":
-        if ordre == "ordre-segon":
-            return True
-        else: False
-    elif curs == "postres":
-        if ordre == "ordre-postres":
-            return True
-        else: return False
-    
-
-def score_beguda_per_plat(beguda_row, ingredient_principal, llista_ingredients):
-    total_score = 0
-
-    # ------------------------------
-    # Funció interna per puntuar 1 ingredient
-    # ------------------------------
-    def score_per_ingredient(ingredient):
-        if not ingredient:
-            return 0
-        
-        score = 0
-        
-        # --- Famílies ---
-        fam_beguda = set(beguda_row["va_be_amb_familia"].split("|"))
-        if ingredient["family"] in fam_beguda:
-            score += 2
-
-        # --- Macro categories ---
-        macro_beguda = set(beguda_row["va_be_amb_categoria_macro"].split("|"))
-        if ingredient["macro_category"] in macro_beguda:
-            score += 2
-
-        # --- Sabors ---
-        sabors_beguda = set(beguda_row["va_be_amb_sabors"].split("|"))
-        evita_sabors = set(beguda_row["evita_sabors"].split("|"))
-        sabors_ing = set(ingredient["base_flavors"].split("|"))
-
-        # Suma per coincidència de sabors
-        score += len(sabors_ing & sabors_beguda)
-
-        # Resta per sabors conflictius
-        score -= len(sabors_ing & evita_sabors)
-
-        return score
-
-    # ---------------------------------------------------------
-    # 1) Puntuar ingredients normals
-    # ---------------------------------------------------------
-    for ing in llista_ingredients:
-        total_score += score_per_ingredient(ing)
-
-    # ---------------------------------------------------------
-    # 2) Puntuar ingredient principal (DOBLE)
-    # ---------------------------------------------------------
-    if ingredient_principal:
-        total_score += 2 * score_per_ingredient(ingredient_principal)
-
-    return total_score
-
-def recomana_beguda_per_plat(plat, base_begudes, base_ingredients):
-    candidates = []
-
-    # 1. Trobar l'ingredient principal del plat 
-    ing_main, llista_ing = get_ingredient_principal(plat, base_ingredients)
-    print(f"Ingredient principal: {ing_main}")
-    
-    # 2. FILTRE DUR (amb 'es_general') per cada beguda
-    for row in base_begudes:
-        if passa_filtre_dur(plat, row):
-            print(f"{row['nom']} ha passat el filtre dur")
-            candidates.append(row)
-    
-    if not candidates:
-        return None, None
-
-    # 3. Escollir la millor beguda per scoring
-    millor = None
-    millor_score = -999
-    for row in candidates:
-        print(f"Provant beguda {row['nom']}")
-        sc = score_beguda_per_plat(row, ing_main, llista_ing)
-        
-        if sc > millor_score:
-            millor = row
-            millor_score = sc
-
-    return millor, millor_score
 
 # ---------------------------------------------------------------------
 #  ESQUELETS D'ALTRES OPERADORS (per si més endavant els implementes)

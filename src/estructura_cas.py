@@ -11,15 +11,19 @@ class Plat:
     def to_dict(self):
         return asdict(self)
 
+
 @dataclass            
 class DescripcioProblema:
-    tipus_esdeveniment: str   # tipus d'esdeveniment
-    estil_culinari: str      # estil culinari
-    n_comensals: int         # nombre de comensals
-    temporada: str           # estació de l'any
-    pressupost_max: float    # pressupost màxim
-    restriccions: list       # llista de restriccions dietètiques
-    formalitat: str  = "indiferent"       # formal / informal / indiferent
+    # --- camps OBLIGATORIS (sense default) ---
+    tipus_esdeveniment: str
+    temporada: str
+    n_comensals: int
+    preu_pers: float
+    servei: str
+
+    # --- camps OPCIONALS (amb default) ---
+    formalitat: str = "indiferent"
+
 
 @dataclass
 class SolucioMenu: 
