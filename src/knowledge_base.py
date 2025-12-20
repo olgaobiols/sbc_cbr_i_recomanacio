@@ -23,13 +23,13 @@ class KnowledgeBase:
             return
         
         # Estructures de dades en memòria
-        self.ingredients: Dict[str, Dict] = {} # {nom_normalitzat: fila_csv}
+        self.ingredients: Dict[str, Dict] = {}  # {nom_normalitzat: fila_csv}
         self.estils: Dict[str, Dict] = {}
         self.tecniques: Dict[str, Dict] = {}
         self.estils_latents: Dict = {}
         
         # Camins als fitxers de dades
-        self.data_dir = "data" 
+        self.data_dir = "data"
         
         # Càrrega
         self._carregar_ingredients()
@@ -38,11 +38,15 @@ class KnowledgeBase:
         self._carregar_latents()
         
         self._inicialitzat = True
-        print(f"✅ [KnowledgeBase] Ontologia carregada: {len(self.ingredients)} ingredients, {len(self.estils)} estils.")
+        print(
+            f"✅ [KnowledgeBase] Ontologia carregada: "
+            f"{len(self.ingredients)} ingredients, {len(self.estils)} estils."
+        )
 
     def _normalize(self, text: str) -> str:
         """Normalització estàndard per a claus de diccionari."""
-        if not text: return ""
+        if not text:
+            return ""
         text = unicodedata.normalize("NFKD", str(text))
         text = text.encode("ascii", "ignore").decode("ascii")
         return text.strip().lower().replace("-", " ").replace("_", " ")
@@ -53,7 +57,7 @@ class KnowledgeBase:
             with open(path, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    nom = self._normalize(row["ingredient_name"])
+                    nom = self._normalize(row["nom_ingredient"])
                     if nom:
                         self.ingredients[nom] = row
         except FileNotFoundError:
@@ -76,23 +80,49 @@ class KnowledgeBase:
                 reader = csv.DictReader(f)
                 for row in reader:
                     self.tecniques[row["nom_tecnica"]] = row
-        except FileNotFoundError: pass
+        except FileNotFoundError:
+            pass
 
     def _carregar_latents(self):
         path = os.path.join(self.data_dir, "estils_latents.json")
         try:
             with open(path, "r", encoding="utf-8") as f:
                 self.estils_latents = json.load(f)
-        except FileNotFoundError: pass
+        except FileNotFoundError:
+            pass
 
     # --- API Pública per al Cicle CBR ---
-    
+
     def get_info_ingredient(self, nom: str) -> Optional[Dict]:
         """Retorna la info ontològica (categoria, rol, etc.) d'un ingredient."""
         return self.ingredients.get(self._normalize(nom))
 
     def get_info_estil(self, nom_estil: str) -> Optional[Dict]:
+        """Retorna la informació d'un estil culinari."""
         return self.estils.get(nom_estil)
     
     def get_info_tecnica(self, nom_tecnica: str) -> Optional[Dict]:
+        """Retorna la informació d'una tècnica culinària."""
         return self.tecniques.get(nom_tecnica)
+
+    def llista_estils(self) -> List[str]:
+        """
+        Mostra per pantalla els estils culinaris disponibles, numerats,
+        a partir del fitxer estils.csv carregat a la base de coneixement.
+
+        La llista s'actualitza automàticament en afegir nous estils
+        al CSV i tornar a executar el programa.
+        """
+        noms_estils = list(self.estils.keys())
+
+        if not noms_estils:
+            print("⚠️ [KnowledgeBase] No hi ha estils disponibles.")
+            return []
+
+        noms_estils.sort()
+
+        print("\n Estils culinaris disponibles:")
+        for i, nom in enumerate(noms_estils, start=1):
+            print(f"  {i:>2}. {nom}")
+
+        return noms_estils
