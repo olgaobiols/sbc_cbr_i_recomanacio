@@ -94,8 +94,26 @@ class KnowledgeBase:
     # --- API Pública per al Cicle CBR ---
 
     def get_info_ingredient(self, nom: str) -> Optional[Dict]:
-        """Retorna la info ontològica (categoria, rol, etc.) d'un ingredient."""
-        return self.ingredients.get(self._normalize(nom))
+        row = self.ingredients.get(self._normalize(nom))
+        if not row:
+            return None
+
+        # Retornem una còpia + camps "compatibles" amb els operadors antics
+        out = dict(row)
+
+        # Alias del nom
+        if "ingredient_name" not in out:
+            out["ingredient_name"] = out.get("nom_ingredient", "")
+
+        # Alias de categoria macro
+        if "macro_category" not in out:
+            out["macro_category"] = out.get("categoria_macro", "")
+
+        # Alias de família
+        if "family" not in out:
+            out["family"] = out.get("familia", "")
+
+        return out
 
     def get_info_estil(self, nom_estil: str) -> Optional[Dict]:
         """Retorna la informació d'un estil culinari."""

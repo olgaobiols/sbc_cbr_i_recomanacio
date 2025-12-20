@@ -5,7 +5,7 @@ import google.generativeai as genai
 import requests
 
 # Importem la lògica latent ja adaptada a KB
-from operador_ingredients import adaptar_plat_a_estil_latent
+from operador_ingredients import _adaptar_latent_core
 
 # Configuració API (Idealment en un .env, però mantenim la teva estructura)
 API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -81,7 +81,7 @@ def substituir_ingredient(plat, tipus_cuina, kb, mode="regles", intensitat=0.4):
     """
     if mode == "latent":
         # Ara passem 'kb' i no llistes crues
-        return adaptar_plat_a_estil_latent(
+        return _adaptar_latent_core(
             plat=plat,
             nom_estil=tipus_cuina,
             kb=kb, # <--- CLAU: Passem la KB
@@ -316,7 +316,9 @@ def triar_tecniques_per_plat(
     min_score=5,
     tecniques_ja_usades=None,
     debug=False,
+    kb=None,  # <--- AFEGIT
 ):
+
     """
     Selecciona fins a `max_tecniques` tècniques de l'estil donat que encaixen
     amb el plat. Per a cada tècnica, associa un ingredient (o el curs) on aplicar-la.
@@ -343,7 +345,15 @@ def triar_tecniques_per_plat(
         tecniques_ja_usades = set()
 
     nom_plat = plat.get("nom", "<sense_nom>")
-    info_ings = _get_info_ingredients_plat(plat, base_ingredients)
+    # Si tenim KB, la fem servir (és el cas correcte)
+    if kb is not None:
+        info_ings = _get_info_ingredients_plat(plat, kb)
+    else:
+        # Fallback: si no hi ha KB, no podem fer get_info_ingredient
+        # (Evitem petar; en debug avisem)
+        if debug:
+            print("[TEC] AVÍS: No s'ha passat KnowledgeBase a triar_tecniques_per_plat().")
+        info_ings = []
 
     estil_row = base_estils.get(nom_estil)
     if estil_row is None:

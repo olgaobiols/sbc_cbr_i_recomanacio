@@ -54,6 +54,33 @@ def parse_list_input(txt: str) -> Set[str]:
     if not txt: return set()
     return {x.strip().lower() for x in txt.split(",") if x.strip()}
 
+def imprimir_tecnniques_proposades(etiqueta_plat: str, plat: dict, transf: list[dict]):
+    nom_plat = plat.get("nom", "—")
+    print(f"\n🧪 TÈCNIQUES PROPOSADES — {etiqueta_plat}: {nom_plat}")
+
+    if not transf:
+        print("   (Cap tècnica aplicada)")
+        return
+
+    for i, t in enumerate(transf, start=1):
+        display = t.get("display") or t.get("nom") or "tècnica"
+        obj_frase = t.get("objectiu_frase") or "un element del plat"
+        desc = (t.get("descripcio") or "").strip()
+
+        tx = t.get("impacte_textura", [])
+        sb = t.get("impacte_sabor", [])
+        tx_txt = ", ".join(tx) if isinstance(tx, list) and tx else ""
+        sb_txt = ", ".join(sb) if isinstance(sb, list) and sb else ""
+
+        print(f"   {i}) {display} → {obj_frase}")
+        if desc:
+            print(f"      - què és: {desc}")
+        if tx_txt:
+            print(f"      - textura: {tx_txt}")
+        if sb_txt:
+            print(f"      - sabor:   {sb_txt}")
+
+
 def imprimir_casos(candidats, top_k=5):
     """Mostra els resultats del Retriever de forma ordenada."""
     if not candidats:
@@ -205,10 +232,10 @@ def main():
         
         if estil_tecnic and estil_tecnic in kb.estils:
             print(f"⚙️  Aplicant tècniques de '{estil_tecnic}'...")
-            transf_1 = triar_tecniques_per_plat(plat1, estil_tecnic, kb.estils, kb.tecniques, base_ingredients_list)
-            transf_2 = triar_tecniques_per_plat(plat2, estil_tecnic, kb.estils, kb.tecniques, base_ingredients_list)
-            transf_post = triar_tecniques_per_plat(postres, estil_tecnic, kb.estils, kb.tecniques, base_ingredients_list)
-            
+            transf_1 = triar_tecniques_per_plat(plat1, estil_tecnic, kb.estils, kb.tecniques, base_ingredients_list, kb=kb)
+            transf_2 = triar_tecniques_per_plat(plat2, estil_tecnic, kb.estils, kb.tecniques, base_ingredients_list, kb=kb)
+            transf_post = triar_tecniques_per_plat(postres, estil_tecnic, kb.estils, kb.tecniques, base_ingredients_list, kb=kb)
+
             # Generació de Text (Gemini)
             if input_default("Generar nous noms i descripcions amb Gemini? (s/n)", "n").lower() == 's':
                 estil_row = kb.estils[estil_tecnic]
