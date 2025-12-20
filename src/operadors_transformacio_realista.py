@@ -1,40 +1,105 @@
 import random
 import os
-from typing import List, Dict
+from typing import List, Dict, Set, Any, Optional
 import google.generativeai as genai
-import base64
 import requests
 
-from operador_ingredients import adaptar_plat_a_estil, adaptar_plat_a_estil_latent
-# Crida única de configuració (posa-la al principi del fitxer d'operadors)
+# Importem la lògica latent ja adaptada a KB
+from operador_ingredients import adaptar_plat_a_estil_latent
+
+# Configuració API (Idealment en un .env, però mantenim la teva estructura)
 API_KEY = os.environ.get("GEMINI_API_KEY")
 if not API_KEY:
-    raise RuntimeError("Falta la variable d'entorn GEMINI_API_KEY")
+    # Per evitar que peti si no tens la clau posada mentre proves altres coses
+    print("[AVÍS] Falta GEMINI_API_KEY. Les funcions LLM no funcionaran.")
+else:
+    genai.configure(api_key=API_KEY)
 
-genai.configure(api_key=API_KEY)
-
-# Model que farem servir (ràpid i força bo)
 GEMINI_MODEL_NAME = "gemini-2.5-flash"
-model_gemini = genai.GenerativeModel(GEMINI_MODEL_NAME)
+try:
+    model_gemini = genai.GenerativeModel(GEMINI_MODEL_NAME)
+except:
+    model_gemini = None
 
 # ---------------------------------------------------------------------
-#  FUNCIONS AUXILIARS
+# 1. FUNCIONS AUXILIARS DE SCORE (Adaptades a KB)
 # ---------------------------------------------------------------------
 
-def _info_ingredients_plat(plat, base_ingredients):
-    """
-    Donat un plat amb plat['ingredients'] = ['tomàquet', 'nata', ...]
-    retorna la llista de files d'ingredients.csv corresponents.
-    """
-    index = {row["nom_ingredient"]: row for row in base_ingredients}
-    info = []
+def _get_info_ingredients_plat(plat: Dict, kb: Any) -> List[Dict]:
+    """Recupera la info de tots els ingredients del plat usant la KB."""
+    infos = []
     for nom in plat.get("ingredients", []):
-        fila = index.get(nom)
-        if fila:
-            info.append(fila)
-    return info
+        info = kb.get_info_ingredient(nom)
+        if info:
+            infos.append(info)
+    return infos
 
-# maridatge.py
+def _troba_ingredient_aplicable(tecnica_row: Dict, plat: Dict, info_ings: List[Dict], ingredients_usats: Set[str]):
+    """Busca sobre quin ingredient aplicar la tècnica."""
+    tags = set(tecnica_row.get("aplicable_a", "").split("|"))
+    curs = (plat.get("curs") or "").lower()
+
+    # Prioritzem ingredients no usats que facin match amb els tags
+    for info in info_ings:
+        nom = info["ingredient_name"]
+        if nom in ingredients_usats: continue
+        
+        cat = info.get("macro_category") or info.get("categoria_macro")
+        fam = info.get("family")
+
+        # Lògica de matching
+        if ("liquids" in tags or "salsa" in tags) and (cat in ("salsa", "altre") or fam == "aigua"):
+            ingredients_usats.add(nom)
+            return f"el líquid '{nom}'", nom
+        
+        if "fruita" in tags and cat == "fruita":
+            ingredients_usats.add(nom)
+            return f"la fruita '{nom}'", nom
+            
+        if "proteina_animal" in tags and cat in ("proteina_animal", "protein_animal", "peix"):
+            ingredients_usats.add(nom)
+            return f"la proteïna '{nom}'", nom
+
+    # Fallback: qualsevol no usat
+    for info in info_ings:
+        nom = info["ingredient_name"]
+        if nom not in ingredients_usats:
+            ingredients_usats.add(nom)
+            return f"l'ingredient '{nom}'", nom
+
+    # Fallback curs
+    if "postres" in tags and "postres" in curs:
+        return "el curs 'postres'", None
+
+    return "un element del plat", None
+
+
+
+def substituir_ingredient(plat, tipus_cuina, kb, mode="regles", intensitat=0.4):
+    """
+    Wrapper que connecta amb l'Operador d'Ingredients Refactoritzat.
+    """
+    if mode == "latent":
+        # Ara passem 'kb' i no llistes crues
+        return adaptar_plat_a_estil_latent(
+            plat=plat,
+            nom_estil=tipus_cuina,
+            kb=kb, # <--- CLAU: Passem la KB
+            base_estils_latents=kb.estils_latents,
+            intensitat=intensitat
+        )
+    return plat
+
+
+
+
+
+
+
+
+
+
+
 
 def categoria_principal_plat(plat: dict, base_ingredients: List[Dict]) -> str:
     """
@@ -69,70 +134,6 @@ def categoria_principal_plat(plat: dict, base_ingredients: List[Dict]) -> str:
         return "postres"
 
     return "neutre"
-
-
-def _troba_ingredient_aplicable(tecnica_row, plat, info_ings, ingredients_usats):
-    """
-    Retorna una tupla (frase_objectiu, nom_ingredient) on:
-      - frase_objectiu: text tipus "el líquid 'salsa de soja'" o "el curs 'postres'"
-      - nom_ingredient: nom cru ('salsa de soja') o None si s'ha referenciat el curs.
-    Actualitza 'ingredients_usats' per evitar reutilitzar el mateix ingredient.
-    """
-    tags = set(tecnica_row.get("aplicable_a", "").split("|"))
-    curs = plat.get("curs", "").lower()
-
-    # 1. Busquem ingredients no usats, prioritzant categories fortes
-    for ing_row in info_ings:
-        nom_ing = ing_row["nom_ingredient"]
-        if nom_ing in ingredients_usats:
-            continue
-
-        categoria = ing_row["categoria_macro"]
-        familia = ing_row["familia"]
-
-        # Líquids / salses
-        if ("liquids" in tags or "salsa" in tags) and (
-            categoria in ("salsa", "altre") or familia in ("aigua", "fons_cuina", "reducció_vi")
-        ):
-            ingredients_usats.add(nom_ing)
-            return f"el líquid '{nom_ing}'", nom_ing
-
-        # Fruita
-        if "fruita" in tags and categoria == "fruita":
-            ingredients_usats.add(nom_ing)
-            return f"la fruita '{nom_ing}'", nom_ing
-
-        # Làctic
-        if "lacti" in tags and categoria == "lacti":
-            ingredients_usats.add(nom_ing)
-            return f"el làctic '{nom_ing}'", nom_ing
-
-        # Feculent (cereals, pasta, arròs…)
-        if "cereal_feculent" in tags and categoria == "cereal_feculent":
-            ingredients_usats.add(nom_ing)
-            return f"el feculent '{nom_ing}'", nom_ing
-
-        # Proteïnes
-        if (
-            "proteina_animal" in tags or "peix" in tags
-        ) and categoria in ("proteina_animal", "peix", "proteina_vegetal"):
-            ingredients_usats.add(nom_ing)
-            return f"la proteïna '{nom_ing}'", nom_ing
-
-    # 2. Si no hem trobat cap match fort, agafem el primer ingredient no usat
-    for ing_row in info_ings:
-        nom_ing = ing_row["nom_ingredient"]
-        if nom_ing not in ingredients_usats:
-            ingredients_usats.add(nom_ing)
-            return f"un ingredient com '{nom_ing}'", nom_ing
-
-    # 3. Si no hi ha ingredients (o tots gastats),
-    #    i la tècnica és específica de POSTRES, fem servir el CURS
-    if "postres" in tags and curs == "postres":
-        return "el curs 'postres'", None
-
-    # 4. Fallback final genèric
-    return "un element del plat", None
 
 
 def _score_tecnica_per_plat(tecnica_row, plat, info_ings):
@@ -301,80 +302,6 @@ def _score_tecnica_per_plat(tecnica_row, plat, info_ings):
 
 
 
-# ---------------------------------------------------------------------
-#  OPERADOR 1: SUBSTITUCIÓ D'INGREDIENT
-# ---------------------------------------------------------------------
-
-def substituir_ingredient(
-    plat,
-    tipus_cuina,
-    base_ingredients,
-    base_cuina,
-    mode="regles",
-    intensitat=0.4,
-):
-    """
-    Substitueix un ingredient d'un plat que NO sigui de l'estil de cuina desitjat
-    per un altre ingredient amb el mateix rol i present a la base d'aquell estil.
-    """
-    if mode == "latent":
-        # Mode creatiu basat en vectors de FlavorGraph
-        try:
-            return adaptar_plat_a_estil_latent(
-                plat=plat,
-                nom_estil=tipus_cuina,
-                base_estils=base_cuina,
-                base_ingredients=base_ingredients,
-                intensitat=intensitat,
-            )
-        except Exception as exc:
-            print(f"[INGREDIENTS] Error en adaptació latent '{tipus_cuina}': {exc}. S'usa mètode clàssic.")
-            # Si hi ha qualsevol problema, fem servir la lògica simple.
-
-    # Ingredients propis de l'estil
-    ingredients_estil = set(base_cuina.get(tipus_cuina, {}).get('ingredients', []))
-
-    # Ingredients del plat que NO són de l'estil
-    ingredients_a_substituir = [ing for ing in plat['ingredients']
-                                if ing not in ingredients_estil]
-
-    if not ingredients_a_substituir:
-        # Ja tot és coherent amb l'estil
-        return plat
-
-    # Escollim un ingredient a substituir
-    ingredient_vell = random.choice(ingredients_a_substituir)
-
-    # Troba el rol de l'ingredient a substituir
-    rol = next(
-        (ing['rol_tipic'] for ing in base_ingredients
-         if ing['nom_ingredient'] == ingredient_vell),
-        None
-    )
-    if not rol:
-        return plat
-
-    # Alternatives amb el mateix rol dins els ingredients de l'estil
-    alternatives = [
-        ing['nom_ingredient'] for ing in base_ingredients
-        if ing['rol_tipic'] == rol and ing['nom_ingredient'] in ingredients_estil
-    ]
-
-    if not alternatives:
-        return plat
-
-    nou_ingredient = random.choice(alternatives)
-
-    # Substituïm a la llista
-    nou_plat = plat.copy()
-    nou_plat['ingredients'] = [
-        nou_ingredient if ing == ingredient_vell else ing
-        for ing in plat['ingredients']
-    ]
-
-    print(f"[INGREDIENTS] Substituint '{ingredient_vell}' per '{nou_ingredient}' al plat '{plat['nom']}'")
-    return nou_plat
-
 
 # ---------------------------------------------------------------------
 #  OPERADOR 2: APLICAR TÈCNIQUES A UN PLAT
@@ -416,7 +343,7 @@ def triar_tecniques_per_plat(
         tecniques_ja_usades = set()
 
     nom_plat = plat.get("nom", "<sense_nom>")
-    info_ings = _info_ingredients_plat(plat, base_ingredients)
+    info_ings = _get_info_ingredients_plat(plat, base_ingredients)
 
     estil_row = base_estils.get(nom_estil)
     if estil_row is None:
