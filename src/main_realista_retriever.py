@@ -13,27 +13,27 @@ from operadors_transformacio_realista import *
 
 # Base d'ingredients
 base_ingredients = []
-with open("ingredients.csv", "r", encoding="utf-8") as f:
+with open("data/ingredients.csv", "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         base_ingredients.append(row)
 
 # Base d'estils culinaris (per tècniques)
 base_estils = {}
-with open("estils.csv", "r", encoding="utf-8") as f:
+with open("data/estils.csv", "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         base_estils[row["nom_estil"]] = row
 
 # Base de tècniques
 base_tecnniques = {}
-with open("tecniques.csv", "r", encoding="utf-8") as f:
+with open("data/tecniques.csv", "r", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
         base_tecnniques[row["nom_tecnica"]] = row
 
 # Estils latents (FlavorGraph)
-with open("estils_latents.json", "r", encoding="utf-8") as f:
+with open("data/estils_latents.json", "r", encoding="utf-8") as f:
     base_estils_latents = json.load(f)
 
 
@@ -167,7 +167,7 @@ def main():
     print("===========================================\n")
 
     # 1) Inicialitzem el retriever nou
-    retriever = Retriever("base_de_casos.json")
+    retriever = Retriever("data/base_de_casos.json")
 
     # 2) Intro
     print("Benvingut/da al recomanador de menús!")
