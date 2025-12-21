@@ -66,6 +66,7 @@ class MemoriaGlobal:
     def __init__(self):
         self.path = PATH_LEARNED_RULES
         self.dades = self._carregar()
+        self._assegurar_estructura()
 
     def _carregar(self) -> Dict:
         if not os.path.exists(self.path):
@@ -83,6 +84,14 @@ class MemoriaGlobal:
                 return json.load(f)
         except:
             return {}
+
+    def _assegurar_estructura(self):
+        """Garanteix que totes les claus necessàries existeixen, fins i tot si el JSON està incomplet."""
+        self.dades.setdefault("regles_ingredients", [])
+        self.dades.setdefault("regles_parelles", [])
+        comptadors = self.dades.setdefault("comptadors", {})
+        comptadors.setdefault("ingredients", {})
+        comptadors.setdefault("parelles", {})
 
     def _guardar(self):
         with open(self.path, "w", encoding="utf-8") as f:

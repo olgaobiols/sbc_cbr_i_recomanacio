@@ -27,7 +27,6 @@ class KnowledgeBase:
         self.estils: Dict[str, Dict] = {}
         self.tecniques: Dict[str, Dict] = {}
         self.estils_latents: Dict = {}
-        self.begudes: Dict[str, Dict] = {}
         
         # Camins als fitxers de dades
         self.data_dir = "data"
@@ -37,7 +36,6 @@ class KnowledgeBase:
         self._carregar_estils()
         self._carregar_tecniques()
         self._carregar_latents()
-        self._carregar_begudes()
         
         self._inicialitzat = True
         print(
@@ -58,12 +56,31 @@ class KnowledgeBase:
         try:
             with open(path, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
+                nom_keys = ["nom_ingredient", "ingredient_name", "name"]
+                # Try to match the column name present in the CSV
+                if reader.fieldnames:
+                    try:
+                        nom_idx = next(
+                            key for key in nom_keys if key in reader.fieldnames
+                        )
+                    except StopIteration:
+                        raise KeyError(
+                            f"No s'ha trobat cap columna de nom a {path}. "
+                            f"Esperat alguna de {', '.join(nom_keys)}"
+                        )
+                else:
+                    raise KeyError(
+                        f"No s'han detectat columnes al fitxer {path}. "
+                        "Comprova el CSV."
+                    )
                 for row in reader:
-                    nom = self._normalize(row["nom_ingredient"])
+                    nom = self._normalize(row.get(nom_idx, ""))
                     if nom:
                         self.ingredients[nom] = row
         except FileNotFoundError:
             print(f"⚠️ [KnowledgeBase] No s'ha trobat {path}")
+        except KeyError as exc:
+            print(f"⚠️ [KnowledgeBase] Error carregant ingredients: {exc}")
 
     def _carregar_estils(self):
         path = os.path.join(self.data_dir, "estils.csv")
@@ -92,19 +109,6 @@ class KnowledgeBase:
                 self.estils_latents = json.load(f)
         except FileNotFoundError:
             pass
-    
-    def _carregar_begudes(self):
-        path = os.path.join(self.data_dir, "begudes_en.csv")
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    nom_beguda = row["nom"].strip()
-                    self.begudes[nom_beguda] = row
-        except FileNotFoundError:
-            print(f"⚠️ No s'ha trobat {path}")
-
-
 
     # --- API Pública per al Cicle CBR ---
 
