@@ -1,5 +1,6 @@
 import os
-from typing import List, Set
+from typing import List, Set, Dict, Any, Optional, Tuple
+import numpy as np
 
 from estructura_cas import DescripcioProblema
 from retriever_nuevo import Retriever
@@ -12,6 +13,7 @@ from operadors_transformacio_realista import (
     construir_prompt_imatge_menu, 
     genera_imatge_menu_hf
 )
+from operador_ingredients import FG_WRAPPER
 
 from operadors_begudes import recomana_beguda_per_plat, get_ingredient_principal, passa_filtre_dur, score_beguda_per_plat
 
@@ -76,36 +78,110 @@ def parse_list_input(txt: str) -> Set[str]:
     return {x.strip().lower() for x in txt.split(",") if x.strip()}
 
 
-#ELIMINAR EN UN FUTUR 
-def debug_ingredients_abans_despres(etiqueta_plat: str, plat: dict, ingredients_abans: list[str]):
+def _dedup_preserve_order(items: List[str]) -> List[str]:
+    vistos = set()
+    resultat = []
+    for x in items:
+        if x not in vistos:
+            resultat.append(x)
+            vistos.add(x)
+    return resultat
+
+def _vector_mitja(ingredients: List[str]) -> Optional[np.ndarray]:
+    vectors = []
+    for ing in ingredients:
+        vec = FG_WRAPPER.get_vector(ing)
+        if vec is not None:
+            vectors.append(vec)
+    if not vectors:
+        return None
+    return np.mean(vectors, axis=0)
+
+def _similitud_plat_estil(ingredients: List[str], estils_latents: Dict, nom_estil: str) -> float:
+    estil_data = estils_latents.get(nom_estil, {})
+    ings_estil = estil_data.get("ingredients", [])
+    vec_estil = FG_WRAPPER.compute_concept_vector(ings_estil)
+    vec_plat = _vector_mitja(ingredients)
+    if vec_estil is None or vec_plat is None:
+        return 0.0
+    norm_a = np.linalg.norm(vec_plat)
+    norm_b = np.linalg.norm(vec_estil)
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return float(np.dot(vec_plat, vec_estil) / (norm_a * norm_b))
+
+def imprimir_resum_adaptacio(
+    etiqueta_plat: str,
+    plat: dict,
+    ingredients_abans: List[str],
+    nom_estil: str,
+    intensitat: float,
+    kb: Any,
+) -> Tuple[List[str], str]:
     """
-    Mostra diferències d'ingredients i també el log_transformacio si existeix.
+    Mostra un resum compacte de l'adaptació i retorna un resum per al final.
     """
     ingredients_despres = plat.get("ingredients", []) or []
+    ingredients_despres_unics = _dedup_preserve_order(ingredients_despres)
 
     set_abans = set(ingredients_abans)
-    set_despres = set(ingredients_despres)
-
-    afegits = sorted(list(set_despres - set_abans))
-    trets = sorted(list(set_abans - set_despres))
-
-    print(f"\n🧩 DEBUG INGREDIENTS — {etiqueta_plat}: {plat.get('nom','—')}")
-    print(f"   Abans ({len(ingredients_abans)}):  {', '.join(ingredients_abans) if ingredients_abans else '—'}")
-    print(f"   Després ({len(ingredients_despres)}): {', '.join(ingredients_despres) if ingredients_despres else '—'}")
-
-    if not afegits and not trets:
-        print("   ✅ Sense canvis d'ingredients (o canvis només interns).")
-    else:
-        if trets:
-            print(f"   ➖ Tret:   {', '.join(trets)}")
-        if afegits:
-            print(f"   ➕ Afegit: {', '.join(afegits)}")
+    set_despres = set(ingredients_despres_unics)
+    afegits = [x for x in ingredients_despres_unics if x not in set_abans]
+    trets = [x for x in ingredients_abans if x not in set_despres]
 
     logs = plat.get("log_transformacio", []) or []
-    if logs:
-        print("   🧾 log_transformacio:")
-        for l in logs:
-            print(f"      - {l}")
+    log_text = " ".join(logs).lower()
+
+    sim_abans = _similitud_plat_estil(ingredients_abans, kb.estils_latents, nom_estil)
+    sim_despres = _similitud_plat_estil(ingredients_despres_unics, kb.estils_latents, nom_estil)
+    delta = sim_despres - sim_abans
+
+    print(f"\n[{etiqueta_plat}] {plat.get('nom','—')}")
+    print(f"- Ingredients: {len(ingredients_abans)} -> {len(ingredients_despres_unics)}")
+    print(f"- Abans: {', '.join(ingredients_abans) if ingredients_abans else '—'}")
+    print(f"- Despres: {', '.join(ingredients_despres_unics) if ingredients_despres_unics else '—'}")
+
+    duplicat_proposat = None
+    if "afegit" in log_text:
+        for ing in ingredients_abans:
+            if f"afegit {ing}" in log_text:
+                duplicat_proposat = ing
+                break
+
+    canvi_text = "CAP CANVI"
+    motiu = "ja coherent amb l'estil / no millora pairing"
+    if trets and afegits:
+        canvi_text = "SUBSTITUCIO"
+        motiu = "substitució vectorial compatible amb ontologia"
+    elif afegits:
+        canvi_text = "INSERCIO"
+        if "fallback simbòlic" in log_text:
+            motiu = "similitud latent insuficient, inserció simbòlica vàlida amb millor pairing"
+        else:
+            motiu = "inserció vectorial compatible amb ontologia"
+    elif duplicat_proposat:
+        print(f"- Nota: ingredient proposat ja present ({duplicat_proposat}) -> ignorat per duplicat")
+        canvi_text = "CAP CANVI"
+        motiu = "inserció descartada (duplicat)"
+
+    if afegits:
+        print(f"- Canvi: +{', '.join(afegits)}")
+    elif trets:
+        print(f"- Canvi: -{', '.join(trets)}")
+
+    print(f"- Pairing (plat): {sim_abans:.2f} -> {sim_despres:.2f} ({delta:+.2f})")
+    print(f"- Decisio: {canvi_text}")
+    print(f"- Motiu: {motiu}")
+    print("")
+
+    if canvi_text == "INSERCIO" and afegits:
+        resum = f"+{', '.join(afegits)}"
+    elif canvi_text == "SUBSTITUCIO" and afegits and trets:
+        resum = f"{trets[0]} -> {afegits[0]}"
+    else:
+        resum = "cap"
+
+    return afegits, resum
 
 
 def imprimir_tecnniques_proposades(etiqueta_plat: str, plat: dict, transf: list[dict]):
@@ -339,8 +415,8 @@ def main():
         postres = _agafa_plat("postres")
 
         # 6) Adaptació d'ingredients
-        print("\n🎨 === FASE ADAPTACIÓ: INGREDIENTS ===")
-        print("   Estils latents disponibles:", ", ".join(sorted(kb.estils_latents.keys())))
+        print("\nFASE ADAPTACIO INGREDIENTS")
+        print("Estils latents disponibles:", ", ".join(sorted(kb.estils_latents.keys())))
         suggeriment = estil_culinari if estil_culinari in kb.estils_latents else ""
         estil_latent = input_default(
             f"Vols aplicar un 'toc' d'estil latent? (ex: picant, thai...) [{suggeriment}]",
@@ -353,7 +429,7 @@ def main():
                 print("   Estils latents disponibles:", ", ".join(sorted(kb.estils_latents.keys())))
 
             intensitat = float(input_default("Intensitat de l'adaptació (0.1 - 0.9)?", "0.5"))
-            print(f"🔄 Adaptant ingredients cap a '{estil_latent}'...")
+            print(f"\nEstil latent: {estil_latent} | Intensitat: {intensitat}")
 
             plats = [
                 ("PRIMER PLAT", plat1),
@@ -362,7 +438,9 @@ def main():
             ]
             ingredients_estil_usats = set()
 
+            resums = []
             for etiqueta, p in plats:
+                etiqueta_short = etiqueta.split()[0]
                 ingredients_abans = list(p.get("ingredients", []) or [])
 
                 resultat = substituir_ingredient(
@@ -379,7 +457,19 @@ def main():
                     p.clear()
                     p.update(resultat)
 
-                debug_ingredients_abans_despres(etiqueta, p, ingredients_abans)
+                _, resum = imprimir_resum_adaptacio(
+                    etiqueta_short,
+                    p,
+                    ingredients_abans,
+                    estil_latent,
+                    intensitat,
+                    kb,
+                )
+                resums.append((etiqueta_short, resum))
+
+            print(f"\nRESUM CANVIS ({estil_latent})")
+            for etiqueta, resum in resums:
+                print(f"{etiqueta.capitalize()}: {resum}")
         # debug_kb_match(plat1, kb, "PRIMER")
         # debug_kb_match(plat2, kb, "SEGON")
         # debug_kb_match(postres, kb, "POSTRES")

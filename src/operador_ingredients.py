@@ -6,6 +6,11 @@ import numpy as np
 from flavorgraph_embeddings import FlavorGraphWrapper
 
 FG_WRAPPER = FlavorGraphWrapper()
+DEBUG_LATENT = False
+
+def _debug_latent(msg: str) -> None:
+    if DEBUG_LATENT:
+        print(msg)
 
 # ---------------------------------------------------------------------
 # 1. FUNCIONS AUXILIARS (Gestió de Dades i Compatibilitat)
@@ -339,6 +344,31 @@ def _similitud_cosinus(vec_a: Optional[np.ndarray], vec_b: Optional[np.ndarray])
         return 0.0
     return float(np.dot(vec_a, vec_b) / (norm_a * norm_b))
 
+def _check_role_compatibility(cat_orig: str, cat_cand: str) -> bool:
+    """
+    Llei de ferro: compatibilitat ontològica estricta entre categories.
+    """
+    if not cat_orig or not cat_cand:
+        return False
+    if cat_orig == "unknown" or cat_cand == "unknown":
+        return False
+
+    proteins = {"meat", "fish", "protein", "protein_animal", "protein_vegetal", "proteina_animal"}
+    seasonings = {"herb", "spice", "condiment"}
+    structural = {"grain", "pasta", "potato", "processed_cereal", "cereal_feculent", "vegetable"}
+    dessert_ok = {"fruit", "sweet", "nut"}
+
+    if cat_orig in proteins:
+        return cat_cand in proteins
+    if cat_orig in seasonings:
+        return cat_cand in seasonings
+    if cat_orig in structural:
+        return cat_cand in structural
+    if cat_orig == "fruit":
+        return cat_cand in dessert_ok
+
+    return cat_cand == cat_orig
+
 # ---------------------------------------------------------------------
 # 5. ADAPTACIÓ LATENT AGRESSIVA (Substitució Real)
 # ---------------------------------------------------------------------
@@ -379,7 +409,7 @@ def _adaptar_latent_core(
     # =================================================================
     # FASE A: SUBSTITUCIÓ (Prioritat: Canviar l'estructura)
     # =================================================================
-    print(f"\n[DEBUG LATENT] --- FASE A: SUBSTITUCIÓ ({nom_estil}) ---")
+    _debug_latent(f"\n[DEBUG LATENT] --- FASE A: SUBSTITUCIÓ ({nom_estil}) ---")
     
     for i, ing_original in enumerate(nou_plat['ingredients']):
         
@@ -400,7 +430,7 @@ def _adaptar_latent_core(
         valids_memoria = sum(
             1 for cand, _ in candidats if _normalize_text(cand) not in ingredients_estil_usats
         )
-        print(f"  [DEBUG] Candidats Fase A: {total_candidats}, vàlids després de memòria: {valids_memoria}")
+        _debug_latent(f"  [DEBUG] Candidats Fase A: {total_candidats}, vàlids després de memòria: {valids_memoria}")
         
         info_orig = kb.get_info_ingredient(ing_original)
         cat_orig = str(info_orig.get('macro_category') or "unknown").lower()
@@ -408,8 +438,6 @@ def _adaptar_latent_core(
         millor_cand = None
         millor_score_hibrid = -99.0
         
-        cats_flexibles = {"sauce", "condiment", "spice", "herb", "fat", "oil", "vegetable_processed", "fruit", "vegetable", "nut"}
-
         # --- PESOS AGRESSIUS ---
         # Volem canviar! No ens importa tant que s'assembli a l'original (W_SELF baix)
         W_STYLE = 0.60 
@@ -439,12 +467,9 @@ def _adaptar_latent_core(
                 if cat_orig == "fruit" and cat_cand not in {"fruit", "nut"}:
                     if not (intensitat > 0.6 and cat_cand == "sweetener"):
                         continue
-            
-            es_compatible = (cat_cand == cat_orig) or \
-                            (cat_orig in cats_flexibles and cat_cand in cats_flexibles) or \
-                            (intensitat > 0.5) # A partir de 0.5 permetem canvis estructurals
-
-            if not es_compatible and not es_postres: continue
+            else:
+                if not _check_role_compatibility(cat_orig, cat_cand):
+                    continue
 
             # PUNTUACIÓ
             sim_style = FG_WRAPPER.similarity_with_vector(cand, vector_estil) or 0.0
@@ -470,7 +495,7 @@ def _adaptar_latent_core(
                     millor_cand = cand
 
         if millor_cand:
-            print(f"  ✅ SUBSTITUCIÓ: {ing_original} -> {millor_cand} (Score: {millor_score_hibrid:.2f})")
+            _debug_latent(f"  ✅ SUBSTITUCIÓ: {ing_original} -> {millor_cand} (Score: {millor_score_hibrid:.2f})")
             nou_plat['ingredients'][i] = millor_cand
             msg_extra = " (evitant repeticions al menú)" if ingredients_estil_usats else ""
             log.append(f"Estil {nom_estil}: Substituït {ing_original} per {millor_cand}{msg_extra}")
@@ -492,7 +517,7 @@ def _adaptar_latent_core(
     TARGET_SIM = 0.82 if not es_postres else 0.88
     MAX_INGS = 9 
 
-    print(f"\n[DEBUG LATENT] --- FASE B: INSERCIÓ (Similitud: {sim_global:.2f} vs {TARGET_SIM}) ---")
+    _debug_latent(f"\n[DEBUG LATENT] --- FASE B: INSERCIÓ (Similitud: {sim_global:.2f} vs {TARGET_SIM}) ---")
 
     força_insercio = (canvis_fets == 0) or (sim_global < TARGET_SIM)
 
@@ -506,7 +531,7 @@ def _adaptar_latent_core(
         valids_memoria = sum(
             1 for cand, _ in representants if _normalize_text(cand) not in ingredients_estil_usats
         )
-        print(f"  [DEBUG] Candidats Fase B: {total_rep}, vàlids després de memòria: {valids_memoria}")
+        _debug_latent(f"  [DEBUG] Candidats Fase B: {total_rep}, vàlids després de memòria: {valids_memoria}")
 
         millor_toc = None
         millor_pairing = -1.0
@@ -559,7 +584,7 @@ def _adaptar_latent_core(
             valids_memoria = sum(
                 1 for cand, _ in representants if _normalize_text(cand) not in ingredients_estil_usats
             )
-            print(f"  [DEBUG] Rescat Fase B: {total_rep}, vàlids després de memòria: {valids_memoria}")
+            _debug_latent(f"  [DEBUG] Rescat Fase B: {total_rep}, vàlids després de memòria: {valids_memoria}")
 
             millor_pairing = -1.0
             millor_style = 0.0
@@ -592,7 +617,7 @@ def _adaptar_latent_core(
                     millor_toc = cand
         
         if millor_toc:
-            print(f"  ✨ TOC MÀGIC AFEGIT: {millor_toc}")
+            _debug_latent(f"  ✨ TOC MÀGIC AFEGIT: {millor_toc}")
             nou_plat['ingredients'].append(millor_toc)
             msg_extra = " (evitant repeticions al menú)" if ingredients_estil_usats else ""
             log.append(f"Estil {nom_estil}: Afegit {millor_toc} com a toc final{msg_extra}.")
@@ -618,13 +643,29 @@ def _adaptar_latent_core(
                 continue
             candidats_filtrats.append((cand, cat_cand))
 
+        vec_context_final = _calcular_vector_context(nou_plat.get("ingredients", []))
+        puntuats = []
+        for cand, cat_cand in candidats_filtrats:
+            sim_pair = 0.0
+            if vec_context_final is not None:
+                vec_c = FG_WRAPPER.get_vector(cand)
+                if vec_c is not None:
+                    norm_c, norm_ctx = np.linalg.norm(vec_c), np.linalg.norm(vec_context_final)
+                    if norm_c > 0 and norm_ctx > 0:
+                        sim_pair = np.dot(vec_c, vec_context_final) / (norm_c * norm_ctx)
+            puntuats.append((cand, cat_cand, sim_pair))
+
+        puntuats.sort(key=lambda x: x[2], reverse=True)
+        if puntuats:
+            _debug_latent(f"  [DEBUG] Fase C: {len(puntuats)} candidats simbòlics vàlids, top pairing {puntuats[0][2]:.2f}")
+
         boring = {
             "oil", "sunflower oil", "sugar", "water", "vinegar", "cream", "milk"
         }
         accio = None
 
-        # Estratègia 1: Substitució genèrica
-        if candidats_filtrats:
+        # Estratègia 1: Substitució genèrica amb pairing vectorial
+        if puntuats:
             for i, ing in enumerate(nou_plat.get("ingredients", [])):
                 if _normalize_text(ing) not in boring:
                     continue
@@ -632,24 +673,26 @@ def _adaptar_latent_core(
                 if not info_ing:
                     continue
                 cat_ing = _normalize_text(info_ing.get("macro_category") or "unknown")
-                for cand, cat_cand in candidats_filtrats:
+                for cand, cat_cand, sim_pair in puntuats:
                     if cat_cand == cat_ing:
                         nou_plat["ingredients"][i] = cand
-                        accio = f"Substituït {ing} per {cand}"
+                        accio = f"Substituït {ing} per {cand} (Fallback Simbòlic + Pairing Vectorial)"
                         ingredients_estil_usats.add(_normalize_text(cand))
+                        _debug_latent(f"  [DEBUG] Fase C: swap genèric {ing} -> {cand} (pairing {sim_pair:.2f})")
                         break
                 if accio:
                     break
 
-        # Estratègia 2: Inserció forçada
-        if not accio and candidats_filtrats:
-            cand, _ = candidats_filtrats[0]
+        # Estratègia 2: Inserció forçada amb pairing vectorial
+        if not accio and puntuats:
+            cand, _, sim_pair = puntuats[0]
             nou_plat["ingredients"].append(cand)
-            accio = f"Afegit {cand}"
+            accio = f"Afegit {cand} (Fallback Simbòlic + Pairing Vectorial)"
             ingredients_estil_usats.add(_normalize_text(cand))
+            _debug_latent(f"  [DEBUG] Fase C: inserció {cand} (pairing {sim_pair:.2f})")
 
         if accio:
-            log.append(f"Estil {nom_estil}: Fallback simbòlic aplicat -> {accio}")
+            log.append(f"Estil {nom_estil}: {accio}")
 
     nou_plat['log_transformacio'] = log
     return nou_plat
