@@ -161,6 +161,31 @@ def imprimir_casos(candidats, top_k=5):
         p2 = _nom_plat("segon")
         p3 = _nom_plat("postres")
 
+        print(f"\n{etiqueta} [Similitud: {score:.1%}] - ID: {cas.get('id_cas', '?')}")
+        print(f"   Context:  {event} | {pr.get('temporada','?')} | {pr.get('servei','?')}{str_restr}")
+        print(f"   Menú:     1. {p1} | 2. {p2} | 3. {p3}")
+
+        # Detall complet dels plats
+        def _ordre_plat(p: dict) -> int:
+            curs = str(p.get("curs", "")).lower()
+            ordre = {"primer": 0, "segon": 1, "postres": 2}
+            return ordre.get(curs, 99)
+
+        plats_ordenats = sorted(plats, key=_ordre_plat)
+        print("   Plats detallats:")
+        for p in plats_ordenats:
+            curs = p.get("curs", "?")
+            nom = p.get("nom", "—")
+            ings = ", ".join(p.get("ingredients", []) or [])
+            rols = ", ".join(p.get("rols_principals", []) or [])
+            preu = p.get("preu", None)
+            print(f"     - {curs}: {nom}")
+            print(f"       Ingredients: {ings if ings else '—'}")
+            if rols:
+                print(f"       Rols principals: {rols}")
+            if preu not in ("", None):
+                print(f"       Preu: {preu}")
+
         # Detall de puntuació (útil per debug/demo)
         parts = []
         if "Restriccions" in detall: parts.append(f"Restr={detall['Restriccions']:.2f}")
