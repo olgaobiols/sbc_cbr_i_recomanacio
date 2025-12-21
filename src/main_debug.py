@@ -12,6 +12,8 @@ from operadors_transformacio_realista import (
     genera_imatge_menu_hf
 )
 
+from operadors_begudes import recomana_beguda_per_plat, get_ingredient_principal, passa_filtre_dur, score_beguda_per_plat
+
 # =========================
 #   INICIALITZACIÓ GLOBAL
 # =========================
@@ -165,15 +167,19 @@ def imprimir_casos(candidats, top_k=5):
         if "Event" in detall: parts.append(f"Event={detall['Event']:.2f}")
         print(f"   Detall:   {' | '.join(parts)}")
 
-def imprimir_menu_final(plat1, transf_1, info_llm_1, plat2, transf_2, info_llm_2, postres, transf_post, info_llm_post):
+def imprimir_menu_final(
+    plat1, transf_1, info_llm_1, beguda1,
+    plat2, transf_2, info_llm_2, beguda2,
+    postres, transf_post, info_llm_post, beguda_postres
+):
     print("\n" + "="*40)
     print("      🍽️  MENÚ ADAPTAT FINAL  🍽️")
     print("="*40)
 
-    for etiqueta, plat, info_llm in [
-        ("PRIMER PLAT", plat1, info_llm_1),
-        ("SEGON PLAT",  plat2, info_llm_2),
-        ("POSTRES",     postres, info_llm_post),
+    for etiqueta, plat, info_llm, beguda in [
+        ("PRIMER PLAT", plat1, info_llm_1, beguda1),
+        ("SEGON PLAT",  plat2, info_llm_2, beguda2),
+        ("POSTRES",     postres, info_llm_post, beguda_postres),
     ]:
         nom = info_llm.get("nom_nou", plat.get("nom", "—")) if info_llm else plat.get("nom", "—")
         desc = info_llm.get("descripcio_carta", "") if info_llm else "Plat clàssic."
@@ -184,12 +190,16 @@ def imprimir_menu_final(plat1, transf_1, info_llm_1, plat2, transf_2, info_llm_2
         if desc:
             print(f"   Carta: {desc}")
         
+        if beguda:
+            print(f"   🍷 Beguda recomanada: {beguda.get('nom', '—')}")
+
         # Si hi ha logs de canvis, els mostrem (Explicabilitat XCBR)
         logs = plat.get("log_transformacio", [])
         if logs:
             print("   🛠️  Adaptacions realitzades:")
             for log in logs:
                 print(f"      - {log}")
+
 
 def debug_kb_match(plat, kb, etiqueta=""):
     print(f"\n[KB CHECK] {etiqueta} — {plat.get('nom','—')}")
@@ -210,7 +220,7 @@ def main():
     print("===========================================\n")
 
     # 1) Inicialitzem el Retriever
-    retriever = Retriever("base_de_casos.json")
+    retriever = Retriever("src/base_de_casos.json")
 
     while True:
         print("\n📝 --- NOVA PETICIÓ ---")
@@ -268,7 +278,7 @@ def main():
         plat2 = _agafa_plat("segon")
         postres = _agafa_plat("postres")
 
-        
+        # 6) Adaptació d'ingredients
         print("\n🎨 === FASE ADAPTACIÓ: INGREDIENTS ===")
         suggeriment = estil_culinari if estil_culinari in kb.estils_latents else ""
         estil_latent = input_default(
@@ -305,7 +315,7 @@ def main():
         debug_kb_match(plat2, kb, "SEGON")
         debug_kb_match(postres, kb, "POSTRES")
 
-            # 7) Adaptació 2: Tècniques i Presentació
+        # 7) Adaptació 2: Tècniques i Presentació
         print("\n✨ === FASE ADAPTACIÓ: TÈCNIQUES ===")
         kb.llista_estils() # Podries imprimir-los
         estil_tecnic = input_default("Vols aplicar un estil tècnic? (ex: cuina_molecular, rustica) [Enter per saltar]", "")
@@ -332,10 +342,21 @@ def main():
                 info_llm_2 = genera_descripcio_llm(plat2, transf_2, estil_tecnic, servei, estil_row)
                 info_llm_post = genera_descripcio_llm(postres, transf_post, estil_tecnic, servei, estil_row)
 
-        # 8) Resultat Final
-        imprimir_menu_final(plat1, transf_1, info_llm_1, plat2, transf_2, info_llm_2, postres, transf_post, info_llm_post)
+
+        # 8) Afegir begudes
+        print("\n✨ === FASE ADAPTACIÓ: BEGUDES ===")
+        beguda1, score1 = recomana_beguda_per_plat(plat1, list(kb.begudes.values()), base_ingredients_list)
+        print(f"Beguda per al primer plat:  {beguda1['nom']} (score {score1})")
+        beguda2, score2 = recomana_beguda_per_plat(plat2, list(kb.begudes.values()), base_ingredients_list)
+        print(f"Beguda per al segon plat:  {beguda2['nom']} (score {score2})")
+        beguda_postres, score_postres = recomana_beguda_per_plat(postres, list(kb.begudes.values()), base_ingredients_list)
+        print(f"Beguda per al segon plat:  {beguda_postres['nom']} (score {score_postres})")
+
         
-        # 9) Feedback (Revise simple)
+        # 9) Resultat Final
+        imprimir_menu_final(plat1, transf_1, info_llm_1, beguda1, plat2, transf_2, info_llm_2, beguda2, postres, transf_post, info_llm_post, beguda_postres)
+        
+        # 10) Feedback (Revise simple)
         print("\n⭐ FASE REVISE")
         try:
             nota = int(input("Puntua aquest menú (1-5): "))
