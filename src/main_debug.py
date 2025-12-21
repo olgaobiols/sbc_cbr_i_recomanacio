@@ -146,14 +146,19 @@ def imprimir_casos(candidats, top_k=5):
             str_restr = ""
 
         # Menú resumit
-        p1 = sol.get("primer_plat", {}).get("nom", "—")
-        p2 = sol.get("segon_plat", {}).get("nom", "—")
-        p3 = sol.get("postres", {}).get("nom", "—")
+        plats = sol.get("plats", []) or []
 
-        print(f"\n{etiqueta} [Similitud: {score:.1%}] - ID: {cas.get('id_cas', '?')}")
-        print(f"   Context:  {event} | {pr.get('temporada','?')} | {pr.get('servei','?')}{str_restr}")
-        print(f"   Menú:     1. {p1} | 2. {p2} | 3. {p3}")
-        
+        def _nom_plat(curs: str) -> str:
+            curs = str(curs).lower()
+            for p in plats:
+                if str(p.get("curs", "")).lower() == curs:
+                    return p.get("nom", "—")
+            return "—"
+
+        p1 = _nom_plat("primer")
+        p2 = _nom_plat("segon")
+        p3 = _nom_plat("postres")
+
         # Detall de puntuació (útil per debug/demo)
         parts = []
         if "Restriccions" in detall: parts.append(f"Restr={detall['Restriccions']:.2f}")
@@ -205,7 +210,7 @@ def main():
     print("===========================================\n")
 
     # 1) Inicialitzem el Retriever
-    retriever = Retriever("data/base_de_casos.json")
+    retriever = Retriever("base_de_casos.json")
 
     while True:
         print("\n📝 --- NOVA PETICIÓ ---")
@@ -248,11 +253,21 @@ def main():
         idx = input_int_default("\nTria el número del cas base (1-3)", 1)
         cas_seleccionat = resultats[idx-1]["cas"]
         sol = cas_seleccionat["solucio"]
-        
-        # Creem còpies de treball dels plats
-        plat1 = sol["primer_plat"].copy()
-        plat2 = sol["segon_plat"].copy()
-        postres = sol["postres"].copy()
+
+        plats = sol.get("plats", []) or []
+
+        def _agafa_plat(curs: str) -> dict:
+            curs = str(curs).lower()
+            for p in plats:
+                if str(p.get("curs", "")).lower() == curs:
+                    return p.copy()
+            # fallback perquè no peti si falta algun curs
+            return {"curs": curs, "nom": "—", "ingredients": []}
+
+        plat1 = _agafa_plat("primer")
+        plat2 = _agafa_plat("segon")
+        postres = _agafa_plat("postres")
+
         
         print("\n🎨 === FASE ADAPTACIÓ: INGREDIENTS ===")
         suggeriment = estil_culinari if estil_culinari in kb.estils_latents else ""
