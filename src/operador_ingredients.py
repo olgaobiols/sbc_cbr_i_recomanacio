@@ -372,7 +372,9 @@ def _adaptar_latent_core(
     es_postres = "postres" in str(plat.get('curs')).lower()
     
     # AUGMENTEM LA TEMPERATURA per trobar coses diferents
-    temperatura = min(0.99, 0.4 + intensitat) 
+    temperatura = min(0.99, 0.4 + intensitat)
+    n_search = 30 + (len(ingredients_estil_usats) * 5)
+    canvis_fets = 0
 
     # =================================================================
     # FASE A: SUBSTITUCIÓ (Prioritat: Canviar l'estructura)
@@ -392,8 +394,13 @@ def _adaptar_latent_core(
 
         # Busquem MOLTS candidats per tenir varietat
         candidats = FG_WRAPPER.get_creative_candidates(
-            ing_original, n=25, temperature=temperatura, style_vector=vector_estil
+            ing_original, n=n_search, temperature=temperatura, style_vector=vector_estil
         )
+        total_candidats = len(candidats)
+        valids_memoria = sum(
+            1 for cand, _ in candidats if _normalize_text(cand) not in ingredients_estil_usats
+        )
+        print(f"  [DEBUG] Candidats Fase A: {total_candidats}, vàlids després de memòria: {valids_memoria}")
         
         info_orig = kb.get_info_ingredient(ing_original)
         cat_orig = str(info_orig.get('macro_category') or "unknown").lower()
@@ -428,8 +435,10 @@ def _adaptar_latent_core(
             
             if es_postres:
                 if cat_cand not in {"sweet", "fruit", "dairy", "sweetener", "nut", "alcohol", "spice"}: continue
-                # Si l'original era fruita, el nou també (Llimona -> Mango)
-                if cat_orig == "fruit" and cat_cand != "fruit": continue
+                # En postres relaxem lleugerament: fruita -> fruita, o bé fruita -> fruit sec/dolç si intensitat alta
+                if cat_orig == "fruit" and cat_cand not in {"fruit", "nut"}:
+                    if not (intensitat > 0.6 and cat_cand == "sweetener"):
+                        continue
             
             es_compatible = (cat_cand == cat_orig) or \
                             (cat_orig in cats_flexibles and cat_cand in cats_flexibles) or \
@@ -463,8 +472,10 @@ def _adaptar_latent_core(
         if millor_cand:
             print(f"  ✅ SUBSTITUCIÓ: {ing_original} -> {millor_cand} (Score: {millor_score_hibrid:.2f})")
             nou_plat['ingredients'][i] = millor_cand
-            log.append(f"Estil {nom_estil}: Substituït {ing_original} per {millor_cand}")
+            msg_extra = " (evitant repeticions al menú)" if ingredients_estil_usats else ""
+            log.append(f"Estil {nom_estil}: Substituït {ing_original} per {millor_cand}{msg_extra}")
             ingredients_estil_usats.add(_normalize_text(millor_cand))
+            canvis_fets += 1
 
     # =================================================================
     # FASE B: INSERCIÓ (Només si el plat ha quedat pobre)
@@ -483,15 +494,27 @@ def _adaptar_latent_core(
 
     print(f"\n[DEBUG LATENT] --- FASE B: INSERCIÓ (Similitud: {sim_global:.2f} vs {TARGET_SIM}) ---")
 
-    if (sim_global < TARGET_SIM) and (len(nou_plat['ingredients']) < MAX_INGS) and (intensitat >= 0.3):
-        
+    força_insercio = (canvis_fets == 0) or (sim_global < TARGET_SIM)
+
+    if força_insercio and (len(nou_plat['ingredients']) < MAX_INGS) and (intensitat >= 0.3):
+        rescue_mode = n_search >= 50
+        # Passada 1: cerca dinàmica segons memòria
         representants = FG_WRAPPER.get_style_representatives(
-            vector_estil, n=25, exclude_names=nou_plat['ingredients']
+            vector_estil, n=n_search, exclude_names=nou_plat['ingredients']
         )
-        
+        total_rep = len(representants)
+        valids_memoria = sum(
+            1 for cand, _ in representants if _normalize_text(cand) not in ingredients_estil_usats
+        )
+        print(f"  [DEBUG] Candidats Fase B: {total_rep}, vàlids després de memòria: {valids_memoria}")
+
         millor_toc = None
         millor_pairing = -1.0
+        millor_style = 0.0
         vec_context_final = _calcular_vector_context(nou_plat['ingredients']) 
+
+        def _score_candidat(score_style, pairing, pes_style, pes_pairing):
+            return (pes_style * score_style) + (pes_pairing * pairing)
 
         for cand, score_style in representants:
             cand_norm = _normalize_text(cand)
@@ -512,18 +535,121 @@ def _adaptar_latent_core(
                 v_c = FG_WRAPPER.get_vector(cand)
                 if v_c is not None:
                     norm_c, norm_ctx = np.linalg.norm(v_c), np.linalg.norm(vec_context_final)
-                    if norm_c > 0 and norm_ctx > 0: pairing = np.dot(v_c, vec_context_final) / (norm_c * norm_ctx)
+                    if norm_c > 0 and norm_ctx > 0:
+                        pairing = np.dot(v_c, vec_context_final) / (norm_c * norm_ctx)
             
-            score_final = (0.6 * score_style) + (0.4 * pairing)
-            if score_final > millor_pairing:
-                millor_pairing = score_final
-                millor_toc = cand
+            if rescue_mode:
+                # Rescat: prioritzem només l'estil i ignorem el pairing
+                score_final = score_style
+                if score_final > 0.4 and score_final > millor_style:
+                    millor_style = score_final
+                    millor_toc = cand
+            else:
+                score_final = _score_candidat(score_style, pairing, 0.6, 0.4)
+                if score_final > millor_pairing:
+                    millor_pairing = score_final
+                    millor_toc = cand
+
+        # Passada 2 (rescat): si no hem trobat res, mirem molt més profund i prioritzem l'estil
+        if millor_toc is None:
+            representants = FG_WRAPPER.get_style_representatives(
+                vector_estil, n=100, exclude_names=nou_plat['ingredients']
+            )
+            total_rep = len(representants)
+            valids_memoria = sum(
+                1 for cand, _ in representants if _normalize_text(cand) not in ingredients_estil_usats
+            )
+            print(f"  [DEBUG] Rescat Fase B: {total_rep}, vàlids després de memòria: {valids_memoria}")
+
+            millor_pairing = -1.0
+            millor_style = 0.0
+            for cand, score_style in representants:
+                cand_norm = _normalize_text(cand)
+                if cand_norm in ingredients_estil_usats: continue
+
+                info_cand = kb.get_info_ingredient(cand)
+                if not info_cand: continue
+                
+                if parelles_prohibides and _check_parelles_prohibides(cand, nou_plat['ingredients'], parelles_prohibides): continue
+                if not _check_compatibilitat(info_cand, perfil_usuari): continue
+                
+                cat_cand = str(info_cand.get('macro_category')).lower()
+                if es_postres:
+                    if cat_cand not in {"sweet", "fruit", "dairy", "sweetener", "nut", "alcohol"}: continue
+
+                pairing = 0.0
+                if vec_context_final is not None:
+                    v_c = FG_WRAPPER.get_vector(cand)
+                    if v_c is not None:
+                        norm_c, norm_ctx = np.linalg.norm(v_c), np.linalg.norm(vec_context_final)
+                        if norm_c > 0 and norm_ctx > 0:
+                            pairing = np.dot(v_c, vec_context_final) / (norm_c * norm_ctx)
+
+                # Rescat fort: només estil, ignorem pairing i acceptem si supera llindar
+                score_final = score_style
+                if score_final > 0.4 and score_final > millor_style:
+                    millor_style = score_final
+                    millor_toc = cand
         
         if millor_toc:
             print(f"  ✨ TOC MÀGIC AFEGIT: {millor_toc}")
             nou_plat['ingredients'].append(millor_toc)
-            log.append(f"Estil {nom_estil}: Afegit {millor_toc} com a toc final.")
+            msg_extra = " (evitant repeticions al menú)" if ingredients_estil_usats else ""
+            log.append(f"Estil {nom_estil}: Afegit {millor_toc} com a toc final{msg_extra}.")
             ingredients_estil_usats.add(_normalize_text(millor_toc))
+
+    # =================================================================
+    # FASE C: FALLBACK SIMBÒLIC (Només si no hi ha canvis)
+    # =================================================================
+    if not log:
+        candidats_estil = list((base_estils_latents.get(nom_estil) or {}).get("ingredients", []))
+        candidats_filtrats = []
+        for cand in candidats_estil:
+            cand_norm = _normalize_text(cand)
+            if cand_norm in ingredients_estil_usats:
+                continue
+            info_cand = kb.get_info_ingredient(cand)
+            if not info_cand:
+                continue
+            if not _check_compatibilitat(info_cand, perfil_usuari):
+                continue
+            cat_cand = _normalize_text(info_cand.get("macro_category") or "unknown")
+            if es_postres and cat_cand not in {"fruit", "sweet", "dairy", "nut", "sweetener"}:
+                continue
+            candidats_filtrats.append((cand, cat_cand))
+
+        boring = {
+            "oil", "sunflower oil", "sugar", "water", "vinegar", "cream", "milk"
+        }
+        accio = None
+
+        # Estratègia 1: Substitució genèrica
+        if candidats_filtrats:
+            for i, ing in enumerate(nou_plat.get("ingredients", [])):
+                if _normalize_text(ing) not in boring:
+                    continue
+                info_ing = kb.get_info_ingredient(ing)
+                if not info_ing:
+                    continue
+                cat_ing = _normalize_text(info_ing.get("macro_category") or "unknown")
+                for cand, cat_cand in candidats_filtrats:
+                    if cat_cand == cat_ing:
+                        nou_plat["ingredients"][i] = cand
+                        accio = f"Substituït {ing} per {cand}"
+                        ingredients_estil_usats.add(_normalize_text(cand))
+                        break
+                if accio:
+                    break
+
+        # Estratègia 2: Inserció forçada
+        if not accio and candidats_filtrats:
+            cand, _ = candidats_filtrats[0]
+            nou_plat["ingredients"].append(cand)
+            accio = f"Afegit {cand}"
+            ingredients_estil_usats.add(_normalize_text(cand))
+
+        if accio:
+            log.append(f"Estil {nom_estil}: Fallback simbòlic aplicat -> {accio}")
 
     nou_plat['log_transformacio'] = log
     return nou_plat
