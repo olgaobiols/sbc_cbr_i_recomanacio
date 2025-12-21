@@ -52,7 +52,7 @@ class KnowledgeBase:
         return text.strip().lower().replace("-", " ").replace("_", " ")
 
     def _carregar_ingredients(self):
-        path = os.path.join(self.data_dir, "ingredients.csv")
+        path = os.path.join(self.data_dir, "ingredients_en.csv")
         try:
             with open(path, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
