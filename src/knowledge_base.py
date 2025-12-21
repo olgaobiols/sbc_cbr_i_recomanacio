@@ -2,7 +2,9 @@ import csv
 import json
 import os
 import unicodedata
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
+
+from Retain import retain_case as retain_case_impl
 
 class KnowledgeBase:
     """
@@ -123,6 +125,23 @@ class KnowledgeBase:
                         self.begudes[key] = row
         except FileNotFoundError:
             print(f"⚠️ [KnowledgeBase] No s'ha trobat {path}")
+
+    def retain_case(
+        self,
+        new_case: Dict,
+        evaluation_result: str,
+        transformation_log: List[str],
+        user_score: int,
+        retriever_instance: Any,
+    ) -> bool:
+        return retain_case_impl(
+            self,
+            new_case,
+            evaluation_result,
+            transformation_log,
+            user_score,
+            retriever_instance,
+        )
 
     # --- API Pública per al Cicle CBR ---
 

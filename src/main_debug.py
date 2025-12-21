@@ -451,6 +451,38 @@ def main():
         resultat_avaluacio = gestor_revise.avaluar_proposta(cas_proposat, user_id)
         print(f"\nResultat de la revisió: {resultat_avaluacio['tipus_resultat']}")
 
+        # 11) FASE RETAIN (Política de memòria)
+        print("\n🧠 --- FASE RETAIN ---")
+        print("   [Retain] Criteris: Seguretat -> Utilitat -> Redundància.")
+        map_resultat = {
+            "CRITICAL_FAILURE": "fracas_critic",
+            "SOFT_FAILURE": "fracas_suau",
+            "SUCCESS": "exit",
+        }
+        resultat_retain = map_resultat.get(resultat_avaluacio["tipus_resultat"], "fracas_suau")
+
+        transformation_log = []
+        for p in [plat1, plat2, postres]:
+            transformation_log.extend(p.get("log_transformacio", []) or [])
+        for t in (transf_1 or []):
+            transformation_log.append(f"Tècnica: {t.get('nom') or t.get('display') or t}")
+        for t in (transf_2 or []):
+            transformation_log.append(f"Tècnica: {t.get('nom') or t.get('display') or t}")
+        for t in (transf_post or []):
+            transformation_log.append(f"Tècnica: {t.get('nom') or t.get('display') or t}")
+
+        saved = kb.retain_case(
+            new_case=cas_proposat,
+            evaluation_result=resultat_retain,
+            transformation_log=transformation_log,
+            user_score=resultat_avaluacio["puntuacio_global"],
+            retriever_instance=retriever,
+        )
+        if saved:
+            print("✅ [RETAIN] Decisió final: el cas s'ha guardat a la memòria.")
+        else:
+            print("❌ [RETAIN] Decisió final: el cas NO s'ha guardat a la memòria.")
+
         if input_default("\nSortir? (s/n)", "n").lower() == 's':
             print("Bon profit! 👋")
             break

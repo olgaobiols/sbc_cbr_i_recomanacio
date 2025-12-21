@@ -2,7 +2,9 @@
     "counters": {
         "ingredients": {
             "tomato": 1,
-            "ceba": 1
+            "ceba": 2,
+            "soy": 1,
+            "lemon": 1
         },
         "pairs": {
             "lemon|water": 1
