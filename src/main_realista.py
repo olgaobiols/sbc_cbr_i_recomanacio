@@ -4,6 +4,7 @@ from typing import List, Set
 from estructura_cas import DescripcioProblema
 from retriever_nuevo import Retriever
 from knowledge_base import KnowledgeBase
+from gestor_feedback import GestorRevise
 from operadors_transformacio_realista import (
     substituir_ingredient, 
     triar_tecniques_per_plat, 
@@ -246,15 +247,27 @@ def main():
         # 8) Resultat Final
         imprimir_menu_final(plat1, transf_1, info_llm_1, plat2, transf_2, info_llm_2, postres, transf_post, info_llm_post)
         
-        # 9) Feedback (Revise simple)
-        print("\n⭐ FASE REVISE")
-        try:
-            nota = int(input("Puntua aquest menú (1-5): "))
-            if nota >= 4:
-                print("✅ M'alegro que t'agradi! (Aquí aniria el RETAIN)")
-            else:
-                print("📝 Prenem nota per millorar.")
-        except: pass
+        # 9) FASE REVISE (NOU CODI)
+        # Identificació d'usuari (simulada o demanada)
+        user_id = input_default("\nIdentificador d'usuari (per guardar preferències)?", "guest")
+        
+        gestor_revise = GestorRevise()
+        
+        # Construïm un objecte 'cas' simplificat per passar a l'avaluador
+        cas_proposat = {
+            "problema": problema, # El que hem creat al principi
+            "solucio": {
+                "primer": plat1, "segon": plat2, "postres": postres
+            }
+        }
+        
+        resultat_avaluacio = gestor_revise.avaluar_proposta(cas_proposat, user_id)
+        
+        print(f"\nResultat de la revisió: {resultat_avaluacio['tipus_resultat'].upper()}")
+        
+        # Aquí anirà la lògica de RETAIN (guardar o no segons resultat_avaluacio)
+        # if resultat_avaluacio['tipus_resultat'] == 'exit':
+        #     kb.retain(cas_proposat, resultat_avaluacio)
 
         if input_default("\nSortir? (s/n)", "n").lower() == 's':
             print("Bon profit! 👋")
