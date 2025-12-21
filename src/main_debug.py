@@ -340,6 +340,7 @@ def main():
 
         # 6) Adaptació d'ingredients
         print("\n🎨 === FASE ADAPTACIÓ: INGREDIENTS ===")
+        print("   Estils latents disponibles:", ", ".join(sorted(kb.estils_latents.keys())))
         suggeriment = estil_culinari if estil_culinari in kb.estils_latents else ""
         estil_latent = input_default(
             f"Vols aplicar un 'toc' d'estil latent? (ex: picant, thai...) [{suggeriment}]",
@@ -359,11 +360,19 @@ def main():
                 ("SEGON PLAT", plat2),
                 ("POSTRES", postres),
             ]
+            ingredients_estil_usats = set()
 
             for etiqueta, p in plats:
                 ingredients_abans = list(p.get("ingredients", []) or [])
 
-                resultat = substituir_ingredient(p, estil_latent, kb, mode="latent", intensitat=intensitat)
+                resultat = substituir_ingredient(
+                    p,
+                    estil_latent,
+                    kb,
+                    mode="latent",
+                    intensitat=intensitat,
+                    ingredients_estil_usats=ingredients_estil_usats,
+                )
 
                 # Si l’operador retorna un plat nou, enganxem resultats al dict original
                 if isinstance(resultat, dict) and resultat is not p:
@@ -371,9 +380,9 @@ def main():
                     p.update(resultat)
 
                 debug_ingredients_abans_despres(etiqueta, p, ingredients_abans)
-        debug_kb_match(plat1, kb, "PRIMER")
-        debug_kb_match(plat2, kb, "SEGON")
-        debug_kb_match(postres, kb, "POSTRES")
+        # debug_kb_match(plat1, kb, "PRIMER")
+        # debug_kb_match(plat2, kb, "SEGON")
+        # debug_kb_match(postres, kb, "POSTRES")
 
         # 7) Adaptació 2: Tècniques i Presentació
         print("\n✨ === FASE ADAPTACIÓ: TÈCNIQUES ===")

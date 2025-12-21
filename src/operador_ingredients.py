@@ -10,6 +10,37 @@ FG_WRAPPER = FlavorGraphWrapper()
 # ---------------------------------------------------------------------
 # 1. FUNCIONS AUXILIARS (Gestió de Dades i Compatibilitat)
 # ---------------------------------------------------------------------
+def _calcular_vector_context(ingredients: List[str], exclude_index: int = -1) -> Optional[np.ndarray]:
+    """
+    Calcula el vector mitjà de la resta d'ingredients del plat (Context).
+    Serveix per mesurar el 'Pairing': com de bé queda un ingredient amb els seus veïns.
+    """
+    vectors = []
+    for i, ing in enumerate(ingredients):
+        if i == exclude_index: continue
+        v = FG_WRAPPER.get_vector(ing)
+        if v is not None:
+            vectors.append(v)
+    
+    if not vectors: return None
+    return np.mean(vectors, axis=0)
+
+def _normalize_vector(vec: Optional[np.ndarray]) -> Optional[np.ndarray]:
+    if vec is None: return None
+    norm = np.linalg.norm(vec)
+    if norm == 0: return None
+    return vec / norm
+    
+def _vector_promig_plat(ingredients: List[str]) -> Optional[np.ndarray]:
+    """Calcula el vector mitjà (centroide) de tots els ingredients del plat."""
+    vectors = []
+    for ing in ingredients:
+        vec = FG_WRAPPER.get_vector(ing)
+        if vec is not None:
+            vectors.append(vec)
+    if not vectors: return None
+    mitjana = np.mean(vectors, axis=0)
+    return _normalize_vector(mitjana)
 
 def _normalize_text(value: str) -> str:
     if not value: return ""
@@ -148,11 +179,21 @@ def substituir_ingredient(
     intensitat: float = 0.5,
     perfil_usuari: Optional[Dict] = None,
     llista_blanca: Optional[Set[str]] = None,
-    parelles_prohibides: Optional[Set[str]] = None # <--- NOU
+    parelles_prohibides: Optional[Set[str]] = None, # <--- NOU
+    ingredients_estil_usats: Optional[Set[str]] = None
 ) -> Dict[str, Any]:
     
     if mode == "latent":
-        return _adaptar_latent_core(plat, target, kb, estils_latents, intensitat, parelles_prohibides)
+        return _adaptar_latent_core(
+            plat=plat,
+            nom_estil=target,
+            kb=kb,
+            base_estils_latents=estils_latents,
+            intensitat=intensitat,
+            parelles_prohibides=parelles_prohibides,
+            perfil_usuari=perfil_usuari,
+            ingredients_estil_usats=ingredients_estil_usats,
+        )
     else:
         # Wrapper per compatibilitat si algú crida amb mode='restriccio' directament
         pass
@@ -164,7 +205,8 @@ def adaptar_plat_a_estil_latent(
     kb: Any,
     base_estils_latents: Dict,
     intensitat: float = 0.5,
-    parelles_prohibides: Optional[Set[str]] = None
+    parelles_prohibides: Optional[Set[str]] = None,
+    ingredients_estil_usats: Optional[Set[str]] = None
 ) -> Dict[str, Any]:
     """Wrapper de compatibilitat per adaptar un plat a un estil latent."""
     return _adaptar_latent_core(
@@ -173,7 +215,8 @@ def adaptar_plat_a_estil_latent(
         kb=kb,
         base_estils_latents=base_estils_latents,
         intensitat=intensitat,
-        parelles_prohibides=parelles_prohibides
+        parelles_prohibides=parelles_prohibides,
+        ingredients_estil_usats=ingredients_estil_usats,
     )
 
 def substituir_ingredients_prohibits(
@@ -275,68 +318,212 @@ def substituir_ingredients_prohibits(
 # 3. ADAPTACIÓ LATENT (Amb Check de Parelles)
 # ---------------------------------------------------------------------
 
+def _vector_mitja_plat(ingredients: List[str]) -> Optional[np.ndarray]:
+    """Calcula el vector mitjà del plat per comparar-lo amb l'estil."""
+    vectors = []
+    for ing in ingredients:
+        vec = FG_WRAPPER.get_vector(ing)
+        if vec is not None:
+            vectors.append(vec)
+    if not vectors:
+        return None
+    return np.mean(vectors, axis=0)
+
+def _similitud_cosinus(vec_a: Optional[np.ndarray], vec_b: Optional[np.ndarray]) -> float:
+    """Calcula la similitud cosinus entre dos vectors."""
+    if vec_a is None or vec_b is None:
+        return 0.0
+    norm_a = np.linalg.norm(vec_a)
+    norm_b = np.linalg.norm(vec_b)
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return float(np.dot(vec_a, vec_b) / (norm_a * norm_b))
+
+# ---------------------------------------------------------------------
+# 5. ADAPTACIÓ LATENT AGRESSIVA (Substitució Real)
+# ---------------------------------------------------------------------
+
 def _adaptar_latent_core(
     plat: Dict, 
     nom_estil: str, 
     kb: Any, 
     base_estils_latents: Dict, 
     intensitat: float,
-    parelles_prohibides: Optional[Set[str]] = None # <--- NOU
+    parelles_prohibides: Optional[Set[str]] = None,
+    perfil_usuari: Optional[Dict] = None,
+    ingredients_estil_usats: Optional[Set[str]] = None
 ):
     if not base_estils_latents: return plat
     
+    # SETUP
     estil_data = base_estils_latents.get(nom_estil, {})
     ings_estil = estil_data.get('ingredients', [])
     vector_estil = FG_WRAPPER.compute_concept_vector(ings_estil)
+    
     if vector_estil is None: return plat
 
+    if ingredients_estil_usats is None:
+        ingredients_estil_usats = set()
+
     nou_plat = plat.copy()
-    nou_plat['ingredients'] = list(plat['ingredients'])
+    nou_plat['ingredients'] = list(plat['ingredients']) 
     log = []
     
-    temperatura = min(0.9, 0.2 + intensitat)
     es_postres = "postres" in str(plat.get('curs')).lower()
     
-    for i, ing_nom in enumerate(nou_plat['ingredients']):
-        sim_actual = FG_WRAPPER.similarity_with_vector(ing_nom, vector_estil)
-        if sim_actual and sim_actual > (0.8 if es_postres else 0.7):
-            continue 
-            
+    # AUGMENTEM LA TEMPERATURA per trobar coses diferents
+    temperatura = min(0.99, 0.4 + intensitat) 
+
+    # =================================================================
+    # FASE A: SUBSTITUCIÓ (Prioritat: Canviar l'estructura)
+    # =================================================================
+    print(f"\n[DEBUG LATENT] --- FASE A: SUBSTITUCIÓ ({nom_estil}) ---")
+    
+    for i, ing_original in enumerate(nou_plat['ingredients']):
+        
+        vec_orig = FG_WRAPPER.get_vector(ing_original)
+        if vec_orig is None: continue
+        
+        vec_context = _calcular_vector_context(nou_plat['ingredients'], exclude_index=i)
+        sim_style_orig = FG_WRAPPER.similarity_with_vector(ing_original, vector_estil) or 0.0
+        
+        # Si l'ingredient ja és perfecte (ex: Pinya en estil Tropical), no el toquem
+        if sim_style_orig > 0.85: continue
+
+        # Busquem MOLTS candidats per tenir varietat
         candidats = FG_WRAPPER.get_creative_candidates(
-            ing_nom, n=8, temperature=temperatura, style_vector=vector_estil
+            ing_original, n=25, temperature=temperatura, style_vector=vector_estil
         )
         
-        # Context per check de parelles
-        context_ingredients = [nou_plat['ingredients'][k] for k in range(len(nou_plat['ingredients'])) if k != i]
+        info_orig = kb.get_info_ingredient(ing_original)
+        cat_orig = str(info_orig.get('macro_category') or "unknown").lower()
+        
+        millor_cand = None
+        millor_score_hibrid = -99.0
+        
+        cats_flexibles = {"sauce", "condiment", "spice", "herb", "fat", "oil", "vegetable_processed", "fruit", "vegetable", "nut"}
 
-        info_orig = kb.get_info_ingredient(ing_nom)
-        cat_orig = info_orig.get('macro_category') if info_orig else None
-        
-        millor = None
-        millor_gain = 0.05 
-        
+        # --- PESOS AGRESSIUS ---
+        # Volem canviar! No ens importa tant que s'assembli a l'original (W_SELF baix)
+        W_STYLE = 0.60 
+        W_PAIRING = 0.35 
+        W_SELF = 0.05    
+
         for cand, _ in candidats:
-            # 1. Check Parelles (Canal A/B)
-            if parelles_prohibides and _check_parelles_prohibides(cand, context_ingredients, parelles_prohibides):
-                continue
+            cand_norm = _normalize_text(cand)
+            if cand_norm == _normalize_text(ing_original): continue
             
+            # CONTROL DE REPETICIÓ GLOBAL
+            if cand_norm in ingredients_estil_usats: continue
+
+            info_cand = kb.get_info_ingredient(cand)
+            if not info_cand: continue
+
+            context_noms = [nou_plat['ingredients'][k] for k in range(len(nou_plat['ingredients'])) if k != i]
+            if parelles_prohibides and _check_parelles_prohibides(cand, context_noms, parelles_prohibides): continue
+            if not _check_compatibilitat(info_cand, perfil_usuari): continue
+            
+            # FILTRES ONTOLÒGICS
+            cat_cand = str(info_cand.get('macro_category') or "unknown").lower()
+            
+            if es_postres:
+                if cat_cand not in {"sweet", "fruit", "dairy", "sweetener", "nut", "alcohol", "spice"}: continue
+                # Si l'original era fruita, el nou també (Llimona -> Mango)
+                if cat_orig == "fruit" and cat_cand != "fruit": continue
+            
+            es_compatible = (cat_cand == cat_orig) or \
+                            (cat_orig in cats_flexibles and cat_cand in cats_flexibles) or \
+                            (intensitat > 0.5) # A partir de 0.5 permetem canvis estructurals
+
+            if not es_compatible and not es_postres: continue
+
+            # PUNTUACIÓ
+            sim_style = FG_WRAPPER.similarity_with_vector(cand, vector_estil) or 0.0
+            sim_self = FG_WRAPPER.similarity_with_vector(cand, vec_orig) or 0.0
+            
+            sim_pairing = 0.0
+            if vec_context is not None:
+                vec_cand = FG_WRAPPER.get_vector(cand)
+                if vec_cand is not None:
+                    norm_c, norm_ctx = np.linalg.norm(vec_cand), np.linalg.norm(vec_context)
+                    if norm_c > 0 and norm_ctx > 0:
+                        sim_pairing = np.dot(vec_cand, vec_context) / (norm_c * norm_ctx)
+            
+            score = (W_STYLE * sim_style) + (W_PAIRING * sim_pairing) + (W_SELF * sim_self)
+            
+            # Score de l'ingredient actual
+            score_current = (W_STYLE * sim_style_orig) + (W_PAIRING * sim_pairing) + (W_SELF * 1.0)
+            
+            # Si millora encara que sigui mínimament, o si la similitud amb l'estil és molt alta
+            if score > score_current or (sim_style > sim_style_orig + 0.1):
+                if score > millor_score_hibrid:
+                    millor_score_hibrid = score
+                    millor_cand = cand
+
+        if millor_cand:
+            print(f"  ✅ SUBSTITUCIÓ: {ing_original} -> {millor_cand} (Score: {millor_score_hibrid:.2f})")
+            nou_plat['ingredients'][i] = millor_cand
+            log.append(f"Estil {nom_estil}: Substituït {ing_original} per {millor_cand}")
+            ingredients_estil_usats.add(_normalize_text(millor_cand))
+
+    # =================================================================
+    # FASE B: INSERCIÓ (Només si el plat ha quedat pobre)
+    # =================================================================
+    
+    vec_plat_nou = _vector_promig_plat(nou_plat['ingredients'])
+    sim_global = 0.0
+    if vec_plat_nou is not None and vector_estil is not None:
+        v_p = _normalize_vector(vec_plat_nou)
+        v_e = _normalize_vector(vector_estil)
+        if v_p is not None and v_e is not None: sim_global = float(np.dot(v_p, v_e))
+    
+    # Si ja hem fet substitucions bones a la Fase A, sim_global haurà pujat i potser saltem la B
+    TARGET_SIM = 0.82 if not es_postres else 0.88
+    MAX_INGS = 9 
+
+    print(f"\n[DEBUG LATENT] --- FASE B: INSERCIÓ (Similitud: {sim_global:.2f} vs {TARGET_SIM}) ---")
+
+    if (sim_global < TARGET_SIM) and (len(nou_plat['ingredients']) < MAX_INGS) and (intensitat >= 0.3):
+        
+        representants = FG_WRAPPER.get_style_representatives(
+            vector_estil, n=25, exclude_names=nou_plat['ingredients']
+        )
+        
+        millor_toc = None
+        millor_pairing = -1.0
+        vec_context_final = _calcular_vector_context(nou_plat['ingredients']) 
+
+        for cand, score_style in representants:
+            cand_norm = _normalize_text(cand)
+            if cand_norm in ingredients_estil_usats: continue # NO REPETIR
+
             info_cand = kb.get_info_ingredient(cand)
             if not info_cand: continue
             
-            cat_cand = info_cand.get('macro_category')
+            if parelles_prohibides and _check_parelles_prohibides(cand, nou_plat['ingredients'], parelles_prohibides): continue
+            if not _check_compatibilitat(info_cand, perfil_usuari): continue
+            
+            cat_cand = str(info_cand.get('macro_category')).lower()
             if es_postres:
-                if str(cat_cand).lower() not in {"sweet", "fruit", "dairy", "sweetener"}: continue
-            elif cat_orig and cat_cand != cat_orig and intensitat < 0.7:
-                 continue 
-                 
-            sim_cand = FG_WRAPPER.similarity_with_vector(cand, vector_estil)
-            if sim_cand and (sim_cand - (sim_actual or 0) > millor_gain):
-                millor = cand
-                millor_gain = sim_cand - (sim_actual or 0)
+                if cat_cand not in {"sweet", "fruit", "dairy", "sweetener", "nut", "alcohol"}: continue
+
+            pairing = 0.0
+            if vec_context_final is not None:
+                v_c = FG_WRAPPER.get_vector(cand)
+                if v_c is not None:
+                    norm_c, norm_ctx = np.linalg.norm(v_c), np.linalg.norm(vec_context_final)
+                    if norm_c > 0 and norm_ctx > 0: pairing = np.dot(v_c, vec_context_final) / (norm_c * norm_ctx)
+            
+            score_final = (0.6 * score_style) + (0.4 * pairing)
+            if score_final > millor_pairing:
+                millor_pairing = score_final
+                millor_toc = cand
         
-        if millor:
-            nou_plat['ingredients'][i] = millor
-            log.append(f"Estil {nom_estil}: {ing_nom} -> {millor} (+{millor_gain:.2f} afinitat)")
+        if millor_toc:
+            print(f"  ✨ TOC MÀGIC AFEGIT: {millor_toc}")
+            nou_plat['ingredients'].append(millor_toc)
+            log.append(f"Estil {nom_estil}: Afegit {millor_toc} com a toc final.")
+            ingredients_estil_usats.add(_normalize_text(millor_toc))
 
     nou_plat['log_transformacio'] = log
     return nou_plat

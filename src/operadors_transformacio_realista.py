@@ -75,7 +75,14 @@ def _troba_ingredient_aplicable(tecnica_row: Dict, plat: Dict, info_ings: List[D
 
 
 
-def substituir_ingredient(plat, tipus_cuina, kb, mode="regles", intensitat=0.4):
+def substituir_ingredient(
+    plat,
+    tipus_cuina,
+    kb,
+    mode="regles",
+    intensitat=0.4,
+    ingredients_estil_usats=None,
+):
     """
     Wrapper que connecta amb l'Operador d'Ingredients Refactoritzat.
     """
@@ -86,7 +93,8 @@ def substituir_ingredient(plat, tipus_cuina, kb, mode="regles", intensitat=0.4):
             nom_estil=tipus_cuina,
             kb=kb, # <--- CLAU: Passem la KB
             base_estils_latents=kb.estils_latents,
-            intensitat=intensitat
+            intensitat=intensitat,
+            ingredients_estil_usats=ingredients_estil_usats,
         )
     return plat
 
