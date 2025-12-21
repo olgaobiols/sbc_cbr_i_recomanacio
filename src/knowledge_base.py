@@ -27,6 +27,7 @@ class KnowledgeBase:
         self.estils: Dict[str, Dict] = {}
         self.tecniques: Dict[str, Dict] = {}
         self.estils_latents: Dict = {}
+        self.begudes: Dict[str, Dict] = {}
         
         # Camins als fitxers de dades
         self.data_dir = "data"
@@ -36,6 +37,7 @@ class KnowledgeBase:
         self._carregar_estils()
         self._carregar_tecniques()
         self._carregar_latents()
+        self._carregar_begudes()
         
         self._inicialitzat = True
         print(
@@ -90,6 +92,19 @@ class KnowledgeBase:
                 self.estils_latents = json.load(f)
         except FileNotFoundError:
             pass
+    
+    def _carregar_begudes(self):
+        path = os.path.join(self.data_dir, "begudes_en.csv")
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    nom_beguda = row["nom"].strip()
+                    self.begudes[nom_beguda] = row
+        except FileNotFoundError:
+            print(f"⚠️ No s'ha trobat {path}")
+
+
 
     # --- API Pública per al Cicle CBR ---
 
