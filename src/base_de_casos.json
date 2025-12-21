@@ -1,0 +1,711 @@
+[
+    {
+    "id_cas": 1,
+    "problema": {
+        "tipus_esdeveniment": "casament",
+        "estil_culinari": "mediterrani",
+        "temporada": "estiu",
+        "n_comensals": 120,
+        "preu_pers_objectiu": 100.0,
+        "servei": "assegut",
+        "formalitat": "formal",
+        "restriccions": []
+    },
+    "solucio": {
+        "plats": [
+        {
+            "curs": "primer",
+            "nom": "Amanida de tomàquet i mozzarella",
+            "ingredients": ["tomato", "mozzarella", "basil", "oil", "salt"],
+            "rols_principals": [],
+			"estil_tags": ["mediterrani"],
+            "preu": 5.0
+        },
+        {
+            "curs": "segon",
+            "nom": "Lluç al forn amb patates",
+            "ingredients": ["hake", "potatoes", "onion", "oil", "lemon"],
+            "rols_principals": [],
+			"estil_tags": ["mediterrani"],
+            "preu": 12.0
+        },
+        {
+            "curs": "postres",
+            "nom": "Sorbet de llimona",
+            "ingredients": ["lemon", "sugar", "water"],
+            "rols_principals": [],
+			"estil_tags": ["fresc"],
+            "preu": 3.0
+        }
+        ],
+        "begudes": [],
+        "preu_total_real": "",
+        "logs_transformacio": []
+    },
+    "avaluacio": {
+        "puntuacio_global": "",
+        "validat": true,
+        "cost_adaptacio": "",
+        "ingredients_rebutjats": [],
+        "utilitat": 1.0
+    }
+    },
+	{
+		"id_cas": 2,
+		"problema": {
+			"tipus_esdeveniment": "casament",
+			"estil_culinari": "",
+			"temporada": "primavera",
+			"n_comensals": 150,
+			"preu_pers_objectiu": 100.0,
+			"servei": "assegut",
+			"formalitat": "formal",
+			"restriccions": []
+		},
+		"solucio": {
+			"plats": [
+				{
+					"curs": "primer",
+					"nom": "Crema de marisc",
+                	"ingredients": ["prawn", "white_fish", "carrot", "onion", "cream"],      
+					"rols_principals": [],
+					"estil_tags": ["tradicional"],
+					"preu": 6.0
+				},
+				{
+					"curs": "segon",
+					"nom": "Vedella amb salsa de bolets",
+                	"ingredients": ["beef", "mushrooms", "white_wine", "oil", "salt"],
+					"rols_principals": [],
+					"estil_tags": ["tradicional", "formal"],
+					"preu": 18.0
+				},
+				{
+					"curs": "postres",
+					"nom": "Pastís de noces",
+                	"ingredients": ["flour", "sugar", "eggs", "butter"],
+					"rols_principals": [],
+					"estil_tags": ["formal"],
+					"preu": 5.0
+				}
+			],
+			"begudes": [],
+			"preu_total_real": "",
+			"logs_transformacio": []
+		},
+		"avaluacio": {
+			"puntuacio_global": "",
+			"validat": true,
+			"cost_adaptacio": "",
+			"ingredients_rebutjats": [],
+			"utilitat": 1.0
+		}
+	},
+	{
+        "id_cas": 3,
+        "problema": {
+            "tipus_esdeveniment": "bateig",
+            "estil_culinari": "mediterrani_fresc",
+            "n_comensals": 60,
+            "temporada": "estiu",
+            "pressupost_max": 30.0,
+            "restriccions": [],
+            "formalitat": "mitjana"
+        },
+        "solucio": {
+            "primer_plat": {
+                "nom": "Gaspatxo",
+                "ingredients": ["tomato", "cucumber", "pepper", "bread", "oil"],
+                "curs": "primer",
+                "estil_tags": ["mediterrani", "fred"],
+                "preu": 3.0
+            },
+            "segon_plat": {
+                "nom": "Pollastre al forn amb herbes",
+                "ingredients": ["chicken", "rosemary", "oil", "salt"],
+                "curs": "segon",
+                "estil_tags": ["mediterrani"],
+                "preu": 8.0
+            },
+            "postres": {
+                "nom": "Flam de vainilla",
+                "ingredients": ["milk", "eggs", "sugar"],
+                "curs": "postres",
+                "estil_tags": [],
+                "preu": 2.0
+            },
+            "begudes": ["Aigua"],
+            "preu_total": 17.0,
+            "descripcio": "Menú senzill i fresc per batejos d’estiu."
+        },
+        "avaluacio": {
+            "derivacio": "Generat automàticament",
+            "feedback_textual": "",
+            "validat": true,
+            "utilitat": 1.0
+        }
+    },
+	{
+		"id_cas": 4,
+		"problema": {
+			"tipus_esdeveniment": "comunio",
+			"estil_culinari": "",
+			"temporada": "primavera",
+			"n_comensals": 80,
+			"preu_pers_objectiu": 40.0,
+			"servei": "assegut",
+			"formalitat": "indiferent",
+			"restriccions": []
+		},
+		"solucio": {
+			"plats": [
+				{
+					"curs": "primer",
+					"nom": "Amanida russa",
+            	    "ingredients": ["potato", "carrot", "peas", "tuna", "mayonnaise"],
+					"rols_principals": [],
+					"estil_tags": ["tradicional"],
+
+					"preu": 3.0
+				},
+				{
+					"curs": "segon",
+					"nom": "Fricandó de vedella",
+          	        "ingredients": ["beef", "mushrooms", "onion", "oil", "flour"],
+					"rols_principals": [],
+					"estil_tags": ["tradicional"],
+					"preu": 10.0
+				},
+				{
+					"curs": "postres",
+					"nom": "Gelat de vainilla",
+                	"ingredients": ["milk", "vanilla", "sugar"],
+					"rols_principals": [],
+					"estil_tags": [],
+					"preu": 3.0
+				}
+			],
+			"begudes": [],
+			"preu_total_real": "",
+			"logs_transformacio": []
+		},
+		"avaluacio": {
+			"puntuacio_global": "",
+			"validat": true,
+			"cost_adaptacio": "",
+			"ingredients_rebutjats": [],
+			"utilitat": 1.0
+		}
+	},
+	{
+		"id_cas": 5,
+		"problema": {
+			"tipus_esdeveniment": "empresa",
+			"estil_culinari": "",
+			"temporada": "indiferent",
+			"n_comensals": 200,
+			"preu_pers_objectiu": 25.0,
+			"servei": "cocktail",
+			"formalitat": "informal",
+			"restriccions": []
+		},
+		"solucio": {
+			"plats": [
+				{
+					"curs": "primer",
+					"nom": "Amanida Cèsar",
+                	"ingredients": ["lettuce", "chicken", "parmesan", "croutons", "caesar sauce"],
+					"rols_principals": [],
+					"estil_tags": ["internacional"],
+					"preu": 3.0
+				},
+				{
+					"curs": "segon",
+					"nom": "Pasta al pesto",
+                	"ingredients": ["pasta", "basil", "oil", "parmesan"],
+					"rols_principals": [],
+					"estil_tags": ["italiana"],
+					"preu": 4.0
+				},
+				{
+					"curs": "postres",
+					"nom": "Iogurt amb mel",
+                	"ingredients": ["yogurt", "honey"],
+					"rols_principals": [],
+					"estil_tags": [],
+					"preu": 1.5
+				}
+			],
+			"begudes": [],
+			"preu_total_real": "",
+			"logs_transformacio": []
+		},
+		"avaluacio": {
+			"puntuacio_global": "",
+			"validat": true,
+			"cost_adaptacio": "",
+			"ingredients_rebutjats": [],
+			"utilitat": 1.0
+		}
+	},
+	{
+		"id_cas": 6,
+		"problema": {
+			"tipus_esdeveniment": "empresa",
+			"estil_culinari": "",
+			"temporada": "tardor",
+			"n_comensals": 50,
+			"preu_pers_objectiu": 32.0,
+			"servei": "cocktail",
+			"formalitat": "indiferent",
+			"restriccions": []
+		},
+		"solucio": {
+			"plats": [
+				{
+					"curs": "primer",
+					"nom": "Crema de carbassa",
+                	"ingredients": ["pumpkin", "onion", "cream", "oil", "salt"],
+					"rols_principals": [],
+					"estil_tags": ["mediterrani"],
+					"preu": 3.0
+				},
+				{
+					"curs": "segon",
+					"nom": "Truita de patates",
+               		"ingredients": ["potatoes", "eggs", "oil", "salt"],
+					"rols_principals": [],
+					"estil_tags": ["tradicional"],
+					"preu": 2.5
+				},
+				{
+					"curs": "postres",
+					"nom": "Poma al forn",
+                	"ingredients": ["apple", "sugar", "cinnamon"],
+					"rols_principals": [],
+					"estil_tags": [],
+					"preu": 1.5
+				}
+			],
+			"begudes": [],
+			"preu_total_real": "",
+			"logs_transformacio": []
+		},
+		"avaluacio": {
+			"puntuacio_global": "",
+			"validat": true,
+			"cost_adaptacio": "",
+			"ingredients_rebutjats": [],
+			"utilitat": 1.0
+		}
+	},
+	{
+		"id_cas": 7,
+		"problema": {
+			"tipus_esdeveniment": "aniversari",
+			"estil_culinari": "",
+			"temporada": "indiferent",
+			"n_comensals": 40,
+			"preu_pers_objectiu": 20.0,
+			"servei": "assegut",
+			"formalitat": "informal",
+			"restriccions": []
+		},
+		"solucio": {
+			"plats": [
+				{
+					"curs": "primer",
+					"nom": "Macarrons amb tomàquet",
+                	"ingredients": ["macaroni", "tomato", "oil", "garlic"],
+					"rols_principals": [],
+					"estil_tags": ["comfort_food"],
+					"preu": 2.5
+				},
+				{
+					"curs": "segon",
+					"nom": "Hamburguesa casolana",
+                	"ingredients": ["minced_meat", "bread", "lettuce", "tomato"],
+					"rols_principals": [],
+					"estil_tags": ["casolà"],
+					"preu": 4.0
+				},
+				{
+					"curs": "postres",
+					"nom": "Brownie de xocolata",
+                	"ingredients": ["chocolate", "flour", "eggs", "butter"],
+					"rols_principals": [],
+					"estil_tags": ["dolç"],
+					"preu": 2.0
+				}
+			],
+			"begudes": [],
+			"preu_total_real": "",
+			"logs_transformacio": []
+		},
+		"avaluacio": {
+			"puntuacio_global": "",
+			"validat": true,
+			"cost_adaptacio": "",
+			"ingredients_rebutjats": [],
+			"utilitat": 1.0
+		}
+	},
+	{
+		"id_cas": 8,
+		"problema": {
+			"tipus_esdeveniment": "altres",
+			"estil_culinari": "",
+			"temporada": "hivern",
+			"n_comensals": 60,
+			"preu_pers_objectiu": 25.0,
+			"servei": "indiferent",
+			"formalitat": "informal",
+			"restriccions": []
+		},
+		"solucio": {
+			"plats": [
+				{
+					"curs": "primer",
+					"nom": "Miso shiru amb tofu i wakame",
+            		"ingredients": ["miso", "tofu", "wakame", "spring_onion", "water"],
+					"rols_principals": [],
+					"estil_tags": ["sopa", "japones"],
+					"preu": 3.0
+				},
+				{
+					"curs": "segon",
+					"nom": "Yakitori de pollastre amb verdures",
+            		"ingredients": ["chicken", "pepper", "onion", "soy_sauce", "mirin"],
+					"rols_principals": [],
+					"estil_tags": ["japones", "a la brasa"],
+					"preu": 6.0
+				},
+				{
+					"curs": "postres",
+					"nom": "Mochi de te verd",
+            		"ingredients": ["rice_flour", "sugar", "green tea matcha", "water"],
+					"rols_principals": [],
+					"estil_tags": ["dolç", "japones"],
+					"preu": 2.0
+				}
+			],
+			"begudes": [],
+			"preu_total_real": "",
+			"logs_transformacio": []
+		},
+		"avaluacio": {
+			"puntuacio_global": "",
+			"validat": true,
+			"cost_adaptacio": "",
+			"ingredients_rebutjats": [],
+			"utilitat": 1.0
+		}
+	},
+	{
+		"id_cas": 9,
+		"problema": {
+			"tipus_esdeveniment": "congres",
+			"estil_culinari": "",
+			"temporada": "indiferent",
+			"n_comensals": 300,
+			"preu_pers_objectiu": 18.0,
+			"servei": "finger_food",
+			"formalitat": "informal",
+			"restriccions": []
+		},
+		"solucio": {
+			"plats": [
+				{
+					"curs": "primer",
+					"nom": "Mini sandvitx de pernil i formatge",
+              	    "ingredients": ["bread", "ham", "cheese"],
+					"rols_principals": [],
+					"estil_tags": ["finger_food"],
+					"preu": 1.5
+				},
+				{
+					"curs": "segon",
+					"nom": "Croquetes variades",
+                	"ingredients": ["flour", "milk", "chicken", "mushrooms"],
+					"rols_principals": [],
+					"estil_tags": ["finger_food"],
+					"preu": 2.5
+				},
+				{
+					"curs": "postres",
+					"nom": "Galetes de mantega",
+                	"ingredients": ["flour", "sugar", "butter"],
+					"rols_principals": [],
+					"estil_tags": [],
+					"preu": 1.0
+				}
+			],
+			"begudes": [],
+			"preu_total_real": "",
+			"logs_transformacio": []
+		},
+		"avaluacio": {
+			"puntuacio_global": "",
+			"validat": true,
+			"cost_adaptacio": "",
+			"ingredients_rebutjats": [],
+			"utilitat": 1.0
+		}
+	},
+	{
+		"id_cas": 10,
+		"problema": {
+			"tipus_esdeveniment": "casament",
+			"estil_culinari": "",
+			"temporada": "primavera",
+			"n_comensals": 100,
+			"preu_pers_objectiu": 65.0,
+			"servei": "assegut",
+			"formalitat": "formal",
+			"restriccions": []
+		},
+		"solucio": {
+			"plats": [
+				{
+					"curs": "primer",
+					"nom": "Carpaccio de remolatxa i formatge de cabra",
+                	"ingredients": ["beetroot", "goat cheese", "walnuts", "arugula", "oil"],
+					"rols_principals": [],
+					"estil_tags": ["mediterrani", "fresc"],
+					"preu": 6.0
+				},
+				{
+					"curs": "segon",
+					"nom": "Orada al forn amb verdures",
+                	"ingredients": ["sea_bream", "zucchini", "pepper", "oil", "lemon"],
+					"rols_principals": [],
+					"estil_tags": ["mediterrani"],
+					"preu": 14.0
+				},
+				{
+					"curs": "postres",
+					"nom": "Mousse de maduixa",
+                	"ingredients": ["strawberry", "cream", "sugar", "gelatin"],
+					"rols_principals": [],
+					"estil_tags": ["fresc", "dolç"],
+					"preu": 4.0
+				}
+			],
+			"begudes": [],
+			"preu_total_real": "",
+			"logs_transformacio": []
+		},
+		"avaluacio": {
+			"puntuacio_global": "",
+			"validat": true,
+			"cost_adaptacio": "",
+			"ingredients_rebutjats": [],
+			"utilitat": 1.0
+		}
+	},
+	{
+		"id_cas": 11,
+		"problema": {
+			"tipus_esdeveniment": "comunio",
+			"estil_culinari": "",
+			"temporada": "tardor",
+			"n_comensals": 50,
+			"preu_pers_objectiu": 35.0,
+			"servei": "assegut",
+			"formalitat": "indiferent",
+			"restriccions": []
+		},
+		"solucio": {
+			"plats": [
+				{
+					"curs": "primer",
+					"nom": "Crema de carbassó",
+               		"ingredients": ["zucchini", "potato", "onion", "oil", "salt"],
+					"rols_principals": [],
+					"estil_tags": ["tradicional"],
+					"preu": 4.0
+				},
+				{
+					"curs": "segon",
+					"nom": "Pollastre rostit amb herbes",
+                	"ingredients": ["chicken", "rosemary", "oil", "salt"],
+					"rols_principals": [],
+					"estil_tags": ["tradicional"],
+					"preu": 10.0
+				},
+				{
+					"curs": "postres",
+					"nom": "Pastís de poma",
+                	"ingredients": ["apple", "flour", "eggs", "sugar", "butter"],
+					"rols_principals": [],
+					"estil_tags": ["dolç", "casolà"],
+					"preu": 4.0
+				}
+			],
+			"begudes": [],
+			"preu_total_real": "",
+			"logs_transformacio": []
+		},
+		"avaluacio": {
+			"puntuacio_global": "",
+			"validat": true,
+			"cost_adaptacio": "",
+			"ingredients_rebutjats": [],
+			"utilitat": 1.0
+		}
+	},
+	{
+		"id_cas": 12,
+		"problema": {
+			"tipus_esdeveniment": "empresa",
+			"estil_culinari": "",
+			"temporada": "estiu",
+			"n_comensals": 120,
+			"preu_pers_objectiu": 28.0,
+			"servei": "cocktail",
+			"formalitat": "informal",
+			"restriccions": []
+		},
+		"solucio": {
+			"plats": [
+				{
+					"curs": "primer",
+					"nom": "Tabulé de quinoa",
+                	"ingredients": ["quinoa", "tomato", "cucumber", "mint", "oil"],
+					"rols_principals": [],
+					"estil_tags": ["internacional", "fresc"],
+					"preu": 3.0
+				},
+				{
+					"curs": "segon",
+					"nom": "Pollastre a la planxa amb verdures",
+                	"ingredients": ["chicken", "zucchini", "pepper", "oil", "salt"],
+					"rols_principals": [],
+					"estil_tags": ["internacional"],
+					"preu": 5.0
+				},
+				{
+					"curs": "postres",
+					"nom": "Iogurt amb fruites del bosc",
+                	"ingredients": ["yogurt", "strawberries", "blackberries", "berries"],
+					"rols_principals": [],
+					"estil_tags": ["fresc", "dolç"],
+					"preu": 2.0
+				}
+			],
+			"begudes": [],
+			"preu_total_real": "",
+			"logs_transformacio": []
+		},
+		"avaluacio": {
+			"puntuacio_global": "",
+			"validat": true,
+			"cost_adaptacio": "",
+			"ingredients_rebutjats": [],
+			"utilitat": 1.0
+		}
+	},
+	{
+		"id_cas": 13,
+		"problema": {
+			"tipus_esdeveniment": "aniversari",
+			"estil_culinari": "",
+			"temporada": "hivern",
+			"n_comensals": 30,
+			"preu_pers_objectiu": 22.0,
+			"servei": "assegut",
+			"formalitat": "informal",
+			"restriccions": []
+		},
+		"solucio": {
+			"plats": [
+				{
+					"curs": "primer",
+					"nom": "Crema de carbassa i pastanaga",
+                	"ingredients": ["pumpkin", "carrot", "onion", "oil", "salt"],
+					"rols_principals": [],
+					"estil_tags": ["comfort_food", "crema"],
+					"preu": 3.0
+				},
+				{
+					"curs": "segon",
+					"nom": "Lasanya casolana",
+                	"ingredients": ["pasta", "minced_meat", "tomato", "cheese", "béchamel"],
+					"rols_principals": [],
+					"estil_tags": ["comfort_food"],
+					"preu": 5.0
+				},
+				{
+					"curs": "postres",
+					"nom": "Brownie amb glaçat",
+                	"ingredients": ["chocolate", "flour", "eggs", "butter", "sugar"],
+					"rols_principals": [],
+					"estil_tags": ["dolç"],
+
+					"preu": 3.0
+				}
+			],
+			"begudes": [],
+			"preu_total_real": "",
+			"logs_transformacio": []
+		},
+		"avaluacio": {
+			"puntuacio_global": "",
+			"validat": true,
+			"cost_adaptacio": "",
+			"ingredients_rebutjats": [],
+			"utilitat": 1.0
+		}
+	},
+	{
+		"id_cas": 14,
+		"problema": {
+			"tipus_esdeveniment": "congres",
+			"estil_culinari": "",
+			"temporada": "primavera",
+			"n_comensals": 250,
+			"preu_pers_objectiu": 20.0,
+			"servei": "cocktail",
+			"formalitat": "informal",
+			"restriccions": []
+		},
+		"solucio": {
+			"plats": [
+				{
+					"curs": "primer",
+					"nom": "Mini brotxetes de pollastre",
+                	"ingredients": ["chicken", "pepper", "onion", "teriyaki_sauce"],
+					"rols_principals": [],
+					"estil_tags": ["finger_food"],
+					"preu": 1.5
+				},
+				{
+					"curs": "segon",
+					"nom": "Mini quiches variades",
+                	"ingredients": ["flour", "eggs", "cheese", "vegetables"],
+					"rols_principals": [],
+					"estil_tags": ["finger_food"],
+					"preu": 2.5
+				},
+				{
+					"curs": "postres",
+					"nom": "Mini magdalenes",
+                	"ingredients": ["flour", "eggs", "sugar", "butter"],
+					"rols_principals": [],
+					"estil_tags": ["dolç"],
+					"preu": 1.0
+				}
+			],
+			"begudes": [],
+			"preu_total_real": "",
+			"logs_transformacio": []
+		},
+		"avaluacio": {
+			"puntuacio_global": "",
+			"validat": true,
+			"cost_adaptacio": "",
+			"ingredients_rebutjats": [],
+			"utilitat": 1.0
+		}
+	}
+]
