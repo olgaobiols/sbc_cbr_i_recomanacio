@@ -1,203 +1,225 @@
 import json
 import os
-from typing import Dict, List, Set, Any, Tuple
-from datetime import datetime
+from typing import Dict, List, Optional, Tuple, Any
 
-# Configuració de fitxers
+# Configuracio de fitxers
 PATH_USER_PROFILES = "data/user_profiles.json"
 PATH_LEARNED_RULES = "data/learned_rules.json"
 
-# Llindar: Quants usuaris diferents s'han de queixar perquè sigui una regla global?
-LLINDAR_GLOBAL_CONFIDENCE = 3 
+# Llindar: si el comptador supera aquest valor, es promociona a regla global
+GLOBAL_PROMOTION_THRESHOLD = 3
 
-class MemoriaPersonal:
-    """
-    CANAL A: Memòria Episòdica/Personal.
-    Gestiona les preferències específiques de cada usuari (persistent).
-    """
-    def __init__(self):
-        self.path = PATH_USER_PROFILES
-        self.dades = self._carregar()
 
-    def _carregar(self) -> Dict:
-        if not os.path.exists(self.path):
-            return {}
-        try:
-            with open(self.path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except:
-            return {}
+def _safe_write_json(path: str, data: Dict) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp_path = f"{path}.tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+    os.replace(tmp_path, path)
 
-    def _guardar(self):
-        with open(self.path, "w", encoding="utf-8") as f:
-            json.dump(self.dades, f, indent=4, ensure_ascii=False)
-
-    def get_perfil(self, user_id: str) -> Dict:
-        if user_id not in self.dades:
-            self.dades[user_id] = {
-                "ingredients_rebutjats": [], # Llista negra personal
-                "parelles_rebutjades": [],   # Incompatibilitats personals
-                "history_sessions": []
-            }
-        return self.dades[user_id]
-
-    def registrar_rebuig_ingredient(self, user_id: str, ingredient: str):
-        perfil = self.get_perfil(user_id)
-        if ingredient not in perfil["ingredients_rebutjats"]:
-            perfil["ingredients_rebutjats"].append(ingredient)
-            self._guardar()
-            print(f"[Canal A] Usuari '{user_id}': Afegit '{ingredient}' a la llista negra personal.")
-
-    def registrar_rebuig_parella(self, user_id: str, ing_a: str, ing_b: str):
-        perfil = self.get_perfil(user_id)
-        parella = sorted([ing_a, ing_b]) # Guardem ordenat per evitar duplicats A-B vs B-A
-        str_parella = f"{parella[0]}|{parella[1]}"
-        
-        if str_parella not in perfil["parelles_rebutjades"]:
-            perfil["parelles_rebutjades"].append(str_parella)
-            self._guardar()
-            print(f"[Canal A] Usuari '{user_id}': Afegida incompatibilitat personal '{str_parella}'.")
-
-class MemoriaGlobal:
-    """
-    CANAL B: Memòria Semàntica/Global.
-    Acumula evidència de múltiples usuaris per crear regles de domini.
-    """
-    def __init__(self):
-        self.path = PATH_LEARNED_RULES
-        self.dades = self._carregar()
-        self._assegurar_estructura()
-
-    def _carregar(self) -> Dict:
-        if not os.path.exists(self.path):
-            # Estructura inicial
-            return {
-                "regles_ingredients": [], # Ingredients prohibits globalment
-                "regles_parelles": [],    # Combinacions prohibides globalment
-                "comptadors": {           # Evidència acumulada
-                    "ingredients": {}, 
-                    "parelles": {}
-                }
-            }
-        try:
-            with open(self.path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except:
-            return {}
-
-    def _assegurar_estructura(self):
-        """Garanteix que totes les claus necessàries existeixen, fins i tot si el JSON està incomplet."""
-        self.dades.setdefault("regles_ingredients", [])
-        self.dades.setdefault("regles_parelles", [])
-        comptadors = self.dades.setdefault("comptadors", {})
-        comptadors.setdefault("ingredients", {})
-        comptadors.setdefault("parelles", {})
-
-    def _guardar(self):
-        with open(self.path, "w", encoding="utf-8") as f:
-            json.dump(self.dades, f, indent=4, ensure_ascii=False)
-
-    def _check_promocio_global(self, tipus: str, clau: str, comptador: int):
-        """Si superem el llindar, promovem a regla global."""
-        if comptador >= LLINDAR_GLOBAL_CONFIDENCE:
-            list_key = "regles_ingredients" if tipus == "ingredients" else "regles_parelles"
-            
-            if clau not in self.dades[list_key]:
-                self.dades[list_key].append(clau)
-                print(f" [Canal B] NOVA REGLA GLOBAL APRESA: {clau} és universalment dolent!")
-                # Aquí podries netejar el comptador o deixar-lo créixer
-            self._guardar()
-
-    def acumular_evidencia_ingredient(self, ingredient: str):
-        counts = self.dades["comptadors"]["ingredients"]
-        counts[ingredient] = counts.get(ingredient, 0) + 1
-        print(f"[Canal B] Evidència acumulada per '{ingredient}': {counts[ingredient]}/{LLINDAR_GLOBAL_CONFIDENCE}")
-        self._guardar()
-        self._check_promocio_global("ingredients", ingredient, counts[ingredient])
-
-    def acumular_evidencia_parella(self, ing_a: str, ing_b: str):
-        counts = self.dades["comptadors"]["parelles"]
-        parella = sorted([ing_a, ing_b])
-        clau = f"{parella[0]}|{parella[1]}"
-        
-        counts[clau] = counts.get(clau, 0) + 1
-        print(f"[Canal B] Evidència acumulada per combinació '{clau}': {counts[clau]}/{LLINDAR_GLOBAL_CONFIDENCE}")
-        self._guardar()
-        self._check_promocio_global("parelles", clau, counts[clau])
 
 class GestorRevise:
     """
-    Controlador de la fase REVISE.
-    Interacciona amb l'usuari i actualitza les memòries.
+    Controlador de la fase REVISE amb doble memòria (personal + global).
     """
-    def __init__(self):
-        self.mem_personal = MemoriaPersonal()
-        self.mem_global = MemoriaGlobal()
+    def __init__(self) -> None:
+        self.user_profiles = self._load_user_profiles()
+        self.learned_rules = self._load_learned_rules()
+
+    def _load_user_profiles(self) -> Dict[str, Dict[str, List[str]]]:
+        if not os.path.exists(PATH_USER_PROFILES):
+            return {}
+        try:
+            with open(PATH_USER_PROFILES, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data if isinstance(data, dict) else {}
+        except Exception:
+            return {}
+
+    def _load_learned_rules(self) -> Dict[str, Dict[str, Any]]:
+        if not os.path.exists(PATH_LEARNED_RULES):
+            return {
+                "counters": {"ingredients": {}, "pairs": {}},
+                "global_rules": {"ingredients": [], "pairs": []},
+            }
+        try:
+            with open(PATH_LEARNED_RULES, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            data = {}
+        data.setdefault("counters", {})
+        data["counters"].setdefault("ingredients", {})
+        data["counters"].setdefault("pairs", {})
+        data.setdefault("global_rules", {})
+        data["global_rules"].setdefault("ingredients", [])
+        data["global_rules"].setdefault("pairs", [])
+        return data
+
+    def _save_user_profiles(self) -> None:
+        _safe_write_json(PATH_USER_PROFILES, self.user_profiles)
+
+    def _save_learned_rules(self) -> None:
+        _safe_write_json(PATH_LEARNED_RULES, self.learned_rules)
+
+    def _ensure_profile(self, user_id: str) -> Dict[str, List[str]]:
+        uid = str(user_id)
+        if uid not in self.user_profiles:
+            self.user_profiles[uid] = {
+                "rejected_ingredients": [],
+                "rejected_pairs": [],
+            }
+        return self.user_profiles[uid]
+
+    def _normalize_ingredient(self, item: str) -> str:
+        return str(item).strip().lower()
+
+    def _normalize_pair(self, item: str) -> Optional[str]:
+        raw = str(item).strip().lower()
+        if "+" in raw:
+            parts = [p.strip() for p in raw.split("+") if p.strip()]
+        elif "|" in raw:
+            parts = [p.strip() for p in raw.split("|") if p.strip()]
+        else:
+            return None
+        if len(parts) != 2:
+            return None
+        a, b = sorted(parts)
+        return f"{a}|{b}"
+
+    def _increment_global_counter(self, category: str, key: str) -> None:
+        counters = self.learned_rules["counters"][category]
+        counters[key] = counters.get(key, 0) + 1
+        if counters[key] > GLOBAL_PROMOTION_THRESHOLD:
+            global_list = self.learned_rules["global_rules"][category]
+            if key not in global_list:
+                global_list.append(key)
+        self._save_learned_rules()
+
+    def process_rejection(self, user_id: str, item: str, type: str) -> Optional[str]:
+        perfil = self._ensure_profile(user_id)
+        if type == "ingredient":
+            ing = self._normalize_ingredient(item)
+            if not ing:
+                return None
+            if ing not in perfil["rejected_ingredients"]:
+                perfil["rejected_ingredients"].append(ing)
+                self._save_user_profiles()
+            self._increment_global_counter("ingredients", ing)
+            return ing
+
+        if type == "pair":
+            pair_key = self._normalize_pair(item)
+            if not pair_key:
+                return None
+            if pair_key not in perfil["rejected_pairs"]:
+                perfil["rejected_pairs"].append(pair_key)
+                self._save_user_profiles()
+            self._increment_global_counter("pairs", pair_key)
+            return pair_key
+
+        return None
 
     def input_nota(self, prompt: str) -> int:
         while True:
             try:
                 val = int(input(prompt))
-                if 1 <= val <= 5: return val
-            except: pass
-            print("  Si us plau, introdueix un número de 1 a 5.")
+                if 1 <= val <= 5:
+                    return val
+            except Exception:
+                pass
+            print("  Si us plau, introdueix un numero de 1 a 5.")
 
-    def avaluar_proposta(self, cas_proposat: Dict, user_id: str = "guest"):
-        print("\n🧐 --- FASE REVISE: AVALUACIÓ ---")
-        
-        # 1. N1: Feedback Global
-        nota_global = self.input_nota("Puntua el menú globalment (1-5): ")
-        
-        resultat = {
-            "puntuacio_global": nota_global,
-            "ingredients_rebutjats": [],
-            "parelles_rebutjades": [],
-            "tipus_resultat": "exit" if nota_global >= 4 else "fracas_suau"
-        }
+    def input_nota_opcional(self, prompt: str) -> Optional[int]:
+        while True:
+            raw = input(prompt).strip()
+            if raw == "":
+                return None
+            try:
+                val = int(raw)
+                if 1 <= val <= 5:
+                    return val
+            except Exception:
+                pass
+            print("  Introdueix un numero de 1 a 5 o prem Enter per saltar.")
 
-        if nota_global == 5:
-            print(" Fantàstic! No calen més detalls.")
-            return resultat
+    def collect_feedback(self, case: Dict, user_id: str) -> Dict[str, Any]:
+        print("\n🧐 --- FASE REVISE: AVALUACIO ---")
+        n1 = self.input_nota("Puntua el menu globalment (1-5): ")
 
-        # 2. N2: Aspectes (Opcional, només si la nota no és perfecta)
-        print("Pots detallar una mica més? (Prem Enter per saltar)")
-        nota_gust = input("  Nota Gust (1-5): ")
-        nota_orig = input("  Nota Originalitat (1-5): ")
-        
-        # 3. N3: Feedback Granular (Crític per aprendre)
-        print("\nHi ha algun ingredient o combinació que vulguis vetar?")
+        print("Pots detallar una mica mes? (Prem Enter per saltar)")
+        n2_taste = self.input_nota_opcional("  Nota Gust (1-5): ")
+        n2_originality = self.input_nota_opcional("  Nota Originalitat (1-5): ")
+
+        rejected_ingredients: List[str] = []
+        rejected_pairs: List[str] = []
+
+        print("\nHi ha algun ingredient o combinacio que vulguis vetar?")
         print("Escriu 'NO ingredient' (ex: 'NO api') o 'NO A+B' (ex: 'NO maduixa+all').")
         print("Escriu 'FI' per acabar.")
-        
+
         while True:
             cmd = input("> ").strip()
-            if cmd.upper() == "FI" or cmd == "": break
-            
+            if cmd == "" or cmd.upper() == "FI":
+                break
             if cmd.upper().startswith("NO "):
-                target = cmd[3:].strip().lower()
-                
-                # Cas Parella (A+B)
-                if "+" in target:
-                    parts = target.split("+")
-                    if len(parts) == 2:
-                        ing_a, ing_b = parts[0].strip(), parts[1].strip()
-                        self.mem_personal.registrar_rebuig_parella(user_id, ing_a, ing_b)
-                        self.mem_global.acumular_evidencia_parella(ing_a, ing_b)
-                        resultat["parelles_rebutjades"].append(f"{ing_a}|{ing_b}")
-                
-                # Cas Ingredient Únic
-                else:
-                    self.mem_personal.registrar_rebuig_ingredient(user_id, target)
-                    self.mem_global.acumular_evidencia_ingredient(target)
-                    resultat["ingredients_rebutjats"].append(target)
-        
-        # Classificació final del fracàs
-        if resultat["ingredients_rebutjats"] or resultat["parelles_rebutjades"]:
-            # Si l'usuari ha vetat coses específiques, considerem que hi ha hagut un problema de contingut
-            # Si la nota era molt baixa (1-2), és crític. Si és 3, és suau.
-            if nota_global <= 2:
-                resultat["tipus_resultat"] = "fracas_critic"
+                target = cmd[3:].strip()
             else:
-                resultat["tipus_resultat"] = "fracas_suau" # Acceptable però millorable
+                target = cmd
 
-        return resultat
+            if "+" in target or "|" in target:
+                normalized = self.process_rejection(user_id, target, "pair")
+                if normalized:
+                    rejected_pairs.append(normalized)
+                else:
+                    print("  Format de parella invalid. Usa 'A+B'.")
+            else:
+                normalized = self.process_rejection(user_id, target, "ingredient")
+                if normalized:
+                    rejected_ingredients.append(normalized)
+                else:
+                    print("  Ingredient invalid.")
+
+        return {
+            "puntuacio_global": n1,
+            "aspectes": {"gust": n2_taste, "originalitat": n2_originality},
+            "ingredients_rebutjats": rejected_ingredients,
+            "parelles_rebutjades": rejected_pairs,
+        }
+
+    def evaluate_result(
+        self,
+        puntuacio_global: int,
+        n2_taste: Optional[int],
+        n2_originality: Optional[int],
+        rejected_ingredients: List[str],
+        rejected_pairs: List[str],
+    ) -> str:
+        if rejected_ingredients or rejected_pairs or puntuacio_global <= 2:
+            return "CRITICAL_FAILURE"
+        if puntuacio_global == 3:
+            return "SOFT_FAILURE"
+
+        low_aspect = False
+        if n2_taste is not None and n2_taste <= 2:
+            low_aspect = True
+        if n2_originality is not None and n2_originality <= 2:
+            low_aspect = True
+        if low_aspect:
+            return "SOFT_FAILURE"
+
+        if puntuacio_global >= 4:
+            return "SUCCESS"
+
+        return "SOFT_FAILURE"
+
+    def avaluar_proposta(self, cas_proposat: Dict, user_id: str = "guest") -> Dict[str, Any]:
+        feedback = self.collect_feedback(cas_proposat, str(user_id))
+        status = self.evaluate_result(
+            feedback["puntuacio_global"],
+            feedback["aspectes"]["gust"],
+            feedback["aspectes"]["originalitat"],
+            feedback["ingredients_rebutjats"],
+            feedback["parelles_rebutjades"],
+        )
+        feedback["tipus_resultat"] = status
+        return feedback

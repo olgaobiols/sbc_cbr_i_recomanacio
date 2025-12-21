@@ -1,13 +1,25 @@
+def _get_ing_field(ing_row, *keys):
+    for key in keys:
+        if key in ing_row:
+            return ing_row[key]
+    return None
+
+def _norm_text(value):
+    return str(value).strip().lower() if value is not None else ""
+
 def get_ingredient_principal(plat, base_ingredients):
     """Retorna l'ingredient del plat amb typical_role = main."""
     ingredient_principal = None
     llista_ingredients = []
     
     for ing in plat.get("ingredients", []):
+        ing_norm = _norm_text(ing)
         for ing_row in base_ingredients:
-            if ing_row['nom_ingredient'] == ing:
+            nom = _get_ing_field(ing_row, "nom_ingredient", "ingredient_name", "name")
+            if _norm_text(nom) == ing_norm:
                 llista_ingredients.append(ing_row)
-                if ing_row['rol_tipic'] == "main":
+                rol = _get_ing_field(ing_row, "rol_tipic", "typical_role")
+                if _norm_text(rol) == "main":
                     ingredient_principal = ing_row
     
     # Fallback: si no hi ha ingredient principal, escollim el primer ingredient reconegut
@@ -49,19 +61,22 @@ def score_beguda_per_plat(beguda_row, ingredient_principal, llista_ingredients):
         score = 0
         
         # --- Famílies ---
-        fam_beguda = set(beguda_row["va_be_amb_familia"].split("|"))
-        if ingredient["familia"] in fam_beguda:
+        fam_beguda = set(beguda_row.get("va_be_amb_familia", "").split("|"))
+        fam_ing = _get_ing_field(ingredient, "familia", "family")
+        if fam_ing and fam_ing in fam_beguda:
             score += 2
 
         # --- Macro categories ---
-        macro_beguda = set(beguda_row["va_be_amb_categoria_macro"].split("|"))
-        if ingredient["categoria_macro"] in macro_beguda:
+        macro_beguda = set(beguda_row.get("va_be_amb_categoria_macro", "").split("|"))
+        macro_ing = _get_ing_field(ingredient, "categoria_macro", "macro_category")
+        if macro_ing and macro_ing in macro_beguda:
             score += 2
 
         # --- Sabors ---
-        sabors_beguda = set(beguda_row["va_be_amb_sabors"].split("|"))
-        evita_sabors = set(beguda_row["evita_sabors"].split("|"))
-        sabors_ing = set(ingredient["sabors_base"].split("|"))
+        sabors_beguda = set(beguda_row.get("va_be_amb_sabors", "").split("|"))
+        evita_sabors = set(beguda_row.get("evita_sabors", "").split("|"))
+        sabors_ing_raw = _get_ing_field(ingredient, "sabors_base", "base_flavors")
+        sabors_ing = set((sabors_ing_raw or "").split("|"))
 
         # Suma per coincidència de sabors
         score += len(sabors_ing & sabors_beguda)

@@ -4,6 +4,7 @@ from typing import List, Set
 from estructura_cas import DescripcioProblema
 from retriever_nuevo import Retriever
 from knowledge_base import KnowledgeBase
+from gestor_feedback import GestorRevise
 from operadors_transformacio_realista import (
     substituir_ingredient, 
     triar_tecniques_per_plat, 
@@ -35,6 +36,21 @@ base_ingredients_list = list(kb.ingredients.values())
 def input_default(prompt, default):
     txt = input(f"{prompt} [{default}]: ").strip()
     return txt if txt else default
+
+def input_choice(prompt, options, default, indiferent_value=None):
+    opts = list(options)
+    if "indiferent" not in opts:
+        opts.append("indiferent")
+    opts_txt = "/".join(opts)
+    while True:
+        txt = input(f"{prompt} ({opts_txt}) [{default}]: ").strip().lower()
+        if not txt:
+            return default
+        if txt == "indiferent":
+            return indiferent_value if indiferent_value is not None else "indiferent"
+        if txt in opts:
+            return txt
+        print(f"  Valor no vàlid. Opcions: {opts_txt}")
 
 def input_int_default(prompt, default):
     txt = input(f"{prompt} [{default}]: ").strip()
@@ -244,6 +260,8 @@ def main():
     print("   (CBR Híbrid: Ontologia + FlavorGraph)")
     print("===========================================\n")
 
+    user_id = input_default("Identificador d'usuari (per guardar preferències)?", "guest")
+
     # 1) Inicialitzem el Retriever
     retriever = Retriever("src/base_de_casos.json")
 
@@ -251,9 +269,21 @@ def main():
         print("\n📝 --- NOVA PETICIÓ ---")
 
         # 2) Recollida de Dades (Inputs)
-        tipus_esdeveniment = input_default("Tipus d'esdeveniment? (casament/aniversari/empresa...)", "casament")
-        temporada = input_default("Temporada? (primavera/estiu/tardor/hivern)", "estiu")
-        servei = input_default("Servei? (assegut/cocktail)", "assegut")
+        tipus_esdeveniment = input_choice(
+            "Tipus d'esdeveniment?",
+            ["casament", "aniversari", "empresa", "congres", "comunio"],
+            "casament"
+        )
+        temporada = input_choice(
+            "Temporada?",
+            ["primavera", "estiu", "tardor", "hivern"],
+            "estiu"
+        )
+        servei = input_choice(
+            "Servei?",
+            ["assegut", "cocktail", "finger_food"],
+            "assegut"
+        )
         n_comensals = input_int_default("Nombre de comensals?", 80)
         preu_pers = input_float_default("Pressupost per persona (€)?", 50.0)
         
@@ -262,7 +292,12 @@ def main():
         restriccions = parse_list_input(restr_input)
         
         # [NOU] Estil (Opcional)
-        estil_culinari = input_default("Estil culinari preferit? (ex: japonès, mediterrani) [opcional]", "")
+        estil_culinari = input_choice(
+            "Estil culinari preferit? [opcional]",
+            ["mediterrani", "japones", "italia", "frances", "thai", "mexica"],
+            "",
+            indiferent_value=""
+        )
 
         # 3) Construcció del Problema
         problema = DescripcioProblema(
@@ -360,12 +395,13 @@ def main():
             imprimir_tecnniques_proposades("SEGON PLAT",  plat2, transf_2)
             imprimir_tecnniques_proposades("POSTRES",     postres, transf_post)
 
-            # Generació de Text (Gemini)
-            if input_default("Generar nous noms i descripcions amb Gemini? (s/n)", "n").lower() == 's':
-                estil_row = kb.estils[estil_tecnic]
-                info_llm_1 = genera_descripcio_llm(plat1, transf_1, estil_tecnic, servei, estil_row)
-                info_llm_2 = genera_descripcio_llm(plat2, transf_2, estil_tecnic, servei, estil_row)
-                info_llm_post = genera_descripcio_llm(postres, transf_post, estil_tecnic, servei, estil_row)
+        # Generació de Text (Gemini)
+        if input_default("Generar nous noms i descripcions amb Gemini? (s/n)", "n").lower() == 's':
+            estil_tecnic_llm = estil_tecnic if estil_tecnic else "classic"
+            estil_row = kb.estils.get(estil_tecnic)
+            info_llm_1 = genera_descripcio_llm(plat1, transf_1, estil_tecnic_llm, servei, estil_row)
+            info_llm_2 = genera_descripcio_llm(plat2, transf_2, estil_tecnic_llm, servei, estil_row)
+            info_llm_post = genera_descripcio_llm(postres, transf_post, estil_tecnic_llm, servei, estil_row)
 
 
         # 8) Afegir begudes
@@ -380,16 +416,40 @@ def main():
         
         # 9) Resultat Final
         imprimir_menu_final(plat1, transf_1, info_llm_1, beguda1, plat2, transf_2, info_llm_2, beguda2, postres, transf_post, info_llm_post, beguda_postres)
+
+        # 9.1) Imatge del menú (opcional)
+        if input_default("Generar imatge detallada del menú? (s/n)", "n").lower() == 's':
+            plats_info = []
+            for plat, info in [
+                (plat1, info_llm_1),
+                (plat2, info_llm_2),
+                (postres, info_llm_post),
+            ]:
+                plats_info.append({
+                    "curs": plat.get("curs", ""),
+                    "nom": info.get("nom_nou", plat.get("nom", "—")) if info else plat.get("nom", "—"),
+                    "ingredients": plat.get("ingredients", []) or [],
+                    "descripcio": info.get("descripcio_carta", "") if info else "",
+                    "presentacio": info.get("presentacio", "") if info else "",
+                })
+
+            prompt_imatge = construir_prompt_imatge_menu(
+                tipus_esdeveniment=tipus_esdeveniment,
+                temporada=temporada,
+                espai="interior",
+                formalitat=problema.formalitat,
+                plats_info=plats_info,
+            )
+            genera_imatge_menu_hf(prompt_imatge, output_path="menu_event.png")
         
-        # 10) Feedback (Revise simple)
-        print("\n⭐ FASE REVISE")
-        try:
-            nota = int(input("Puntua aquest menú (1-5): "))
-            if nota >= 4:
-                print("✅ M'alegro que t'agradi! (Aquí aniria el RETAIN)")
-            else:
-                print("📝 Prenem nota per millorar.")
-        except: pass
+        # 10) FASE REVISE (Dual Memory)
+        gestor_revise = GestorRevise()
+        cas_proposat = {
+            "problema": problema,
+            "solucio": {"primer": plat1, "segon": plat2, "postres": postres}
+        }
+        resultat_avaluacio = gestor_revise.avaluar_proposta(cas_proposat, user_id)
+        print(f"\nResultat de la revisió: {resultat_avaluacio['tipus_resultat']}")
 
         if input_default("\nSortir? (s/n)", "n").lower() == 's':
             print("Bon profit! 👋")
