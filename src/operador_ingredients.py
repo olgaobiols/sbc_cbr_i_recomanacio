@@ -158,6 +158,24 @@ def substituir_ingredient(
         pass
     return plat
 
+def adaptar_plat_a_estil_latent(
+    plat: Dict[str, Any],
+    nom_estil: str,
+    kb: Any,
+    base_estils_latents: Dict,
+    intensitat: float = 0.5,
+    parelles_prohibides: Optional[Set[str]] = None
+) -> Dict[str, Any]:
+    """Wrapper de compatibilitat per adaptar un plat a un estil latent."""
+    return _adaptar_latent_core(
+        plat=plat,
+        nom_estil=nom_estil,
+        kb=kb,
+        base_estils_latents=base_estils_latents,
+        intensitat=intensitat,
+        parelles_prohibides=parelles_prohibides
+    )
+
 def substituir_ingredients_prohibits(
     plat: Dict[str, Any], 
     ingredients_prohibits: Set[str], 
