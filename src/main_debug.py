@@ -278,7 +278,7 @@ EU_ALLERGENS = [
     ("egg", "Ous"),
     ("fish", "Peix"),
     ("peanuts", "Cacauets"),
-    ("soy", "Soja"),
+    ("soybeans", "Soja"),
     ("milk", "Llet"),
     ("nuts", "Fruits secs"),
     ("celery", "Api"),
