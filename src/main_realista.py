@@ -175,8 +175,7 @@ def main():
         restr_input = input_default("Tens restriccions? (ex: celiac, vegan) [separat per comes]", "")
         restriccions = parse_list_input(restr_input)
         
-        # [NOU] Estil (Opcional)
-        estil_culinari = input_default("Estil culinari preferit? (ex: japonès, mediterrani) [opcional]", "")
+        estil_culinari = ""
 
         # 3) Construcció del Problema
         problema = DescripcioProblema(

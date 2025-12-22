@@ -1,14 +1,38 @@
+def _first_present(row, keys):
+    for key in keys:
+        value = row.get(key)
+        if value not in (None, ""):
+            return value
+    return ""
+
+def _normalize_key(value):
+    return str(value or "").strip().lower()
+
+def _normalize_ingredient_row(ing_row):
+    out = dict(ing_row)
+    out["nom_ingredient"] = _first_present(out, ("nom_ingredient", "ingredient_name", "name"))
+    out["rol_tipic"] = _first_present(out, ("rol_tipic", "typical_role", "role"))
+    out["familia"] = _first_present(out, ("familia", "family"))
+    out["categoria_macro"] = _first_present(out, ("categoria_macro", "macro_category"))
+    out["sabors_base"] = _first_present(out, ("sabors_base", "base_flavors"))
+    return out
+
 def get_ingredient_principal(plat, base_ingredients):
     """Retorna l'ingredient del plat amb typical_role = main."""
     ingredient_principal = None
     llista_ingredients = []
     
     for ing in plat.get("ingredients", []):
+        ing_key = _normalize_key(ing)
         for ing_row in base_ingredients:
-            if ing_row['nom_ingredient'] == ing:
-                llista_ingredients.append(ing_row)
-                if ing_row['rol_tipic'] == "main":
-                    ingredient_principal = ing_row
+            row_name = _normalize_key(
+                _first_present(ing_row, ("nom_ingredient", "ingredient_name", "name"))
+            )
+            if row_name == ing_key:
+                norm_row = _normalize_ingredient_row(ing_row)
+                llista_ingredients.append(norm_row)
+                if norm_row.get('rol_tipic') == "main":
+                    ingredient_principal = norm_row
     
     # Fallback: si no hi ha ingredient principal, escollim el primer ingredient reconegut
     if ingredient_principal is None and llista_ingredients:

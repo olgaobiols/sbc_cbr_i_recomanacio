@@ -481,13 +481,7 @@ def main():
         
         alcohol = input_choice("Voldràs begudes amb alcohol?", ["si", "no"],"si")
         
-        # [NOU] Estil (Opcional)
-        estil_culinari = input_choice(
-            "Estil culinari preferit? [opcional]",
-            ["mediterrani", "japones", "italia", "frances", "thai", "mexica"],
-            "",
-            indiferent_value=""
-        )
+        estil_culinari = ""
 
         # 3) Construcció del Problema
         problema = DescripcioProblema(
