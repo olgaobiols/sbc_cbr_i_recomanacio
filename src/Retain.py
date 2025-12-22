@@ -4,6 +4,42 @@ import os
 from typing import Any, Dict, List
 
 
+LLINDAR_UTILITAT = 0.6
+GAMMA = 0.01
+
+def _normalize_cost_text(value: str) -> str:
+    if not value:
+        return ""
+    txt = str(value).lower()
+    return (
+        txt.replace("ó", "o")
+        .replace("è", "e")
+        .replace("à", "a")
+        .replace("í", "i")
+        .replace("ï", "i")
+        .replace("ú", "u")
+    )
+
+def _calcular_cost_adaptacio(transformation_log: List[str]) -> int:
+    complex_kw = {"estil", "latent", "tecnica", "estructural", "cultural", "toc magic"}
+    simple_kw = {"substitucio", "maridatge", "fallback"}
+    excluded_kw = {"imatge", "descripcio", "llm", "presentacio"}
+
+    k_adapt = 0
+    for entry in transformation_log or []:
+        txt_norm = _normalize_cost_text(entry)
+        if not txt_norm:
+            continue
+        if any(kw in txt_norm for kw in excluded_kw):
+            continue
+        if any(kw in txt_norm for kw in complex_kw):
+            k_adapt += 3
+        elif any(kw in txt_norm for kw in simple_kw):
+            k_adapt += 1
+        else:
+            k_adapt += 1
+    return k_adapt
+
 def retain_case(
     kb_instance: Any,
     new_case: Dict,
@@ -18,27 +54,20 @@ def retain_case(
     """
     # 1) Filtre de seguretat
     if evaluation_result == "fracas_critic":
-        print("❌ [RETAIN] Cas descartat per Fracàs Crític (violació de restriccions).")
+        print("❌ [DECISIÓ: DESCARTAT PER SEGURETAT]")
+        print("El cas ha estat rebutjat degut a un Fracàs Crític (violació de restriccions dures o al·lèrgies).")
+        print("Segons la política de retenció, el sistema no pot interioritzar coneixement insegur.")
         return False
 
     # 2) Cost d'adaptació K_adapt
-    k_adapt = 0
-    for entry in transformation_log or []:
-        txt = (entry or "").lower()
-        txt_norm = txt.replace("ó", "o").replace("è", "e").replace("à", "a")
-        if "estil" in txt_norm or "latent" in txt_norm or "tecnica" in txt_norm:
-            k_adapt += 3
-        elif "substitucio" in txt_norm:
-            k_adapt += 1
-        else:
-            k_adapt += 1
+    k_adapt = _calcular_cost_adaptacio(transformation_log)
+    print(f"Cost d'adaptació calculat: K_adapt={k_adapt}")
 
 
     # 3) Utilitat U
     q_user = max(0.0, min(1.0, float(user_score) / 5.0))
     alpha = 0.5
     utilitat = q_user * (1 + alpha * math.log(1 + k_adapt))
-    print(f"ℹ️ [RETAIN] Cost d'adaptació K_adapt={k_adapt} | Utilitat U={utilitat:.2f}")
 
 
     # 4) Redundància (d_min)
@@ -62,13 +91,14 @@ def retain_case(
             continue
 
     d_min = 1.0 - sim_max
-    gamma = 0.01
-    if d_min < gamma:
-        print(f"❌ [RETAIN] Cas descartat per Redundància. Distància {d_min:.2f} < Gamma.")
+    if d_min < GAMMA:
+        print("♻️ [DECISIÓ: DESCARTAT PER REDUNDÀNCIA]")
+        print("El cas no aporta prou novetat a la Base de Casos.")
+        print(f"Distància al veí més proper (d_min={d_min:.2f}) < radi d'exclusió (gamma={GAMMA}).")
         return False
 
     # 5) Persistència segons utilitat i estructura final detallada
-    utility_threshold = 0.6
+    utility_threshold = LLINDAR_UTILITAT
     
     if utilitat > utility_threshold:
         prob_obj = new_case["problema"]
@@ -134,11 +164,19 @@ def retain_case(
                 json.dump(kb_instance.base_casos, f, indent=4, ensure_ascii=False)
                 f.flush()
                 os.fsync(f.fileno())
-            print(f"✅ [RETAIN] Cas {final_case['id_cas']} guardat amb estructura completa!")
+            print("✅ [DECISIÓ: APRÈS I RETINGUT]")
+            print("El cas s'ha incorporat exitosament a la memòria a llarg termini.")
+            print("Justificació XCBR:")
+            print("  1. Seguretat validada.")
+            print(f"  2. Alta Utilitat (U={utilitat:.2f}): Esforç d'adaptació (K={k_adapt}) vs Satisfacció.")
+            print(f"  3. Novetat confirmada (d_min >= {GAMMA}).")
             return True
         except Exception as e:
-            print(f"❌ [RETAIN] Error al guardar: {e}")
+            print(f"Error al guardar: {e}")
             return False
 
-    print(f"❌ [RETAIN] Cas descartat (Utilitat {utilitat:.2f} <= {utility_threshold})")
+    print("⚠️ [DECISIÓ: DESCARTAT PER BAIXA UTILITAT]")
+    print(f"Utilitat calculada (U={utilitat:.2f}) inferior al llindar ({LLINDAR_UTILITAT}).")
+    print(f"Motiu: El Cost d'Adaptació ha estat baix (K_adapt={k_adapt}).")
+    print("Teoria: Solució 'trivial'. El cost de manteniment supera el cost de regeneració futura.")
     return False

@@ -970,6 +970,15 @@ def main():
             transformation_log.append(f"Tècnica: {t.get('nom') or t.get('display') or t}")
         for t in (transf_post or []):
             transformation_log.append(f"Tècnica: {t.get('nom') or t.get('display') or t}")
+        for curs, beguda in [
+            ("primer", beguda1),
+            ("segon", beguda2),
+            ("postres", beguda_postres),
+        ]:
+            if beguda:
+                transformation_log.append(
+                    f"Maridatge: Generat nou maridatge per {curs} ({beguda.get('nom', '—')})"
+                )
 
         saved = kb.retain_case(
             new_case=cas_proposat,

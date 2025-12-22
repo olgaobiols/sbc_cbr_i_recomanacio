@@ -259,7 +259,7 @@ LATENT_CONDIMENT_SETS = {
         ],
         "dessert": [
             "chocolate + chili",
-            "hot honey (dessert-safe)",
+            "hot honey",
             "berry coulis with chili",
         ],
     },

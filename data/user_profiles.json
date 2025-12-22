@@ -10,10 +10,13 @@
             "lemon|water"
         ],
         "alergies": [
-            "fish"
+            "milk"
         ],
         "restriccions": [
             "vegan"
+        ],
+        "ingredients_preferits": [
+            "apple"
         ]
     },
     "guest": {
