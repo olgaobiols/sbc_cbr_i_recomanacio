@@ -367,18 +367,18 @@ def imprimir_casos(candidats, top_k=5):
         print(f"   Detall:   {' | '.join(parts)}")
 
 def imprimir_menu_final(
-    plat1, transf_1, info_llm_1, beguda1,
-    plat2, transf_2, info_llm_2, beguda2,
-    postres, transf_post, info_llm_post, beguda_postres
+    plat1, transf_1, info_llm_1, beguda1, score1,
+    plat2, transf_2, info_llm_2, beguda2, score2,
+    postres, transf_post, info_llm_post, beguda_postres, score_postres
 ):
     print("\n" + "="*40)
     print("      🍽️  MENÚ ADAPTAT FINAL  🍽️")
     print("="*40)
 
-    for etiqueta, plat, info_llm, beguda in [
-        ("PRIMER PLAT", plat1, info_llm_1, beguda1),
-        ("SEGON PLAT",  plat2, info_llm_2, beguda2),
-        ("POSTRES",     postres, info_llm_post, beguda_postres),
+    for etiqueta, plat, info_llm, beguda, score in [
+        ("PRIMER PLAT", plat1, info_llm_1, beguda1, score1),
+        ("SEGON PLAT",  plat2, info_llm_2, beguda2, score2),
+        ("POSTRES",     postres, info_llm_post, beguda_postres, score_postres),
     ]:
         nom = info_llm.get("nom_nou", plat.get("nom", "—")) if info_llm else plat.get("nom", "—")
         desc = info_llm.get("descripcio_carta", "") if info_llm else "Plat clàssic."
@@ -389,8 +389,10 @@ def imprimir_menu_final(
         if desc:
             print(f"   Carta: {desc}")
         
-        if beguda:
-            print(f"   🍷 Beguda recomanada: {beguda.get('nom', '—')}")
+        if beguda is None:
+            print("   🍷 Beguda recomanada: ❌ No s'ha trobat cap beguda adequada")
+        else:
+            print(f"   🍷 Beguda recomanada: {beguda.get('nom', '—')} (score {score:.2f})")
 
         # Si hi ha logs de canvis, els mostrem (Explicabilitat XCBR)
         logs = plat.get("log_transformacio", [])
@@ -477,6 +479,8 @@ def main():
                 usar_alergies_guardades = True
         perfil_usuari = {"alergies": alergies} if alergies else None
         
+        alcohol = input_choice("Voldràs begudes amb alcohol?", ["si", "no"],"si")
+        
         # [NOU] Estil (Opcional)
         estil_culinari = input_choice(
             "Estil culinari preferit? [opcional]",
@@ -493,6 +497,7 @@ def main():
             preu_pers_objectiu=preu_pers, # Compte amb el nom del camp a la dataclass
             servei=servei,
             restriccions=restriccions,
+            alcohol=alcohol,
             estil_culinari=estil_culinari
         )
 
@@ -656,16 +661,13 @@ def main():
 
         # 8) Afegir begudes
         print("\n✨ === FASE ADAPTACIÓ: BEGUDES ===")
-        beguda1, score1 = recomana_beguda_per_plat(plat1, list(kb.begudes.values()), base_ingredients_list)
-        print(f"Beguda per al primer plat:  {beguda1['nom']} (score {score1})")
-        beguda2, score2 = recomana_beguda_per_plat(plat2, list(kb.begudes.values()), base_ingredients_list)
-        print(f"Beguda per al segon plat:  {beguda2['nom']} (score {score2})")
-        beguda_postres, score_postres = recomana_beguda_per_plat(postres, list(kb.begudes.values()), base_ingredients_list)
-        print(f"Beguda per al segon plat:  {beguda_postres['nom']} (score {score_postres})")
+        beguda1, score1 = recomana_beguda_per_plat(plat1, list(kb.begudes.values()), base_ingredients_list, restriccions, alcohol)
+        beguda2, score2 = recomana_beguda_per_plat(plat2, list(kb.begudes.values()), base_ingredients_list, restriccions, alcohol)
+        beguda_postres, score_postres = recomana_beguda_per_plat(postres, list(kb.begudes.values()), base_ingredients_list, restriccions, alcohol)
 
         
         # 9) Resultat Final
-        imprimir_menu_final(plat1, transf_1, info_llm_1, beguda1, plat2, transf_2, info_llm_2, beguda2, postres, transf_post, info_llm_post, beguda_postres)
+        imprimir_menu_final(plat1, transf_1, info_llm_1, beguda1, score1, plat2, transf_2, info_llm_2, beguda2, score2, postres, transf_post, info_llm_post, beguda_postres, score_postres)
 
         # 9.1) Imatge del menú (opcional)
         if input_default("Generar imatge detallada del menú? (s/n)", "n").lower() == 's':
