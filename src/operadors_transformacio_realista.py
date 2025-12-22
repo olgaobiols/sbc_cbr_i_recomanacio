@@ -82,6 +82,7 @@ def substituir_ingredient(
     mode="regles",
     intensitat=0.4,
     ingredients_estil_usats=None,
+    perfil_usuari: Optional[Dict] = None,
 ):
     """
     Wrapper que connecta amb l'Operador d'Ingredients Refactoritzat.
@@ -95,6 +96,7 @@ def substituir_ingredient(
             base_estils_latents=kb.estils_latents,
             intensitat=intensitat,
             ingredients_estil_usats=ingredients_estil_usats,
+            perfil_usuari=perfil_usuari,
         )
     return plat
 

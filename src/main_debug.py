@@ -1,3 +1,4 @@
+import json
 import os
 from typing import List, Set, Dict, Any, Optional, Tuple
 import numpy as np
@@ -13,7 +14,11 @@ from operadors_transformacio_realista import (
     construir_prompt_imatge_menu, 
     genera_imatge_menu_hf
 )
-from operador_ingredients import FG_WRAPPER
+from operador_ingredients import (
+    FG_WRAPPER,
+    ingredients_incompatibles,
+    substituir_ingredients_prohibits,
+)
 
 from operadors_begudes import recomana_beguda_per_plat, get_ingredient_principal, passa_filtre_dur, score_beguda_per_plat
 
@@ -76,6 +81,83 @@ def parse_list_input(txt: str) -> Set[str]:
     """Converteix 'gluten, vegan' en {'gluten', 'vegan'} normalitzat."""
     if not txt: return set()
     return {x.strip().lower() for x in txt.split(",") if x.strip()}
+
+EU_ALLERGENS = [
+    ("gluten", "Cereals amb gluten"),
+    ("crustaceans", "Crustacis"),
+    ("egg", "Ous"),
+    ("fish", "Peix"),
+    ("peanuts", "Cacauets"),
+    ("soy", "Soja"),
+    ("milk", "Llet"),
+    ("nuts", "Fruits secs"),
+    ("celery", "Api"),
+    ("mustard", "Mostassa"),
+    ("sesame", "Sesam"),
+    ("sulfites", "Sulfitos"),
+    ("lupin", "Lupi"),
+    ("molluscs", "Moluscs"),
+]
+
+def seleccionar_alergens() -> List[str]:
+    print("\nALLERGENS UE (14)")
+    for i, (key, label) in enumerate(EU_ALLERGENS, start=1):
+        print(f"  {i:>2}. {label} [{key}]")
+    txt = input_default("Selecciona allergens (numeros separats per comes, Enter si cap)", "")
+    if not txt:
+        return []
+    seleccionats = []
+    for part in txt.split(","):
+        token = part.strip().lower()
+        if not token:
+            continue
+        if token.isdigit():
+            idx = int(token)
+            if 1 <= idx <= len(EU_ALLERGENS):
+                seleccionats.append(EU_ALLERGENS[idx - 1][0])
+            continue
+        for key, _ in EU_ALLERGENS:
+            if token == key:
+                seleccionats.append(key)
+                break
+    vistos = set()
+    resultat = []
+    for key in seleccionats:
+        if key not in vistos:
+            resultat.append(key)
+            vistos.add(key)
+    return resultat
+
+PATH_USER_PROFILES = "data/user_profiles.json"
+
+def _load_user_profiles(path: str) -> Dict[str, Any]:
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+def _save_user_profiles(path: str, data: Dict[str, Any]) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp_path = f"{path}.tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+    os.replace(tmp_path, path)
+
+def _get_user_profile(data: Dict[str, Any], user_id: str) -> Dict[str, Any]:
+    uid = str(user_id)
+    perfil = data.get(uid)
+    if perfil is None:
+        perfil = {}
+        data[uid] = perfil
+    return perfil
+
+def _store_user_alergies(data: Dict[str, Any], user_id: str, alergies: List[str]) -> None:
+    perfil = _get_user_profile(data, user_id)
+    perfil["alergies"] = list(alergies)
 
 
 def _dedup_preserve_order(items: List[str]) -> List[str]:
@@ -336,7 +418,23 @@ def main():
     print("   (CBR Híbrid: Ontologia + FlavorGraph)")
     print("===========================================\n")
 
-    user_id = input_default("Identificador d'usuari (per guardar preferències)?", "guest")
+    user_id = input_default("Identificador d'usuari (per guardar preferencies)?", "guest")
+    user_profiles = _load_user_profiles(PATH_USER_PROFILES)
+    stored_alergies = []
+    perfil_guardat = user_profiles.get(str(user_id), {})
+    if isinstance(perfil_guardat, dict):
+        stored_alergies = list(perfil_guardat.get("alergies", []) or [])
+    usar_alergies_guardades = False
+    if stored_alergies:
+        msg = f"Hola {user_id}! Recordem que ets alergica a: {', '.join(stored_alergies)}."
+        msg += " Vols mantenir aquesta restriccio? (s/n/c per esborrar)"
+        keep = input_default(msg, "s").strip().lower()
+        if keep == "s":
+            usar_alergies_guardades = True
+        elif keep == "c":
+            _store_user_alergies(user_profiles, user_id, [])
+            _save_user_profiles(PATH_USER_PROFILES, user_profiles)
+            stored_alergies = []
 
     # 1) Inicialitzem el Retriever
     retriever = Retriever("src/base_de_casos.json")
@@ -366,6 +464,18 @@ def main():
         # [NOU] Restriccions
         restr_input = input_default("Tens restriccions? (ex: celiac, vegan) [separat per comes]", "")
         restriccions = parse_list_input(restr_input)
+        if usar_alergies_guardades:
+            alergies = list(stored_alergies)
+        else:
+            alergies = seleccionar_alergens()
+
+        if alergies != stored_alergies:
+            _store_user_alergies(user_profiles, user_id, alergies)
+            _save_user_profiles(PATH_USER_PROFILES, user_profiles)
+            stored_alergies = list(alergies)
+            if alergies:
+                usar_alergies_guardades = True
+        perfil_usuari = {"alergies": alergies} if alergies else None
         
         # [NOU] Estil (Opcional)
         estil_culinari = input_choice(
@@ -414,6 +524,46 @@ def main():
         plat2 = _agafa_plat("segon")
         postres = _agafa_plat("postres")
 
+        # 5.5) Substitucio previa d'ingredients prohibits (al.lergens)
+        if perfil_usuari:
+            print("\nFASE SUBSTITUCIO D'INGREDIENTS PROHIBITS")
+            ingredients_usats = set()
+            resums_prohibits = []
+            plats_pre = [
+                ("PRIMER PLAT", plat1),
+                ("SEGON PLAT", plat2),
+                ("POSTRES", postres),
+            ]
+            for etiqueta, p in plats_pre:
+                ingredients = list(p.get("ingredients", []) or [])
+                prohibits = ingredients_incompatibles(ingredients, kb, perfil_usuari)
+                if not prohibits:
+                    continue
+                plat_tmp = {"nom": p.get("nom", ""), "ingredients": ingredients}
+                adaptat = substituir_ingredients_prohibits(
+                    plat_tmp,
+                    prohibits,
+                    kb,
+                    perfil_usuari=perfil_usuari,
+                    ingredients_usats=ingredients_usats,
+                )
+                if isinstance(adaptat, dict):
+                    p["ingredients"] = adaptat.get("ingredients", ingredients)
+                    logs = list(p.get("log_transformacio", []) or [])
+                    logs_sub = adaptat.get("log_transformacio", []) or []
+                    logs.extend(logs_sub)
+                    if logs:
+                        p["log_transformacio"] = logs
+                    if logs_sub:
+                        resums_prohibits.append((etiqueta, logs_sub))
+
+            if resums_prohibits:
+                print("\nRESUM SUBSTITUCIONS (ALERGENS)")
+                for etiqueta, logs_sub in resums_prohibits:
+                    print(f"- {etiqueta}:")
+                    for log in logs_sub:
+                        print(f"  {log}")
+
         # 6) Adaptació d'ingredients
         print("\nFASE ADAPTACIO INGREDIENTS")
         print("Estils latents disponibles:", ", ".join(sorted(kb.estils_latents.keys())))
@@ -450,6 +600,7 @@ def main():
                     mode="latent",
                     intensitat=intensitat,
                     ingredients_estil_usats=ingredients_estil_usats,
+                    perfil_usuari=perfil_usuari,
                 )
 
                 # Si l’operador retorna un plat nou, enganxem resultats al dict original

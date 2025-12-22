@@ -8,6 +8,9 @@
         ],
         "rejected_pairs": [
             "lemon|water"
+        ],
+        "alergies": [
+            "fish"
         ]
     },
     "guest": {

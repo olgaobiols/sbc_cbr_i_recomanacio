@@ -117,6 +117,22 @@ def _build_perfil_context(perfil_base: Optional[Dict], info_prohibit: Dict) -> D
     perfil['alergies'] = alergies
     return perfil
 
+def ingredients_incompatibles(
+    ingredients: List[str],
+    kb: Any,
+    perfil_usuari: Optional[Dict],
+) -> Set[str]:
+    prohibits = set()
+    if not perfil_usuari:
+        return prohibits
+    for ing in ingredients:
+        info = kb.get_info_ingredient(ing)
+        if not info:
+            continue
+        if not _check_compatibilitat(info, perfil_usuari):
+            prohibits.add(ing)
+    return prohibits
+
 # --- Lògica Ontològica ---
 
 _PROTEINA_CATEGORIES = {"protein_animal", "protein_vegetal", "fish_white", "fish_oily", "proteina_animal"}
@@ -211,7 +227,8 @@ def adaptar_plat_a_estil_latent(
     base_estils_latents: Dict,
     intensitat: float = 0.5,
     parelles_prohibides: Optional[Set[str]] = None,
-    ingredients_estil_usats: Optional[Set[str]] = None
+    ingredients_estil_usats: Optional[Set[str]] = None,
+    perfil_usuari: Optional[Dict] = None,
 ) -> Dict[str, Any]:
     """Wrapper de compatibilitat per adaptar un plat a un estil latent."""
     return _adaptar_latent_core(
@@ -222,6 +239,7 @@ def adaptar_plat_a_estil_latent(
         intensitat=intensitat,
         parelles_prohibides=parelles_prohibides,
         ingredients_estil_usats=ingredients_estil_usats,
+        perfil_usuari=perfil_usuari,
     )
 
 def substituir_ingredients_prohibits(
@@ -286,30 +304,41 @@ def substituir_ingredients_prohibits(
                 log_canvis.append(f"Avís: No s'ha trobat substitut segur per {ing_nom}")
                 continue
 
-            # Selecció Híbrida
+            # Selecció Híbrida (similaritat + pairing)
             millor_substitut = None
+            millor_score = -99.0
             justificacio = ""
-            
+
             vec_orig = FG_WRAPPER.get_vector(ing_nom)
-            if vec_orig is not None:
-                fg_ranking = FG_WRAPPER._find_nearest_to_vector(
-                    vec_orig, n=10, exclude_names=list(prohibits_norm | {ing_norm})
-                )
-                for nom_fg, score in fg_ranking:
-                    if _normalize_text(nom_fg) in candidats_map:
-                        millor_substitut = candidats_map[_normalize_text(nom_fg)]
-                        justificacio = f"FlavorGraph (similitud {score:.2f})"
-                        break
-            
-            if not millor_substitut:
+            vec_context = _calcular_vector_context(context_ingredients)
+
+            use_vectors = vec_orig is not None or vec_context is not None
+
+            if use_vectors:
+                for cand in candidats_finals:
+                    sim_self = FG_WRAPPER.similarity_with_vector(cand, vec_orig) if vec_orig is not None else None
+                    sim_pair = FG_WRAPPER.similarity_with_vector(cand, vec_context) if vec_context is not None else None
+
+                    score = 0.0
+                    if sim_self is not None:
+                        score += 0.65 * sim_self
+                    if sim_pair is not None:
+                        score += 0.35 * sim_pair
+
+                    if score > millor_score:
+                        millor_score = score
+                        millor_substitut = cand
+
+            if millor_substitut:
+                justificacio = f"FlavorGraph (similitud+pairing {millor_score:.2f})"
+            else:
                 ordenats = _ordenar_candidats_per_afinitat(candidats_finals, kb, info_orig)
                 if ordenats:
                     millor_substitut = ordenats[0]
                     justificacio = "Ontologia (família/rol)"
-            
-            if not millor_substitut:
-                millor_substitut = random.choice(candidats_finals)
-                justificacio = "Aleatori"
+                else:
+                    millor_substitut = random.choice(candidats_finals)
+                    justificacio = "Aleatori"
 
             nou_plat['ingredients'][i] = millor_substitut
             log_canvis.append(f"Substitució: {ing_nom} -> {millor_substitut} [{justificacio}]")
