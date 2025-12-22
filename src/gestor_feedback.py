@@ -67,9 +67,21 @@ class MemoriaGlobal:
         cnt[key] = cnt.get(key, 0) + 1
         
         # Promoció a regla global si supera el llindar de consens (Tau_global)
-        if cnt[key] > LLINDAR_GLOBAL:
+        if cnt[key] >= LLINDAR_GLOBAL:
             rules = self.data["global_rules"][category]
-            if key not in rules: rules.append(key)
+            if key not in rules:
+                rules.append(key)
+                if category == "pairs":
+                    pretty = key.replace("|", " + ")
+                    print(
+                        "✅ [Memòria Global] Parella vetada promoguda a regla global: "
+                        f"{pretty} (evidència: {cnt[key]})"
+                    )
+                else:
+                    print(
+                        "✅ [Memòria Global] Ingredient vetat promogut a regla global: "
+                        f"{key} (evidència: {cnt[key]})"
+                    )
         
         _json_rw(PATH_RULES, self.data)
 
