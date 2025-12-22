@@ -28,6 +28,13 @@ def _normalize_text(value: str) -> str:
     text = unicodedata.normalize("NFKD", str(value)).encode("ascii", "ignore").decode("ascii")
     return " ".join(text.replace("-", " ").replace("_", " ").lower().split())
 
+def _normalize_category(value: str) -> str:
+    if not value:
+        return ""
+    text = unicodedata.normalize("NFKD", str(value)).encode("ascii", "ignore").decode("ascii")
+    text = text.strip().lower().replace("-", "_").replace(" ", "_")
+    return "_".join(part for part in text.split("_") if part)
+
 def _normalize_vector(vec: Optional[np.ndarray]) -> Optional[np.ndarray]:
     if vec is None: return None
     norm = np.linalg.norm(vec)
@@ -114,10 +121,10 @@ def ingredients_incompatibles(ingredients: List[str], kb: Any, perfil_usuari: Op
     return prohibits
 
 def _get_candidats_per_categoria(categoria: str, kb: Any) -> List[str]:
-    cat_norm = _normalize_text(categoria)
+    cat_norm = _normalize_category(categoria)
     candidats = []
     for nom, info in kb.ingredients.items():
-        c_macro = _normalize_text(info.get('macro_category') or info.get('categoria_macro'))
+        c_macro = _normalize_category(info.get('macro_category') or info.get('categoria_macro'))
         if c_macro == cat_norm:
             candidats.append(info['ingredient_name'])
     return candidats
@@ -125,6 +132,7 @@ def _get_candidats_per_categoria(categoria: str, kb: Any) -> List[str]:
 def _categoria_fallbacks(categoria_norm: str, perfil_usuari: Optional[Dict]) -> List[str]:
     if not perfil_usuari: return []
     dieta = _normalize_text(perfil_usuari.get('dieta'))
+    categoria_norm = _normalize_category(categoria_norm)
     fallbacks = []
     if dieta in {"vegan", "vegetarian"}:
         if categoria_norm in _PROTEINA_CATEGORIES:
@@ -133,9 +141,10 @@ def _categoria_fallbacks(categoria_norm: str, perfil_usuari: Optional[Dict]) -> 
             fallbacks.extend(["plant_vegetal", "fat", "other"])
         if categoria_norm in _EGG_CATEGORIES:
             fallbacks.extend(["plant_vegetal", "grain"])
-    return [_normalize_text(c) for c in fallbacks]
+    return [_normalize_category(c) for c in fallbacks]
 
 def _es_candidat_coherent(info_orig: Dict, info_cand: Dict, cat_orig_norm: str) -> bool:
+    cat_orig_norm = _normalize_category(cat_orig_norm)
     r_orig = _normalize_text(info_orig.get('typical_role'))
     r_cand = _normalize_text(info_cand.get('typical_role'))
     if cat_orig_norm in _PROTEINA_CATEGORIES or r_orig in _MAIN_ROLES:
@@ -168,6 +177,215 @@ _EGG_CATEGORIES = {"egg"}
 _MAIN_ROLES = {"main", "principal", "main course"}
 _SIDE_ROLES = {"side", "base"}
 
+LATENT_CONDIMENT_SETS = {
+    "citric": {
+        "starter": [
+            "lemon-mustard vinaigrette (mild)",
+            "lemon zest + extra virgin olive oil",
+            "yogurt-lime sauce",
+        ],
+        "main": [
+            "light lemon-butter sauce",
+            "orange-citrus herb glaze",
+            "soft citrus mojo",
+        ],
+        "dessert": [
+            "lemon coulis",
+            "lime cream",
+            "citrus syrup",
+        ],
+    },
+    "fumat": {
+        "starter": [
+            "smoked oil drizzle",
+            "smoked paprika oil",
+            "light smoked-vegetable cream",
+        ],
+        "main": [
+            "mild smoky barbecue sauce",
+            "smoky soy-honey glaze",
+            "dark jus with smoky note",
+        ],
+        "dessert": [
+            "smoked caramel",
+            "dark chocolate + smoked salt",
+            "vanilla cream with a smoky touch",
+        ],
+    },
+    "italia": {
+        "starter": [
+            "classic pesto (Genovese-style)",
+            "basil tomato sauce",
+            "light parmesan cream",
+        ],
+        "main": [
+            "herbed tomato sauce",
+            "wine + rosemary reduction",
+            "sage-butter sauce",
+        ],
+        "dessert": [
+            "mascarpone cream",
+            "coffee sauce",
+            "sweet Marsala reduction",
+        ],
+    },
+    "mexica": {
+        "starter": [
+            "mild pico de gallo",
+            "tomatillo salsa verde",
+            "sour cream + lime",
+        ],
+        "main": [
+            "roasted red salsa",
+            "mild mole sauce",
+            "spiced adobo",
+        ],
+        "dessert": [
+            "chocolate + cinnamon",
+            "piloncillo caramel",
+            "vanilla-cinnamon cream",
+        ],
+    },
+    "picant": {
+        "starter": [
+            "infused chili oil (controlled heat)",
+            "yogurt + mild chili sauce",
+            "spicy vinaigrette (mild)",
+        ],
+        "main": [
+            "fermented chili sauce (small dose)",
+            "sweet-spicy glaze",
+            "spiced cream with chili",
+        ],
+        "dessert": [
+            "chocolate + chili",
+            "hot honey (dessert-safe)",
+            "berry coulis with chili",
+        ],
+    },
+    "tropical": {
+        "starter": [
+            "mango vinaigrette",
+            "coconut-lime sauce",
+            "tropical fruit cold cream",
+        ],
+        "main": [
+            "pineapple glaze",
+            "spiced coconut sauce",
+            "tropical chutney",
+        ],
+        "dessert": [
+            "passionfruit coulis",
+            "coconut cream",
+            "mango-lime sauce",
+        ],
+    },
+    "umami": {
+        "starter": [
+            "concentrated mushroom broth",
+            "mild miso cream",
+            "mushroom oil",
+        ],
+        "main": [
+            "reduced soy sauce",
+            "vegetable demi-glace",
+            "mushroom-wine sauce",
+        ],
+        "dessert": [
+            "salted caramel",
+            "intense dark chocolate",
+            "coffee cream",
+        ],
+    },
+}
+_RECENT_CONDIMENTS = {
+    style: {course: [] for course in courses} for style, courses in LATENT_CONDIMENT_SETS.items()
+}
+
+def _clamp(value: float, low: float, high: float) -> float:
+    return max(low, min(high, value))
+
+def _map_course_to_condiment_key(plat: Dict[str, Any]) -> Optional[str]:
+    curs = _normalize_text(plat.get("curs", ""))
+    if "postres" in curs:
+        return "dessert"
+    if curs in {"segon", "main"}:
+        return "main"
+    if curs in {"primer", "starter"}:
+        return "starter"
+    return None
+
+def _weighted_choice(candidates: List[str], recent: List[str], rng: random.Random) -> Optional[str]:
+    if not candidates:
+        return None
+    recent_set = set(recent)
+    fresh = [c for c in candidates if c not in recent_set]
+    if fresh:
+        return rng.choice(fresh)
+
+    weights = []
+    for cand in candidates:
+        weight = 1.0
+        if recent:
+            if cand == recent[-1]:
+                weight = 0.2
+            elif len(recent) > 1 and cand == recent[-2]:
+                weight = 0.5
+        weights.append(weight)
+    total = sum(weights)
+    if total <= 0:
+        return rng.choice(candidates)
+    roll = rng.random() * total
+    acc = 0.0
+    for cand, weight in zip(candidates, weights):
+        acc += weight
+        if roll <= acc:
+            return cand
+    return candidates[-1]
+
+def pick_latent_condiment(
+    style: str,
+    course: str,
+    temperature: float,
+    fallback_mode: bool = False,
+    random_mode: bool = False,
+    rng: Optional[random.Random] = None,
+) -> Optional[str]:
+    if not style or not course:
+        return None
+    if style not in LATENT_CONDIMENT_SETS:
+        return None
+    if course not in LATENT_CONDIMENT_SETS[style]:
+        return None
+
+    rng = rng or random
+    t = _clamp(float(temperature), 0.1, 0.9)
+    base_prob = _clamp((t - 0.2) / 0.7, 0.0, 1.0)
+    if fallback_mode:
+        prob = max(base_prob, 0.6)
+    else:
+        prob = base_prob if random_mode else 0.0
+
+    if rng.random() >= prob:
+        return None
+
+    candidates = list(LATENT_CONDIMENT_SETS[style][course])
+    recent = _RECENT_CONDIMENTS.get(style, {}).get(course, [])
+    choice = _weighted_choice(candidates, recent, rng)
+    if choice is None:
+        return None
+
+    if style in _RECENT_CONDIMENTS and course in _RECENT_CONDIMENTS[style]:
+        _RECENT_CONDIMENTS[style][course].append(choice)
+        if len(_RECENT_CONDIMENTS[style][course]) > 2:
+            _RECENT_CONDIMENTS[style][course] = _RECENT_CONDIMENTS[style][course][-2:]
+    return choice
+
+def _condiment_random_mode(temperature: float, rng: random.Random) -> bool:
+    t = _clamp(float(temperature), 0.1, 0.9)
+    chance = _clamp(0.05 + 0.5 * ((t - 0.1) / 0.8), 0.0, 0.6)
+    return rng.random() < chance
+
 
 # CONSTANTS ONTOLÒGIQUES 
 # MILLORRRRRRRRRRRRRRRRRRRRAAAAAAAAAAAAAAAAAAR
@@ -175,16 +393,17 @@ _SIDE_ROLES = {"side", "base"}
 
 
 def _get_candidats_per_categoria(categoria: str, kb: Any) -> List[str]:
-    cat_norm = _normalize_text(categoria)
+    cat_norm = _normalize_category(categoria)
     return [
         info['ingredient_name'] for info in kb.ingredients.values()
-        if _normalize_text(info.get('macro_category') or info.get('categoria_macro')) == cat_norm
+        if _normalize_category(info.get('macro_category') or info.get('categoria_macro')) == cat_norm
     ]
 
 def _categoria_fallbacks(categoria_norm: str, perfil_usuari: Optional[Dict]) -> List[str]:
     """Defineix substitucions ontològiques segures quan la categoria original està prohibida."""
     if not perfil_usuari: return []
     dieta = _normalize_text(perfil_usuari.get('dieta'))
+    categoria_norm = _normalize_category(categoria_norm)
     fallbacks = []
     
     if dieta in {"vegan", "vegetarian"}:
@@ -195,17 +414,28 @@ def _categoria_fallbacks(categoria_norm: str, perfil_usuari: Optional[Dict]) -> 
         elif categoria_norm in _EGG_CATEGORIES:
             fallbacks.extend(["plant_vegetal", "grain"])
             
-    return [_normalize_text(c) for c in fallbacks]
+    return [_normalize_category(c) for c in fallbacks]
+
+def _role_tokens(value: Any) -> Set[str]:
+    if not value:
+        return set()
+    tokens = set()
+    for part in str(value).split("|"):
+        part_norm = _normalize_text(part)
+        if part_norm:
+            tokens.add(part_norm)
+    return tokens
 
 def _es_candidat_coherent(info_orig: Dict, info_cand: Dict, cat_orig_norm: str) -> bool:
     """Verifica que el substitut mantingui el rol estructural al plat (Coherència)."""
-    r_orig = _normalize_text(info_orig.get('typical_role'))
-    r_cand = _normalize_text(info_cand.get('typical_role'))
+    cat_orig_norm = _normalize_category(cat_orig_norm)
+    r_orig_tokens = _role_tokens(info_orig.get('typical_role'))
+    r_cand_tokens = _role_tokens(info_cand.get('typical_role'))
     
-    if cat_orig_norm in _PROTEINA_CATEGORIES or r_orig in _MAIN_ROLES:
-        return r_cand in _MAIN_ROLES
-    if r_orig in _SIDE_ROLES and r_cand:
-        return r_cand in _SIDE_ROLES or r_cand in _MAIN_ROLES
+    if cat_orig_norm in _PROTEINA_CATEGORIES or (r_orig_tokens & _MAIN_ROLES):
+        return bool(r_cand_tokens & _MAIN_ROLES)
+    if r_orig_tokens & _SIDE_ROLES and r_cand_tokens:
+        return bool(r_cand_tokens & _SIDE_ROLES) or bool(r_cand_tokens & _MAIN_ROLES)
     return True 
 
 def _ordenar_candidats_per_afinitat(candidats: List[str], kb: Any, info_orig: Dict) -> List[str]:
@@ -227,6 +457,8 @@ def _ordenar_candidats_per_afinitat(candidats: List[str], kb: Any, info_orig: Di
 
 def _check_role_compatibility(cat_orig: str, cat_cand: str) -> bool:
     """Validació estricta de compatibilitat entre categories (Llei de ferro)."""
+    cat_orig = _normalize_category(cat_orig)
+    cat_cand = _normalize_category(cat_cand)
     if not cat_orig or not cat_cand or "unknown" in (cat_orig, cat_cand):
         return False
 
@@ -247,9 +479,11 @@ _DESSERT_ALLOWED_CATEGORIES = {
     "sweet",
     "sweetener",
     "dairy",
-    "fat",
     "nuts",
     "nut",
+}
+_DESSERT_EXTRA_CATEGORIES = {
+    "fat",
     "spice",
     "seasoning",
     "sauce",
@@ -257,14 +491,29 @@ _DESSERT_ALLOWED_CATEGORIES = {
     "alcohol",
 }
 _DESSERT_SAVORY_FLAVORS = {"salty", "umami", "savory", "meaty", "fishy", "smoky"}
-_DESSERT_SOFT_FLAVORS = {"sweet", "mild_sweet", "creamy", "mild"}
+_DESSERT_SOFT_FLAVORS = {"sweet", "mild_sweet", "creamy", "mild", "tropical"}
+_DESSERT_GOOD_FLAVORS = {
+    "sweet",
+    "mild_sweet",
+    "creamy",
+    "mild",
+    "fruity",
+    "citrus",
+    "citrusy",
+    "tropical",
+    "vanilla",
+    "caramel",
+    "chocolate",
+    "cocoa",
+    "berry",
+}
 
 def _es_apte_postres(info: Dict, intensitat: float) -> bool:
     """Filtre per evitar ingredients salats/umami en postres."""
     if not info:
         return False
-    cat = _normalize_text(info.get("macro_category") or info.get("categoria_macro"))
-    if cat not in _DESSERT_ALLOWED_CATEGORIES:
+    cat = _normalize_category(info.get("macro_category") or info.get("categoria_macro"))
+    if cat not in _DESSERT_ALLOWED_CATEGORIES and cat not in _DESSERT_EXTRA_CATEGORIES:
         return False
 
     fam = _normalize_text(info.get("family") or info.get("familia"))
@@ -277,6 +526,11 @@ def _es_apte_postres(info: Dict, intensitat: float) -> bool:
     # Evita formatges salats en postres, a no ser que siguin suaus/dolcos.
     if "cheese" in fam and not (flavors & _DESSERT_SOFT_FLAVORS):
         return False
+
+    # Categories extra: exigeix senyals dolcos/fruit/citrus.
+    if cat in _DESSERT_EXTRA_CATEGORIES:
+        if not (flavors & _DESSERT_GOOD_FLAVORS):
+            return False
 
     return True
 
@@ -326,11 +580,13 @@ def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits
             cat_macro = info_orig.get('macro_category') or info_orig.get('categoria_macro')
             if not cat_macro: continue
             
-            cats_candidats = [_normalize_text(cat_macro)]
-            cats_candidats.extend(_categoria_fallbacks(_normalize_text(cat_macro), perfil_usuari))
+            cats_candidats = [_normalize_category(cat_macro)]
+            cats_candidats.extend(_categoria_fallbacks(_normalize_category(cat_macro), perfil_usuari))
             
             candidats_map = {}
+            candidats_dup_map = {}
             context_ingredients = [ing for k, ing in enumerate(nou_plat['ingredients']) if k != i]
+            context_norm = {_normalize_text(ing) for ing in context_ingredients}
 
             # Filtratge de candidats
             for cat in cats_candidats:
@@ -343,9 +599,15 @@ def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits
 
                     info_cand = kb.get_info_ingredient(cand_nom)
                     if info_cand and _check_compatibilitat(info_cand, perfil_context) and _es_candidat_coherent(info_orig, info_cand, _normalize_text(cat_macro)):
-                        candidats_map[c_norm] = cand_nom
+                        if c_norm in context_norm:
+                            candidats_dup_map[c_norm] = cand_nom
+                        else:
+                            candidats_map[c_norm] = cand_nom
 
-            candidats_finals = list(candidats_map.values())
+            if candidats_map:
+                candidats_finals = list(candidats_map.values())
+            else:
+                candidats_finals = list(candidats_dup_map.values())
             if not candidats_finals:
                 log_canvis.append(f"Avís: No s'ha trobat substitut segur per {ing_nom}")
                 continue
@@ -428,7 +690,9 @@ def _adaptar_latent_core(plat: Dict, nom_estil: str, kb: Any, base_estils_latent
         candidats = FG_WRAPPER.get_creative_candidates(ing_original, n=n_search, temperature=temperatura, style_vector=vector_estil)
         
         info_orig = kb.get_info_ingredient(ing_original)
-        cat_orig = str(info_orig.get('macro_category') or "unknown").lower()
+        if not info_orig:
+            continue
+        cat_orig = _normalize_category(info_orig.get('macro_category') or "unknown")
         
         millor_cand = None
         millor_score_hibrid = -99.0
@@ -449,7 +713,7 @@ def _adaptar_latent_core(plat: Dict, nom_estil: str, kb: Any, base_estils_latent
             if parelles_prohibides and _check_parelles_prohibides(cand, context_noms, parelles_prohibides): continue
             if not _check_compatibilitat(info_cand, perfil_usuari): continue
             
-            cat_cand = _normalize_text(info_cand.get("macro_category") or "unknown")
+            cat_cand = _normalize_category(info_cand.get("macro_category") or "unknown")
             if es_postres:
                 if not _es_apte_postres(info_cand, intensitat):
                     continue
@@ -541,7 +805,7 @@ def _adaptar_latent_core(plat: Dict, nom_estil: str, kb: Any, base_estils_latent
         for cand in candidats_estil:
             if info := kb.get_info_ingredient(cand):
                 if not _check_compatibilitat(info, perfil_usuari): continue
-                cat = _normalize_text(info.get("macro_category") or "unknown")
+                cat = _normalize_category(info.get("macro_category") or "unknown")
                 if es_postres and not _es_apte_postres(info, intensitat):
                     continue
                 
@@ -560,7 +824,7 @@ def _adaptar_latent_core(plat: Dict, nom_estil: str, kb: Any, base_estils_latent
             for i, ing in enumerate(nou_plat.get("ingredients", [])):
                 if _normalize_text(ing) in boring_ingredients:
                     info_ing = kb.get_info_ingredient(ing)
-                    cat_ing = _normalize_text(info_ing.get("macro_category") or "unknown") if info_ing else ""
+                    cat_ing = _normalize_category(info_ing.get("macro_category") or "unknown") if info_ing else ""
                     
                     for cand, cat_cand, sim_pair in puntuats:
                         if cat_cand == cat_ing: # Match categòric
@@ -572,12 +836,37 @@ def _adaptar_latent_core(plat: Dict, nom_estil: str, kb: Any, base_estils_latent
 
         # Inserció directa si falla la substitució
         if not accio and puntuats:
-            cand = puntuats[0][0]
-            nou_plat["ingredients"].append(cand)
-            accio = f"Afegit {cand} (Fallback Simbòlic)"
-            ingredients_estil_usats.add(_normalize_text(cand))
+            existing = {_normalize_text(x) for x in nou_plat.get("ingredients", [])}
+            cand = None
+            for cand_opt, _, _ in puntuats:
+                if _normalize_text(cand_opt) not in existing:
+                    cand = cand_opt
+                    break
+            if cand:
+                nou_plat["ingredients"].append(cand)
+                accio = f"Afegit {cand} (Fallback Simbòlic)"
+                ingredients_estil_usats.add(_normalize_text(cand))
 
         if accio: log.append(f"Estil {nom_estil}: {accio}")
+
+    # FASE D: CONDIMENT LATENT (extra opcional)
+    course_key = _map_course_to_condiment_key(plat)
+    if course_key and not nou_plat.get("condiment"):
+        rng = random
+        temp_condiment = _clamp(float(intensitat), 0.1, 0.9)
+        fallback_mode = canvis_fets == 0
+        random_mode = _condiment_random_mode(temp_condiment, rng)
+        condiment = pick_latent_condiment(
+            nom_estil,
+            course_key,
+            temp_condiment,
+            fallback_mode=fallback_mode,
+            random_mode=random_mode,
+            rng=rng,
+        )
+        if condiment:
+            nou_plat["condiment"] = condiment
+            log.append(f"Condiment latent: {condiment}")
 
     nou_plat['log_transformacio'] = log
     return nou_plat

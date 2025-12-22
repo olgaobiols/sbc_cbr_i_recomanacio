@@ -201,6 +201,7 @@ def imprimir_resum_adaptacio(
     nom_estil: str,
     intensitat: float,
     kb: Any,
+    ingredients_original: Optional[List[str]] = None,
 ) -> Tuple[List[str], str]:
     """
     Mostra un resum compacte de l'adaptació i retorna un resum per al final.
@@ -222,8 +223,13 @@ def imprimir_resum_adaptacio(
 
     print(f"\n[{etiqueta_plat}] {plat.get('nom','—')}")
     print(f"- Ingredients: {len(ingredients_abans)} -> {len(ingredients_despres_unics)}")
-    print(f"- Abans: {', '.join(ingredients_abans) if ingredients_abans else '—'}")
+    if ingredients_original and ingredients_original != ingredients_abans:
+        print(f"- Abans (original): {', '.join(ingredients_original) if ingredients_original else '—'}")
+    print(f"- Abans (post-restriccions): {', '.join(ingredients_abans) if ingredients_abans else '—'}")
     print(f"- Despres: {', '.join(ingredients_despres_unics) if ingredients_despres_unics else '—'}")
+    condiment = plat.get("condiment")
+    if condiment:
+        print(f"- Condiment: {condiment}")
 
     duplicat_proposat = None
     if "afegit" in log_text:
@@ -264,6 +270,12 @@ def imprimir_resum_adaptacio(
         resum = f"{trets[0]} -> {afegits[0]}"
     else:
         resum = "cap"
+
+    if condiment:
+        if resum == "cap":
+            resum = f"condiment: {condiment}"
+        else:
+            resum = f"{resum} | condiment: {condiment}"
 
     return afegits, resum
 
@@ -417,6 +429,8 @@ def imprimir_menu_final(
         print(f"\n🔹 {etiqueta}: {nom}")
         ings = ", ".join(plat.get("ingredients", []))
         print(f"   Ingredients: {ings}")
+        if plat.get("condiment"):
+            print(f"   Condiment: {plat.get('condiment')}")
         if desc:
             print(f"   Carta: {desc}")
         
@@ -470,7 +484,7 @@ def main():
             stored_alergies = []
 
     # 1) Inicialitzem el Retriever
-    retriever = Retriever("base_de_casos.json")
+    retriever = Retriever(os.path.join("data", "base_de_casos.json"))
 
     while True:
         print("\n📝 --- NOVA PETICIÓ ---")
@@ -508,7 +522,19 @@ def main():
             stored_alergies = list(alergies)
             if alergies:
                 usar_alergies_guardades = True
-        perfil_usuari = {"alergies": alergies} if alergies else None
+        dieta = None
+        if "vegan" in restriccions:
+            dieta = "vegan"
+        elif "vegetarian" in restriccions:
+            dieta = "vegetarian"
+
+        perfil_usuari = {}
+        if alergies:
+            perfil_usuari["alergies"] = alergies
+        if dieta:
+            perfil_usuari["dieta"] = dieta
+        if not perfil_usuari:
+            perfil_usuari = None
         
         alcohol = input_choice("Voldràs begudes amb alcohol?", ["si", "no"],"si")
         
@@ -553,6 +579,11 @@ def main():
         plat1 = _agafa_plat("primer")
         plat2 = _agafa_plat("segon")
         postres = _agafa_plat("postres")
+        ingredients_originals = {
+            "primer": list(plat1.get("ingredients", []) or []),
+            "segon": list(plat2.get("ingredients", []) or []),
+            "postres": list(postres.get("ingredients", []) or []),
+        }
 
         # 5.5) Substitucio previa d'ingredients prohibits (al.lergens)
         if perfil_usuari:
@@ -601,7 +632,7 @@ def main():
         estil_latent = input_default(
             f"Vols aplicar un 'toc' d'estil latent? (ex: picant, thai...) [{suggeriment}]",
             suggeriment
-        )
+        ).strip().lower()
 
         if estil_latent:
             if estil_latent not in kb.estils_latents:
@@ -645,6 +676,9 @@ def main():
                     estil_latent,
                     intensitat,
                     kb,
+                    ingredients_original=ingredients_originals.get(
+                        str(p.get("curs", "")).lower()
+                    ),
                 )
                 resums.append((etiqueta_short, resum))
 

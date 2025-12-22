@@ -17,6 +17,9 @@
         "rejected_ingredients": [
             "ceba"
         ],
-        "rejected_pairs": []
+        "rejected_pairs": [],
+        "alergies": [
+            "fish"
+        ]
     }
 }
