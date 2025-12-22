@@ -42,7 +42,7 @@ def retain_case(
 
 
     # 4) Redundància (d_min)
-    path_fixe = os.path.join("base_de_casos.json")
+    path_fixe = os.path.join("data", "base_de_casos.json")
     if not hasattr(kb_instance, "base_casos") or kb_instance.base_casos is None:
         try:
             with open(path_fixe, "r", encoding="utf-8") as f:
@@ -67,24 +67,19 @@ def retain_case(
         print(f"❌ [RETAIN] Cas descartat per Redundància. Distància {d_min:.2f} < Gamma.")
         return False
 
-    # 5) Persistència segons utilitat
+    # 5) Persistència segons utilitat i estructura final detallada
     utility_threshold = 0.6
     
     if utilitat > utility_threshold:
         prob_obj = new_case["problema"]
         solu_obj = new_case.get("solucio", {})
 
-        # --- PROCESSAMENT DELS PLATS (Adaptat al teu main) ---
+        # --- 1. PROCESSAMENT DELS PLATS (amb rols i tags) ---
         plats_per_json = []
-        
-        # El teu main envia un dict amb claus: "primer", "segon", "postres"
-        # Iterem sobre aquestes claus per extreure els objectes plat
         for clau_curs in ["primer", "segon", "postres"]:
             p = solu_obj.get(clau_curs)
             if p:
-                # Si p és un objecte o diccionari, extraiem la info
-                # Fem servir una funció helper per seguretat
-                def get_v(obj, attr, default=""):
+                def get_v(obj, attr, default):
                     if isinstance(obj, dict):
                         return obj.get(attr, default)
                     return getattr(obj, attr, default)
@@ -93,11 +88,12 @@ def retain_case(
                     "curs": clau_curs,
                     "nom": get_v(p, "nom", "Sense nom"),
                     "ingredients": list(get_v(p, "ingredients", [])),
+                    "rols_principals": list(get_v(p, "rols_principals", [])),
+                    "estil_tags": list(get_v(p, "estil_tags", [])),
                     "preu": float(get_v(p, "preu", 0.0))
                 })
 
-        # --- ESTRUCTURA DEL PROBLEMA ---
-        # Convertim a llista per evitar l'error del JSON amb els 'set'
+        # --- 2. ESTRUCTURA DEL PROBLEMA ---
         restr_raw = getattr(prob_obj, "restriccions", [])
         restr_list = list(restr_raw) if isinstance(restr_raw, (set, list)) else []
 
@@ -112,29 +108,37 @@ def retain_case(
             "restriccions": restr_list
         }
 
-        # --- ESTRUCTURA FINAL DEL CAS ---
+        # --- 3. ESTRUCTURA FINAL DEL CAS (Problema + Solució + Avaluació) ---
         final_case = {
             "id_cas": len(kb_instance.base_casos) + 1,
             "problema": problema_dict,
             "solucio": {
                 "plats": plats_per_json,
-                "begudes": [], # Pots extreure-les si les afegeixes al cas_proposat del main
-                "preu_total_real": sum(p["preu"] for p in plats_per_json)
+                "begudes": list(solu_obj.get("begudes", [])),
+                "preu_total_real": sum(p["preu"] for p in plats_per_json),
+                "logs_transformacio": transformation_log if transformation_log else []
+            },
+            "avaluacio": {
+                "puntuacio_global": user_score,
+                "validat": (evaluation_result == "exit"),
+                "cost_adaptacio": k_adapt,
+                "ingredients_rebutjats": [], # Es podria omplir si el log ho indica
+                "utilitat": round(utilitat, 2)
             }
         }
 
-        # --- GUARDAT AL FITXER ---
+        # --- 4. GUARDAT AL FITXER JSON ---
         kb_instance.base_casos.append(final_case)
         try:
             with open(path_fixe, "w", encoding="utf-8") as f:
                 json.dump(kb_instance.base_casos, f, indent=4, ensure_ascii=False)
                 f.flush()
                 os.fsync(f.fileno())
-            print(f"✅ [RETAIN] Cas {final_case['id_cas']} guardat amb èxit!")
+            print(f"✅ [RETAIN] Cas {final_case['id_cas']} guardat amb estructura completa!")
             return True
         except Exception as e:
-            print(f"❌ [RETAIN] Error en l'escriptura JSON: {e}")
+            print(f"❌ [RETAIN] Error al guardar: {e}")
             return False
 
-    print(f"❌ [RETAIN] Cas descartat per Baixa Utilitat ({utilitat:.2f}).")
+    print(f"❌ [RETAIN] Cas descartat (Utilitat {utilitat:.2f} <= {utility_threshold})")
     return False
