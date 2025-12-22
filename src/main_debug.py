@@ -4,7 +4,7 @@ from typing import List, Set, Dict, Any, Optional, Tuple
 import numpy as np
 
 from estructura_cas import DescripcioProblema
-from Retriever import Retriever
+from retriever_nuevo import Retriever
 from knowledge_base import KnowledgeBase
 from gestor_feedback import GestorRevise
 from operadors_transformacio_realista import (
@@ -84,12 +84,6 @@ def parse_list_input(txt: str) -> Set[str]:
     if not txt: return set()
     return {x.strip().lower() for x in txt.split(",") if x.strip()}
 
-def _normalize_item(value: str) -> str:
-    if not value:
-        return ""
-    text = str(value).strip().lower()
-    return " ".join(text.replace("-", " ").replace("_", " ").split())
-
 def _format_list(items: List[str]) -> str:
     if not items:
         return "—"
@@ -122,150 +116,8 @@ def _parse_pairs_input(txt: str) -> List[str]:
         else:
             continue
         if a and b:
-            out.append("|".join(sorted([_normalize_item(a), _normalize_item(b)])))
+            out.append("|".join(sorted([a.lower(), b.lower()])))
     return out
-
-def _normalize_pair_key(raw: str) -> str:
-    if not raw:
-        return ""
-    if "|" in raw:
-        a, b = raw.split("|", 1)
-    elif "+" in raw:
-        a, b = raw.split("+", 1)
-    else:
-        return ""
-    a_norm = _normalize_item(a)
-    b_norm = _normalize_item(b)
-    if not a_norm or not b_norm:
-        return ""
-    return "|".join(sorted([a_norm, b_norm]))
-
-def _collect_vetats(perfil: Dict[str, Any], learned_rules: Dict[str, Any]) -> tuple[Set[str], Set[str]]:
-    user_ings = {_normalize_item(x) for x in (perfil.get("rejected_ingredients", []) or []) if x}
-    user_pairs = {_normalize_pair_key(x) for x in (perfil.get("rejected_pairs", []) or []) if x}
-    global_rules = learned_rules.get("global_rules", {}) if isinstance(learned_rules, dict) else {}
-    glob_ings = {_normalize_item(x) for x in (global_rules.get("ingredients", []) or []) if x}
-    glob_pairs = {_normalize_pair_key(x) for x in (global_rules.get("pairs", []) or []) if x}
-    user_pairs.discard("")
-    glob_pairs.discard("")
-    return user_ings | glob_ings, user_pairs | glob_pairs
-
-def _plat_te_ingredient_vetat(ingredients: List[str], vetats: Set[str]) -> bool:
-    if not vetats:
-        return False
-    for ing in ingredients:
-        if _normalize_item(ing) in vetats:
-            return True
-    return False
-
-def _plat_te_parella_vetada(ingredients: List[str], parelles_vetades: Set[str]) -> bool:
-    if not parelles_vetades:
-        return False
-    norm_ings = [_normalize_item(i) for i in ingredients if i]
-    for i in range(len(norm_ings)):
-        for j in range(i + 1, len(norm_ings)):
-            key = "|".join(sorted([norm_ings[i], norm_ings[j]]))
-            if key in parelles_vetades:
-                return True
-    return False
-
-def _parelles_detectades(ingredients: List[str], parelles_vetades: Set[str]) -> List[str]:
-    if not parelles_vetades:
-        return []
-    norm_ings = [_normalize_item(i) for i in ingredients if i]
-    found = []
-    for i in range(len(norm_ings)):
-        for j in range(i + 1, len(norm_ings)):
-            key = "|".join(sorted([norm_ings[i], norm_ings[j]]))
-            if key in parelles_vetades:
-                found.append(key)
-    return found
-
-def _trobar_plat_alternatiu(
-    curs: str,
-    resultats: list,
-    vetats: Set[str],
-    parelles_vetades: Set[str],
-    case_id_actual: Any,
-) -> Optional[dict]:
-    curs_norm = str(curs).lower()
-    for r in resultats:
-        cas = r.get("cas") or {}
-        if cas.get("id_cas") == case_id_actual:
-            continue
-        plats = cas.get("solucio", {}).get("plats", []) or []
-        for p in plats:
-            if str(p.get("curs", "")).lower() != curs_norm:
-                continue
-            ings = list(p.get("ingredients", []) or [])
-            if _plat_te_ingredient_vetat(ings, vetats):
-                continue
-            if _plat_te_parella_vetada(ings, parelles_vetades):
-                continue
-            return p.copy()
-    return None
-
-def _check_compatibilitat_local(ingredient_info: Dict, perfil_usuari: Optional[Dict]) -> bool:
-    if not ingredient_info:
-        return False
-    if not perfil_usuari:
-        return True
-    alergies = {_normalize_item(a) for a in perfil_usuari.get("alergies", []) if a}
-    if alergies:
-        alergens_ing = {_normalize_item(p) for p in str(ingredient_info.get("allergens", "")).split("|") if p}
-        familia_ing = _normalize_item(ingredient_info.get("family"))
-        if alergies.intersection(alergens_ing) or (familia_ing and familia_ing in alergies):
-            return False
-    dieta = _normalize_item(perfil_usuari.get("dieta"))
-    if dieta:
-        dietes_ing = {_normalize_item(p) for p in str(ingredient_info.get("allowed_diets", "")).split("|") if p}
-        if dieta and dieta not in dietes_ing:
-            return False
-    return True
-
-def _try_add_preferred_touch(
-    plats: List[dict],
-    preferits: List[str],
-    perfil_usuari: Optional[Dict],
-    vetats: Set[str],
-    parelles_vetades: Set[str],
-) -> None:
-    if not preferits:
-        return
-    best = None
-    best_score = 0.0
-    threshold = 0.35
-
-    for pref in preferits:
-        pref_norm = _normalize_item(pref)
-        if not pref_norm or pref_norm in vetats:
-            continue
-        info = kb.get_info_ingredient(pref_norm)
-        if not _check_compatibilitat_local(info, perfil_usuari):
-            continue
-        pref_name = info.get("ingredient_name") or pref_norm
-        for plat in plats:
-            ings = list(plat.get("ingredients", []) or [])
-            if pref_norm in {_normalize_item(i) for i in ings}:
-                continue
-            if parelles_vetades and _plat_te_parella_vetada(ings + [pref_name], parelles_vetades):
-                continue
-            vec_plat = _vector_mitja(ings)
-            if vec_plat is None:
-                continue
-            score = FG_WRAPPER.similarity_with_vector(pref_name, vec_plat)
-            if score is None or score < threshold:
-                continue
-            if score > best_score:
-                best_score = score
-                best = (plat, pref_name, score)
-
-    if best:
-        plat, pref_norm, score = best
-        plat.setdefault("ingredients", []).append(pref_norm)
-        logs = list(plat.get("log_transformacio", []) or [])
-        logs.append(f"Preferència: Afegit {pref_norm} com a toc (afinitat {score:.2f})")
-        plat["log_transformacio"] = logs
 
 def _print_section(title: str) -> None:
     print("\n" + "—" * 50)
@@ -278,7 +130,7 @@ EU_ALLERGENS = [
     ("egg", "Ous"),
     ("fish", "Peix"),
     ("peanuts", "Cacauets"),
-    ("soybeans", "Soja"),
+    ("soy", "Soja"),
     ("milk", "Llet"),
     ("nuts", "Fruits secs"),
     ("celery", "Api"),
@@ -319,19 +171,8 @@ def seleccionar_alergens() -> List[str]:
     return resultat
 
 PATH_USER_PROFILES = "data/user_profiles.json"
-PATH_LEARNED_RULES = "data/learned_rules.json"
 
 def _load_user_profiles(path: str) -> Dict[str, Any]:
-    if not os.path.exists(path):
-        return {}
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            return data if isinstance(data, dict) else {}
-    except Exception:
-        return {}
-
-def _load_learned_rules(path: str) -> Dict[str, Any]:
     if not os.path.exists(path):
         return {}
     try:
@@ -608,6 +449,8 @@ def imprimir_menu_final(
 ):
     _print_section("🍽️  Proposta final de menú")
 
+    preu_total_menu = 0.0
+
     for etiqueta, plat, info_llm, beguda, score in [
         ("PRIMER PLAT", plat1, info_llm_1, beguda1, score1),
         ("SEGON PLAT",  plat2, info_llm_2, beguda2, score2),
@@ -616,18 +459,19 @@ def imprimir_menu_final(
         nom = info_llm.get("nom_nou", plat.get("nom", "—")) if info_llm else plat.get("nom", "—")
         desc = info_llm.get("descripcio_carta", "") if info_llm else "Plat clàssic."
         
+        preu_plat = float(plat.get("preu", 0.0) or 0.0)
+        preu_total_menu += preu_plat
+        
         print(f"\n🍽️  {etiqueta}: {nom}")
         ings = ", ".join(plat.get("ingredients", []))
         print(f"   Ingredients clau: {ings if ings else '—'}")
+        
         if plat.get("condiment"):
             print(f"   Condiment: {plat.get('condiment')}")
         if desc:
             print(f"   Descripció: {desc}")
         
-        if beguda is None:
-            print("   🍷 Maridatge: no he trobat una opció adequada.")
-        else:
-            print(f"   🍷 Maridatge: {beguda.get('nom', '—')} (afinitat {score:.2f})")
+        
 
         # Si hi ha logs de canvis, els mostrem (Explicabilitat XCBR)
         logs = plat.get("log_transformacio", [])
@@ -635,8 +479,24 @@ def imprimir_menu_final(
             print("   Ajustos del xef:")
             for log in logs:
                 print(f"      - {log}")
-
-
+        
+        # Mostrem el preu total d'aquest curs (Plat)
+        print(f"   💵  Preu {etiqueta.lower()}: {preu_plat:.2f}€")
+        
+        if beguda is None:
+                    print("   🍷 Maridatge: no he trobat una opció adequada.")
+        else:
+            preu_beguda = float(beguda.get("preu_cost", 0.0) or 0.0)
+            preu_total_menu += preu_beguda
+            print(f"   🍷 Maridatge: {beguda.get('nom', '—')} (afinitat {score:.2f})")
+            print(f"         Preu beguda: {preu_beguda:.2f}€")
+            
+    # Secció final de resum econòmic
+    print("\n" + "="*30)
+    print(f"💰 PREU TOTAL DEL MENÚ: {preu_total_menu:.2f}€")
+    print("="*30)
+    
+    
 def debug_kb_match(plat, kb, etiqueta=""):
     print(f"\n[KB CHECK] {etiqueta} — {plat.get('nom','—')}")
     for ing in plat.get("ingredients", []):
@@ -654,23 +514,14 @@ def main():
     print("   🍷 Maître Digital — Recomanador de Menús 3.0")
     print("==================================================\n")
 
-    user_id_raw = input_default("Com et puc anomenar? (per guardar preferències)", "guest").strip()
-    user_id = (user_id_raw or "guest").lower()
+    COST_INGREDIENT_EXTRA = 3
+    COST_TECNICA_ALTA = 10
+    COST_TECNICA_CULTURAL = 5
+    user_id = input_default("Com et puc anomenar? (per guardar preferències)", "guest")
     user_profiles = _load_user_profiles(PATH_USER_PROFILES)
-    learned_rules = _load_learned_rules(PATH_LEARNED_RULES)
-    perfil_guardat = user_profiles.get(str(user_id))
-    if perfil_guardat is None:
-        existing_key = next(
-            (k for k in user_profiles.keys() if str(k).lower() == user_id),
-            None
-        )
-        if existing_key is not None:
-            perfil_guardat = user_profiles.get(existing_key)
-    if perfil_guardat is None:
-        perfil_guardat = {}
+    perfil_guardat = user_profiles.get(str(user_id), {})
     if not isinstance(perfil_guardat, dict):
         perfil_guardat = {}
-    display_name = perfil_guardat.get("display_name") or user_id_raw or user_id
 
     stored_alergies = list(perfil_guardat.get("alergies", []) or [])
     stored_pref = list(
@@ -691,7 +542,7 @@ def main():
     stored_rejected_ing = list(perfil_guardat.get("rejected_ingredients", []) or [])
     stored_rejected_pairs = list(perfil_guardat.get("rejected_pairs", []) or [])
 
-    _print_section(f"Hola {display_name}! Benvinguda/o al teu servei")
+    _print_section(f"Hola {user_id}! Benvinguda/o al teu servei")
     print("Això és el que tinc guardat del teu perfil:")
     print(f"- Al·lèrgens: {_format_list(stored_alergies)}")
     print(f"- Ingredients preferits: {_format_list(stored_pref)}")
@@ -723,7 +574,6 @@ def main():
             stored_rejected_pairs = _parse_pairs_input(txt)
             perfil_guardat["rejected_pairs"] = stored_rejected_pairs
 
-        perfil_guardat.setdefault("display_name", display_name)
         user_profiles[str(user_id)] = perfil_guardat
         _save_user_profiles(PATH_USER_PROFILES, user_profiles)
         print("Perfecte, actualització guardada.")
@@ -848,7 +698,6 @@ def main():
         sol = cas_seleccionat["solucio"]
 
         plats = sol.get("plats", []) or []
-        vetats_ingredients, parelles_vetades = _collect_vetats(perfil_guardat, learned_rules)
 
         def _agafa_plat(curs: str) -> dict:
             curs = str(curs).lower()
@@ -861,41 +710,14 @@ def main():
         plat1 = _agafa_plat("primer")
         plat2 = _agafa_plat("segon")
         postres = _agafa_plat("postres")
-        vetats_per_curs = {"primer": set(), "segon": set(), "postres": set()}
-
-        for plat in (plat1, plat2, postres):
-            ings = list(plat.get("ingredients", []) or [])
-            parelles_detectades = _parelles_detectades(ings, parelles_vetades)
-            if parelles_detectades:
-                alternatiu = _trobar_plat_alternatiu(
-                    plat.get("curs", ""),
-                    resultats,
-                    vetats_ingredients,
-                    parelles_vetades,
-                    cas_seleccionat.get("id_cas"),
-                )
-                if alternatiu:
-                    plat.clear()
-                    plat.update(alternatiu)
-                    plat.setdefault("log_transformacio", []).append(
-                        "Substitució completa per parella vetada"
-                    )
-                else:
-                    a, b = parelles_detectades[0].split("|", 1)
-                    norm_ings = {_normalize_item(i) for i in ings}
-                    ing_forcat = b if b in norm_ings else a
-                    vetats_per_curs[str(plat.get("curs", "")).lower()].add(ing_forcat)
-                    plat.setdefault("log_transformacio", []).append(
-                        f"Substitució parcial per parella vetada ({a} + {b})"
-                    )
         ingredients_originals = {
             "primer": list(plat1.get("ingredients", []) or []),
             "segon": list(plat2.get("ingredients", []) or []),
             "postres": list(postres.get("ingredients", []) or []),
         }
 
-        # 5.5) Substitucio previa d'ingredients prohibits (al.lergens i vetos)
-        if perfil_usuari or vetats_ingredients or any(vetats_per_curs.values()):
+        # 5.5) Substitucio previa d'ingredients prohibits (al.lergens)
+        if perfil_usuari:
             _print_section("Primer pas: seguretat alimentària")
             print("Reviso al·lèrgens i dietes per evitar riscos.")
             ingredients_usats = set()
@@ -908,8 +730,6 @@ def main():
             for etiqueta, p in plats_pre:
                 ingredients = list(p.get("ingredients", []) or [])
                 prohibits = ingredients_incompatibles(ingredients, kb, perfil_usuari)
-                prohibits.update(vetats_ingredients)
-                prohibits.update(vetats_per_curs.get(str(p.get("curs", "")).lower(), set()))
                 if not prohibits:
                     continue
                 plat_tmp = {"nom": p.get("nom", ""), "ingredients": ingredients}
@@ -919,8 +739,6 @@ def main():
                     kb,
                     perfil_usuari=perfil_usuari,
                     ingredients_usats=ingredients_usats,
-                    parelles_prohibides=parelles_vetades,
-                    preferits=stored_pref,
                 )
                 if isinstance(adaptat, dict):
                     p["ingredients"] = adaptat.get("ingredients", ingredients)
@@ -951,92 +769,65 @@ def main():
         if estil_latent:
             if estil_latent not in kb.estils_latents:
                 print(f"\nNo tinc l'estil '{estil_latent}' a la carta.")
-                print(f"Opcions disponibles: {estils_txt}")
+            else:
+                intensitat = float(input_default("Quina intensitat vols? (0.1 - 0.9)", "0.5"))
+                print(f"\nPerfecte. Apliquem l'estil {estil_latent} amb intensitat {intensitat}.")
 
-            intensitat = float(input_default("Quina intensitat vols? (0.1 - 0.9)", "0.5"))
-            print(f"\nPerfecte. Apliquem l'estil {estil_latent} amb intensitat {intensitat}.")
+                plats_llista = [
+                    ("PRIMER PLAT", plat1),
+                    ("SEGON PLAT", plat2),
+                    ("POSTRES", postres),
+                ]
+                ingredients_estil_usats = set()
+                resums = []
 
-            plats = [
-                ("PRIMER PLAT", plat1),
-                ("SEGON PLAT", plat2),
-                ("POSTRES", postres),
-            ]
-            ingredients_estil_usats = set()
+                for etiqueta, p in plats_llista:
+                    etiqueta_short = etiqueta.split()[0]
+                    
+                    # PAS A: Guardem el nombre d'ingredients abans de la transformació
+                    # Fem una còpia (list()) per evitar que la referència s'actualitzi sola
+                    ingredients_abans = list(p.get("ingredients", []) or [])
+                    n_abans = len(ingredients_abans)
 
-            resums = []
-            for etiqueta, p in plats:
-                etiqueta_short = etiqueta.split()[0]
-                ingredients_abans = list(p.get("ingredients", []) or [])
+                    resultat = substituir_ingredient(
+                        p,
+                        estil_latent,
+                        kb,
+                        mode="latent",
+                        intensitat=intensitat,
+                        ingredients_estil_usats=ingredients_estil_usats,
+                        perfil_usuari=perfil_usuari,
+                    )
 
-                resultat = substituir_ingredient(
-                    p,
-                    estil_latent,
-                    kb,
-                    mode="latent",
-                    intensitat=intensitat,
-                    ingredients_estil_usats=ingredients_estil_usats,
-                    perfil_usuari=perfil_usuari,
-                    parelles_prohibides=parelles_vetades,
-                )
+                    # Sincronitzem el diccionari p amb el resultat
+                    if isinstance(resultat, dict) and resultat is not p:
+                        p.clear()
+                        p.update(resultat)
 
-                # Si l’operador retorna un plat nou, enganxem resultats al dict original
-                if isinstance(resultat, dict) and resultat is not p:
-                    p.clear()
-                    p.update(resultat)
+                    # PAS B: Comptem ingredients després i calculem increment de preu
+                    ingredients_despres = p.get("ingredients", []) or []
+                    n_despres = len(ingredients_despres)
+                    
+                    diferencia = n_despres - n_abans
+                    if diferencia > 0:
+                        increment = diferencia * COST_INGREDIENT_EXTRA
+                        preu_actual = float(p.get("preu", 0.0) or 0.0)
+                        p["preu"] = preu_actual + increment
+                        
+                    _, resum = imprimir_resum_adaptacio(
+                        etiqueta_short,
+                        p,
+                        ingredients_abans,
+                        estil_latent,
+                        intensitat,
+                        kb,
+                        ingredients_original=ingredients_originals.get(str(p.get("curs", "")).lower()),
+                    )
+                    resums.append((etiqueta_short, resum))
 
-                _, resum = imprimir_resum_adaptacio(
-                    etiqueta_short,
-                    p,
-                    ingredients_abans,
-                    estil_latent,
-                    intensitat,
-                    kb,
-                    ingredients_original=ingredients_originals.get(
-                        str(p.get("curs", "")).lower()
-                    ),
-                )
-                resums.append((etiqueta_short, resum))
-
-            print(f"\nResum del toc d'estil ({estil_latent}):")
-            for etiqueta, resum in resums:
-                print(f"{etiqueta.capitalize()}: {resum}")
-
-        _try_add_preferred_touch(
-            [plat1, plat2, postres],
-            stored_pref,
-            perfil_usuari,
-            vetats_ingredients,
-            parelles_vetades,
-        )
-
-        if vetats_ingredients:
-            plats_post = [
-                ("PRIMER PLAT", plat1),
-                ("SEGON PLAT", plat2),
-                ("POSTRES", postres),
-            ]
-            for _, p in plats_post:
-                ingredients = list(p.get("ingredients", []) or [])
-                prohibits = ingredients_incompatibles(ingredients, kb, perfil_usuari)
-                prohibits.update(vetats_ingredients)
-                prohibits.update(vetats_per_curs.get(str(p.get("curs", "")).lower(), set()))
-                if not prohibits:
-                    continue
-                adaptat = substituir_ingredients_prohibits(
-                    {"nom": p.get("nom", ""), "ingredients": ingredients},
-                    prohibits,
-                    kb,
-                    perfil_usuari=perfil_usuari,
-                    parelles_prohibides=parelles_vetades,
-                    preferits=stored_pref,
-                )
-                if isinstance(adaptat, dict):
-                    p["ingredients"] = adaptat.get("ingredients", ingredients)
-                    logs = list(p.get("log_transformacio", []) or [])
-                    logs_sub = adaptat.get("log_transformacio", []) or []
-                    logs.extend(logs_sub)
-                    if logs:
-                        p["log_transformacio"] = logs
+                print(f"\nResum del toc d'estil ({estil_latent}):")
+                for etiqueta, resum in resums:
+                    print(f"{etiqueta.capitalize()}: {resum}")
         # debug_kb_match(plat1, kb, "PRIMER")
         # debug_kb_match(plat2, kb, "SEGON")
         # debug_kb_match(postres, kb, "POSTRES")
@@ -1119,6 +910,29 @@ def main():
             )
 
             transf_1, transf_2, transf_post = t_menu[0], t_menu[1], t_menu[2]
+
+            # --- ACTUALITZACIÓ DE PREUS PER TÈCNIQUES ---
+            # Mapegem cada llista de transformacions al seu plat corresponent
+            vincle_t = [
+                ("Primer", plat1, transf_1), 
+                ("Segon", plat2, transf_2), 
+                ("Postres", postres, transf_post)
+            ]
+
+            for nom_curs, p, llista_t in vincle_t:
+                if llista_t and isinstance(llista_t, list):
+                    n_tecs = len(llista_t)
+                    if n_tecs > 0:
+                        # Determinem el cost segons si és alta cuina o només cultural
+                        # Si és mode 'mixt' o 'alta', apliquem el preu més alt
+                        preu_u = COST_TECNICA_ALTA if (mode_ops in ["alta", "mixt"]) else COST_TECNICA_CULTURAL
+                        increment_total = n_tecs * preu_u
+                        
+                        preu_actual = float(p.get("preu", 0.0) or 0.0)
+                        p["preu"] = preu_actual + increment_total
+                        
+            
+
         else:
             print("Cap estil cultural ni d'alta cuina seleccionat. Ho deixem clàssic.")
 
@@ -1212,15 +1026,6 @@ def main():
             transformation_log.append(f"Tècnica: {t.get('nom') or t.get('display') or t}")
         for t in (transf_post or []):
             transformation_log.append(f"Tècnica: {t.get('nom') or t.get('display') or t}")
-        for curs, beguda in [
-            ("primer", beguda1),
-            ("segon", beguda2),
-            ("postres", beguda_postres),
-        ]:
-            if beguda:
-                transformation_log.append(
-                    f"Maridatge: Generat nou maridatge per {curs} ({beguda.get('nom', '—')})"
-                )
 
         saved = kb.retain_case(
             new_case=cas_proposat,
