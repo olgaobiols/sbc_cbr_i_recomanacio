@@ -3,6 +3,9 @@ import os
 from typing import List, Dict, Set, Any, Optional
 import google.generativeai as genai
 import requests
+from collections import defaultdict
+
+
 
 # Importem la lògica latent ja adaptada a KB
 from operador_ingredients import adaptar_plat_a_estil_latent
@@ -24,6 +27,93 @@ except:
 # ---------------------------------------------------------------------
 # 1. FUNCIONS AUXILIARS DE SCORE (Adaptades a KB)
 # ---------------------------------------------------------------------
+def _split_pipe(val: Any) -> List[str]:
+    if not val:
+        return []
+    if isinstance(val, list):
+        return [str(x).strip() for x in val if str(x).strip()]
+    return [x.strip() for x in str(val).split("|") if x.strip()]
+
+def _split_priority(val: Any) -> List[str]:
+    # format: "sauce>other>fruit"
+    if not val:
+        return []
+    return [x.strip() for x in str(val).split(">") if x.strip()]
+
+def _rank_from_priority(priority_list: List[str]) -> Dict[str, int]:
+    # menor = millor
+    return {name: i for i, name in enumerate(priority_list)}
+
+def _estat_ingredient(info_ing: Dict) -> str:
+    # 1) si la KB ja té estat, el respectem
+    for k in ("estat", "state", "aplicable_estat", "physical_state", "form"):
+        v = (info_ing.get(k) or "").strip().lower()
+        if v:
+            if "powder" in v or "pols" in v:
+                return "powder"
+            if "semi" in v:
+                return "semi_liquid"
+            if "liquid" in v or "líquid" in v:
+                return "liquid"
+            if "solid" in v or "sòlid" in v:
+                return "solid"
+
+    macro = (info_ing.get("macro_category") or info_ing.get("categoria_macro") or "").lower()
+    fam = (info_ing.get("family") or info_ing.get("familia") or "").lower()
+    name = (info_ing.get("nom_ingredient") or info_ing.get("ingredient_name") or info_ing.get("name") or "").lower()
+
+    # 2) Overrides “obvis” per família/nom
+    if name in ("water", "aigua"):
+        return "liquid"
+
+    # Pols clares
+    if fam in ("salt", "sugar", "sweetener", "spice") or macro in ("spice", "seasoning"):
+        return "powder"
+
+    # Lactis: distingim formatges vs cremes/iogurts
+    if macro == "dairy":
+        if "cheese" in fam:       # dairy_cheese, soft_dairy_cheese, etc.
+            return "solid"
+        if fam in ("dairy_cream", "dairy_yogurt"):
+            return "semi_liquid"
+        # fallback per lacti desconegut:
+        return "solid"
+
+    # Salses / brous / reduccions / vinagres
+    if macro in ("sauce", "sweet_sauce") or fam in ("cooking_stock", "wine_reduction", "acetic", "asian_acetic"):
+        return "liquid"
+
+    # Greixos: oli = liquid, greix sòlid (mantega) depèn de family si ho tens
+    if macro == "fat":
+        return "liquid"
+
+    # Sweet/sweetener: normalment sucre (powder) o xarop (liquid) -> si no tens family, millor powder
+    if macro in ("sweetener", "sweet"):
+        return "powder"
+
+    # "other"/"emulsion": sol ser semi_liquid SI és una emulsió real (maionesa), però l’aigua no hauria de ser emulsion
+    if fam == "emulsion":
+        return "semi_liquid"
+
+    return "solid"
+
+def _norm_macro(m: str) -> str:
+    m = (m or "").strip().lower()
+    mapa = {
+        "plant_vegetal": "vegetable",
+        "green_leaf": "vegetable",   # si mai t'arriba així
+        "vegetable": "vegetable",
+        "fruit": "fruit",
+        "grain": "grain",
+        "protein_animal": "protein",
+        "meat_cured": "protein",
+        "egg": "protein",
+        "sauce": "sauce",
+        "fat": "fat",
+        "dairy": "dairy",
+    }
+    return mapa.get(m, m)
+
 
 def _get_info_ingredients_plat(plat: Dict, kb: Any) -> List[Dict]:
     """Recupera la info de tots els ingredients del plat usant la KB."""
@@ -34,43 +124,153 @@ def _get_info_ingredients_plat(plat: Dict, kb: Any) -> List[Dict]:
             infos.append(info)
     return infos
 
-def _troba_ingredient_aplicable(tecnica_row: Dict, plat: Dict, info_ings: List[Dict], ingredients_usats: Set[str]):
-    """Busca sobre quin ingredient aplicar la tècnica."""
-    tags = set(tecnica_row.get("aplicable_a", "").split("|"))
-    curs = (plat.get("curs") or "").lower()
+def _llista_ingredients_aplicables(tecnica_row: Dict, info_ings: List[Dict]) -> list[str]:
+    aplica_estat = set(_split_pipe(tecnica_row.get("aplica_estat")))
+    aplica_macro = {_norm_macro(x) for x in _split_pipe(tecnica_row.get("aplica_macro"))}
+    aplica_family = set(_split_pipe(tecnica_row.get("aplica_family")))
 
-    # Prioritzem ingredients no usats que facin match amb els tags
+    evita_macro = set(_split_pipe(tecnica_row.get("evita_macro")))
+    evita_family = set(_split_pipe(tecnica_row.get("evita_family")))
+
+    # “aigua” fora si hi ha alternatives
+    alternatives_no_portadores = []
     for info in info_ings:
-        nom = info["ingredient_name"]
-        if nom in ingredients_usats: continue
-        
-        cat = info.get("macro_category") or info.get("categoria_macro")
-        fam = info.get("family")
+        nom0 = info.get("nom_ingredient") or info.get("ingredient_name") or info.get("name")
+        if nom0 and not _es_ingredient_buit_o_portador(nom0, info):
+            alternatives_no_portadores.append(info)
 
-        # Lògica de matching
-        if ("liquids" in tags or "salsa" in tags) and (cat in ("salsa", "altre") or fam == "aigua"):
-            ingredients_usats.add(nom)
-            return f"el líquid '{nom}'", nom
-        
-        if "fruita" in tags and cat == "fruita":
-            ingredients_usats.add(nom)
-            return f"la fruita '{nom}'", nom
-            
-        if "proteina_animal" in tags and cat in ("proteina_animal", "protein_animal", "peix"):
-            ingredients_usats.add(nom)
-            return f"la proteïna '{nom}'", nom
-
-    # Fallback: qualsevol no usat
+    possibles = []
     for info in info_ings:
-        nom = info["ingredient_name"]
-        if nom not in ingredients_usats:
-            ingredients_usats.add(nom)
-            return f"l'ingredient '{nom}'", nom
+        nom = info.get("nom_ingredient") or info.get("ingredient_name") or info.get("name")
+        if not nom:
+            continue
 
-    # Fallback curs
-    if "postres" in tags and "postres" in curs:
-        return "el curs 'postres'", None
+        if _es_ingredient_buit_o_portador(nom, info) and alternatives_no_portadores:
+            continue
 
+        macro = _norm_macro(info.get("macro_category") or info.get("categoria_macro") or "")
+        fam = (info.get("family") or info.get("familia") or "").lower()
+        estat = _estat_ingredient(info)
+
+        if macro in evita_macro:
+            continue
+        if fam in evita_family:
+            continue
+        if aplica_estat and estat not in aplica_estat:
+            continue
+        if aplica_macro and macro not in aplica_macro:
+            continue
+        # family NO és dur (com al teu _troba_ingredient_aplicable), però si vols fer-la dura aquí ho podem canviar.
+        possibles.append(nom)
+
+    return possibles
+
+def _compta_compat_per_ingredients(tecniques_raw: list[dict], base_tecnniques: dict, info_ings: list[dict]) -> dict:
+    """
+    Per cada ingredient del plat, compta en quantes de les tècniques seleccionades
+    podria ser objectiu. Com més baix, més 'escàs' -> l'hem de protegir.
+    """
+    counts = {}
+    for info in info_ings:
+        nom = info.get("nom_ingredient") or info.get("ingredient_name") or info.get("name")
+        if nom:
+            counts[nom] = 0
+
+    for r in tecniques_raw:
+        tec_row = base_tecnniques.get(r["nom"]) or {}
+        for ing in _llista_ingredients_aplicables(tec_row, info_ings):
+            if ing in counts:
+                counts[ing] += 1
+
+    return counts
+
+def _troba_ingredient_aplicable(
+    tecnica_row: Dict,
+    plat: Dict,
+    info_ings: List[Dict],
+    ingredients_usats: Set[str],
+    compat_counts: Optional[Dict[str, int]] = None,   # <-- AFEGIT
+):
+
+    aplica_estat = set(_split_pipe(tecnica_row.get("aplica_estat")))
+    aplica_macro = {_norm_macro(x) for x in _split_pipe(tecnica_row.get("aplica_macro"))}
+    aplica_family = set(_split_pipe(tecnica_row.get("aplica_family")))
+
+    evita_macro = set(_split_pipe(tecnica_row.get("evita_macro")))
+    evita_family = set(_split_pipe(tecnica_row.get("evita_family")))
+
+    prio_macro = _rank_from_priority(_split_priority(tecnica_row.get("prioritat_macro")))
+    prio_family = _rank_from_priority(_split_priority(tecnica_row.get("prioritat_family")))
+    # abans del loop candidates
+    alternatives_no_portadores = []
+    for info in info_ings:
+        nom0 = info.get("nom_ingredient") or info.get("ingredient_name") or info.get("name")
+        if not nom0:
+            continue
+        if _es_ingredient_buit_o_portador(nom0, info):
+            continue
+        alternatives_no_portadores.append(info)
+
+    # candidates scored
+    candidates = []
+
+    for info in info_ings:
+        nom = info.get("nom_ingredient") or info.get("ingredient_name") or info.get("name")
+        if not nom or nom in ingredients_usats:
+            continue
+
+        # si és water/aigua i hi ha altres opcions, el descartem
+        if _es_ingredient_buit_o_portador(nom, info) and alternatives_no_portadores:
+            continue
+
+
+        macro_raw = (info.get("macro_category") or info.get("categoria_macro") or "")
+        macro = _norm_macro(macro_raw)
+        fam = (info.get("family") or info.get("familia") or "").lower()
+        estat = _estat_ingredient(info)
+
+        # filtres d'exclusió
+        if macro in evita_macro:
+            continue
+        if fam in evita_family:
+            continue
+
+        # filtre d'aplicabilitat (si el camp és buit, no obliga)
+        if aplica_estat and estat not in aplica_estat:
+            continue
+        if aplica_macro and macro not in aplica_macro:
+            continue
+
+        # family: el considerem "bonus", no filtre dur (per ser robustos)
+        family_bonus = 1 if (aplica_family and fam in aplica_family) else 0
+
+        # prioritat: com més baix, millor
+        macro_rank = prio_macro.get(macro, 999)
+        fam_rank = prio_family.get(fam, 999)
+
+        # score global (tu pots ajustar pesos)
+        score = 0
+        score += 5  # passa filtres
+        score += 3 * family_bonus
+        score += max(0, 10 - macro_rank) if macro_rank < 999 else 0
+        score += max(0, 6 - fam_rank) if fam_rank < 999 else 0
+        # Penalització "anti-robatori": protegim ingredients escassos
+        if compat_counts is not None:
+            c = compat_counts.get(nom, 0)
+            if c <= 1:
+                score -= 4
+            elif c == 2:
+                score -= 2
+
+        candidates.append((score, nom, macro, fam, estat))
+
+    if candidates:
+        candidates.sort(reverse=True, key=lambda x: x[0])
+        _, nom, macro, fam, estat = candidates[0]
+        ingredients_usats.add(nom)
+        return f"l'ingredient '{nom}' ({estat}, {macro}, {fam})", nom
+
+    # si no hi ha cap ingredient, retornem None (la tècnica queda “sense objectiu”)
     return "un element del plat", None
 
 
@@ -100,215 +300,79 @@ def substituir_ingredient(
         )
     return plat
 
-
-
-
-
-
-
-
-
-
-
-
-def categoria_principal_plat(plat: dict, base_ingredients: List[Dict]) -> str:
+def _completa_fins_a_n(
+    transformacions: list[dict],
+    plat: dict,
+    nom_estil: str,
+    base_estils: dict,
+    base_tecnniques: dict,
+    kb,
+    n_objectiu: int,
+    tecniques_ja_usades: set,
+    min_score: int,
+    debug: bool = False,
+) -> list[dict]:
     """
-    Determina una categoria 'grossa' del plat a partir dels ingredients.
-    Retorna valors tipus: 'peix', 'carn', 'vegetal', 'pasta_arros', 'postres', etc.
-    És una heurística simple, suficient per a maridatge.
+    Si n'hi ha menys de n_objectiu, intenta afegir més tècniques relaxant restriccions:
+      1) baixa min_score de forma suau
+      2) permet repeticions de tècnica (només si és l'únic que encaixa)
     """
-    info_ings = _info_ingredients_plat(plat, base_ingredients)
-    cats = {row["categoria_macro"] for row in info_ings}
+    if len(transformacions) >= n_objectiu:
+        return transformacions
 
-    # Peix i marisc
-    if "peix" in cats:
-        return "peix"
+    # Per evitar duplicats exactes
+    noms_ja = {t["nom"] for t in transformacions if t.get("nom")}
 
-    # Proteïna animal (carn) sense peix
-    if "proteina_animal" in cats:
-        return "carn"
+    # intent 1: baixar llindar
+    for relax in (min_score - 1, min_score - 2, min_score - 3):
+        if len(transformacions) >= n_objectiu:
+            break
+        if relax < 1:
+            continue
 
-    # Vegetarià/vegetal (verdura, cereal, lacti, etc.)
-    if "verdura" in cats:
-        return "vegetal"
+        extra = triar_tecniques_per_plat(
+            plat=plat,
+            nom_estil=nom_estil,
+            base_estils=base_estils,
+            base_tecnniques=base_tecnniques,
+            kb=kb,
+            max_tecniques=n_objectiu,   # volem tenir marge
+            min_score=relax,
+            tecniques_ja_usades=tecniques_ja_usades,
+            debug=debug,
+        )
 
-    if "cereal_feculent" in cats:
-        return "pasta_arros"
+        for t in extra:
+            if len(transformacions) >= n_objectiu:
+                break
+            if t["nom"] in noms_ja:
+                continue
+            transformacions.append(t)
+            noms_ja.add(t["nom"])
 
-    if "lacti" in cats or "fruita" in cats:
-        return "suau"
+    # intent 2 (últim recurs): permetre repetir tècniques del menú si cal
+    if len(transformacions) < n_objectiu:
+        extra2 = triar_tecniques_per_plat(
+            plat=plat,
+            nom_estil=nom_estil,
+            base_estils=base_estils,
+            base_tecnniques=base_tecnniques,
+            kb=kb,
+            max_tecniques=n_objectiu,
+            min_score=max(1, min_score - 3),
+            tecniques_ja_usades=set(),  # <- elimina penalització menu
+            debug=debug,
+        )
+        for t in extra2:
+            if len(transformacions) >= n_objectiu:
+                break
+            if t["nom"] in noms_ja:
+                continue
+            transformacions.append(t)
+            noms_ja.add(t["nom"])
 
-    # Si és postres, potser tens plat["curs"] == "postres"
-    curs = plat.get("curs", "").lower()
-    if "postres" in curs:
-        return "postres"
+    return transformacions
 
-    return "neutre"
-
-
-def _score_tecnica_per_plat(tecnica_row, plat, info_ings):
-    """
-    Dona una puntuació (enter) que indica com bé encaixa aquesta tècnica
-    amb el plat i els seus ingredients.
-
-    Hi ha dues parts:
-      1) SCORE BASE genèric (curs + categories + famílies)
-      2) Ajustos específics segons categoria de la tècnica
-         ('molecular', 'minimalista', 'nouvelle', 'classica',
-          'nordica', 'fusio', 'creativa', 'mercat', ...).
-
-    Com més alt el score, més coherent és aplicar la tècnica a aquest plat.
-    """
-    curs = plat.get("curs", "").lower()  # 'primer', 'segon', 'postres', ...
-    tags = set(tecnica_row.get("aplicable_a", "").split("|")) if tecnica_row.get("aplicable_a") else set()
-    categoria_tecnica = (tecnica_row.get("categoria") or "").lower()
-
-    score = 0
-
-    # -------------------------
-    # 1) SCORE BASE GENERIC
-    # -------------------------
-    # Match per CURS (p.ex. 'postres', 'primer', 'segon' dins aplicable_a)
-    if curs and curs in tags:
-        score += 3
-
-    # Match per CATEGORIA i FAMÍLIA d'ingredients (puntuació base)
-    cats = {row["categoria_macro"] for row in info_ings}
-    fams = {row["familia"] for row in info_ings}
-
-    if tags & cats:
-        score += 2
-    if tags & fams:
-        score += 1
-
-    # Detecció de tipus d'ingredients presents al plat
-    hi_ha_liquid = any(
-        row["categoria_macro"] in ("salsa", "altre")
-        or row["familia"] in ("aigua", "fons_cuina", "reducció_vi")
-        for row in info_ings
-    )
-    hi_ha_fruta = any(row["categoria_macro"] == "fruita" for row in info_ings)
-    hi_ha_lacti = any(row["categoria_macro"] == "lacti" for row in info_ings)
-    hi_ha_feculent = any(row["categoria_macro"] == "cereal_feculent" for row in info_ings)
-    hi_ha_proteina_o_verdura = any(
-        row["categoria_macro"] in ("proteina_animal", "peix", "proteina_vegetal", "verdura")
-        for row in info_ings
-    )
-    hi_ha_verdura = any(row["categoria_macro"] == "verdura" for row in info_ings)
-    num_ingredients = len(info_ings)
-
-    # -------------------------
-    # 2) AJUSTOS PER CATEGORIA
-    # -------------------------
-
-    # 2.1) Criteris específics per a tècniques de CUINA MOLECULAR
-    if categoria_tecnica == "molecular":
-        # LÍQUIDS / SALSES → molt importants
-        if ("liquids" in tags or "salsa" in tags or "altre" in tags) and hi_ha_liquid:
-            score += 3
-
-        # POSTRES moleculars funcionen molt bé
-        if "postres" in tags and curs == "postres":
-            score += 3
-
-        # FRUITA, LACTIS, FECULENTS → bons candidats per gels, escumes, etc.
-        if "fruita" in tags and hi_ha_fruta:
-            score += 2
-        if "lacti" in tags and hi_ha_lacti:
-            score += 2
-        if "cereal_feculent" in tags and hi_ha_feculent:
-            score += 2
-
-    # 2.2) Criteris específics per a tècniques MINIMALISTES / PLATING
-    elif categoria_tecnica == "minimalista":
-        # Plats amb pocs ingredients → més propensos a minimalisme
-        if num_ingredients <= 4:
-            score += 2
-
-        # En postres, minimalisme acostuma a quedar molt bé
-        if curs == "postres":
-            score += 2
-
-        # Presència de proteïna o verdura → encaixa amb plating en línia, contrast de volums…
-        if hi_ha_proteina_o_verdura:
-            score += 2
-
-        # Minimalisme sol evitar salses pesades; plats “nets” tenen un plus
-        hi_ha_salsa = any(row["categoria_macro"] == "salsa" for row in info_ings)
-        if not hi_ha_salsa:
-            score += 1
-
-    # 2.3) NOUVELLE CUISINE
-    elif categoria_tecnica == "nouvelle":
-        # Plats lleugers, sovint primers/segons fins
-        if curs in ("primer", "segon"):
-            score += 2
-        # Fons clars / líquids lleugers
-        if hi_ha_liquid:
-            score += 2
-        # Verdures i proteïnes suaus → bons candidats
-        if hi_ha_verdura or hi_ha_proteina_o_verdura:
-            score += 2
-        # Plats no excessivament carregats
-        if num_ingredients <= 7:
-            score += 1
-
-    # 2.4) CUINA CLÀSSICA FRANCESA
-    elif categoria_tecnica == "classica":
-        # Segons amb proteïna o verdura → brasejats, glace, napar...
-        if hi_ha_proteina_o_verdura and curs in ("segon", "principal"):
-            score += 3
-        # Presència de líquids → bons candidats per fons, roux, glace
-        if hi_ha_liquid:
-            score += 2
-        # Feculents (gratinats, salses espessides, etc.)
-        if hi_ha_feculent:
-            score += 1
-
-    # 2.5) NOVA CUINA NÒRDICA
-    elif categoria_tecnica == "nordica":
-        # Molt centrada en verdura, arrels, cereals, peix
-        if hi_ha_verdura:
-            score += 2
-        if any(row["categoria_macro"] == "peix" for row in info_ings):
-            score += 2
-        # Plats relativament nets, sense massa ingredients
-        if num_ingredients <= 8:
-            score += 1
-
-    # 2.6) CUINA FUSIÓ CONTEMPORÀNIA
-    elif categoria_tecnica == "fusio":
-        # Proteïna + líquid → ideal per lacats, infusions, gelee, etc.
-        if hi_ha_proteina_o_verdura and hi_ha_liquid:
-            score += 3
-        # Fruita o feculent → ajuden a contrast dolç/salat/picant
-        if hi_ha_fruta or hi_ha_feculent:
-            score += 1
-
-    # 2.7) CUINA CREATIVA
-    elif categoria_tecnica == "creativa":
-        # Forta orientació a líquids i textura
-        if hi_ha_liquid:
-            score += 3
-        # Plats amb 3–8 ingredients → prou material per jugar, però sense caos
-        if 3 <= num_ingredients <= 8:
-            score += 2
-
-    # 2.8) CUINA DE MERCAT
-    elif categoria_tecnica == "mercat":
-        # Pocs ingredients, producte protagonista
-        if num_ingredients <= 6:
-            score += 2
-        # Verdura i proteïna fresques
-        if hi_ha_verdura or hi_ha_proteina_o_verdura:
-            score += 2
-        # Primers/segons senzills
-        if curs in ("primer", "segon", "principal"):
-            score += 1
-
-    # Altres categories es queden només amb el score base
-
-    return score
 
 
 
@@ -316,15 +380,438 @@ def _score_tecnica_per_plat(tecnica_row, plat, info_ings):
 # ---------------------------------------------------------------------
 #  OPERADOR 2: APLICAR TÈCNIQUES A UN PLAT
 # ---------------------------------------------------------------------
+def llista_tecniques_applicables_per_ingredient(
+    plat: dict,
+    kb,
+    base_tecnniques: dict,
+    inclou_curs: bool = True,
+    ordenar_per: str = "nom",  # "nom" o "match"
+    debug: bool = False,
+) -> dict:
+    """
+    Retorna un dict:
+      { ingredient_nom: [ {nom_tecnica, display, match, motius_ok, motius_no} , ... ] }
+    on match = nombre de dimensions que matxegen (estat/macro/family/curs)
+    i només inclou tècniques que passen exclusions i que NO fallen cap filtre dur.
+
+    NOTE:
+    - Considero 'aplica_*' com a filtre dur NOMÉS si el camp no és buit.
+    - 'aplica_family' també el faig filtre dur aquí, perquè tu demanes "es pot aplicar o no".
+      (Si prefereixes family com a "bonus", t’ho canvio fàcil.)
+    """
+
+    curs = (plat.get("curs", "") or "").strip().lower()
+    info_ings = _get_info_ingredients_plat(plat, kb)
+
+    # index per nom d'ingredient (tal com surt de KB)
+    result = defaultdict(list)
+
+    for info in info_ings:
+        ing_nom = info.get("nom_ingredient") or info.get("ingredient_name") or info.get("name")
+        if not ing_nom:
+            continue
+
+        macro_raw = (info.get("macro_category") or info.get("categoria_macro") or "")
+        macro = _norm_macro(macro_raw)
+        fam = (info.get("family") or info.get("familia") or "").strip().lower()
+        estat = _estat_ingredient(info)
+
+        for nom_tecnica, tec_row in base_tecnniques.items():
+            if tec_row is None:
+                continue
+
+            # camps tècnica
+            aplica_estat = set(_split_pipe(tec_row.get("aplica_estat")))
+            aplica_macro = {_norm_macro(x) for x in _split_pipe(tec_row.get("aplica_macro"))}
+            aplica_family = set(_split_pipe(tec_row.get("aplica_family")))
+            aplica_curs = set(_split_pipe(tec_row.get("aplicable_curs") or ""))
+
+            evita_macro = set(_split_pipe(tec_row.get("evita_macro")))
+            evita_family = set(_split_pipe(tec_row.get("evita_family")))
+
+            motius_ok = []
+            motius_no = []
+
+            # 1) exclusions (dures)
+            if macro in evita_macro:
+                motius_no.append(f"EXCLÒS: macro '{macro}' ∈ evita_macro")
+                continue
+            if fam and fam in evita_family:
+                motius_no.append(f"EXCLÒS: family '{fam}' ∈ evita_family")
+                continue
+
+            # 2) aplica_curs (si vols)
+            if inclou_curs and aplica_curs:
+                if curs in aplica_curs:
+                    motius_ok.append(f"curs OK ({curs})")
+                else:
+                    motius_no.append(f"curs NO ({curs}) no ∈ {sorted(aplica_curs)}")
+                    continue
+
+            # 3) estat (dur si tècnica defineix aplica_estat)
+            if aplica_estat:
+                if estat in aplica_estat:
+                    motius_ok.append(f"estat OK ({estat})")
+                else:
+                    motius_no.append(f"estat NO ({estat}) no ∈ {sorted(aplica_estat)}")
+                    continue
+
+            # 4) macro (dur si tècnica defineix aplica_macro)
+            if aplica_macro:
+                if macro in aplica_macro:
+                    motius_ok.append(f"macro OK ({macro})")
+                else:
+                    motius_no.append(f"macro NO ({macro}) no ∈ {sorted(aplica_macro)}")
+                    continue
+
+            # 5) family (dur si tècnica defineix aplica_family)
+            if aplica_family:
+                if fam in aplica_family:
+                    motius_ok.append(f"family OK ({fam})")
+                else:
+                    motius_no.append(f"family NO ({fam}) no ∈ {sorted(aplica_family)}")
+                    continue
+
+            # match score (quantes dimensions han matxejat, només sobre dimensions que existien)
+            match = 0
+            if inclou_curs and aplica_curs:
+                match += 1
+            if aplica_estat:
+                match += 1
+            if aplica_macro:
+                match += 1
+            if aplica_family:
+                match += 1
+
+            result[ing_nom].append({
+                "nom_tecnica": nom_tecnica,
+                "display": tec_row.get("display_nom", nom_tecnica),
+                "match": match,
+                "motius_ok": motius_ok,
+                "motius_no": motius_no,
+                "categoria": (tec_row.get("categoria") or "").lower(),
+                "impacte_textura": tec_row.get("impacte_textura", ""),
+                "impacte_sabor": tec_row.get("impacte_sabor", ""),
+            })
+
+        # ordenar per ingredient
+        if ordenar_per == "match":
+            result[ing_nom].sort(key=lambda x: (x["match"], x["nom_tecnica"]), reverse=True)
+        else:
+            result[ing_nom].sort(key=lambda x: x["nom_tecnica"])
+
+        if debug:
+            print(f"[MAP] {ing_nom}: {len(result[ing_nom])} tècniques aplicables")
+
+    return dict(result)
+
+def triar_tecniques_2_operadors_per_plat(
+    plat: dict,
+    mode: str,  # "cultural", "alta", "mixt"
+    estil_cultural: str | None,
+    estil_alta: str | None,
+    base_estils: dict,
+    base_tecnniques: dict,
+    kb,
+    tecniques_ja_usades: set,
+    min_score: int = 5,
+    ingredients_usats_plat = set(),
+    debug: bool = False,
+) -> list[dict]:
+    """
+    Retorna EXACTAMENT (si es pot) 2 transformacions totals segons el mode:
+      - cultural: 2 culturals
+      - alta: 2 alta cuina
+      - mixt: 1 cultural + 1 alta cuina
+    """
+    mode = (mode or "").strip().lower()
+    transf = []
+
+    if mode == "mixt":
+        # 1 cultural
+        if estil_cultural:
+            t_c = triar_tecniques_per_plat(
+                plat=plat,
+                nom_estil=estil_cultural,
+                base_estils=base_estils,
+                base_tecnniques=base_tecnniques,
+                kb=kb,
+                max_tecniques=1,
+                min_score=min_score,
+                tecniques_ja_usades=tecniques_ja_usades,
+                ingredients_usats_global=ingredients_usats_plat,
+                debug=debug,
+            )
+            if t_c:
+                transf.extend(t_c)
+                tecniques_ja_usades.update(x["nom"] for x in t_c)
+
+        # 1 alta
+        if estil_alta:
+            t_a = triar_tecniques_per_plat(
+                plat=plat,
+                nom_estil=estil_alta,
+                base_estils=base_estils,
+                base_tecnniques=base_tecnniques,
+                kb=kb,
+                max_tecniques=1,
+                min_score=min_score,
+                tecniques_ja_usades=tecniques_ja_usades,
+                ingredients_usats_global=ingredients_usats_plat,
+                debug=debug,
+            )
+            if t_a:
+                transf.extend(t_a)
+                tecniques_ja_usades.update(x["nom"] for x in t_a)
+
+        # completa fins 2 (prioritat: el que falti segons disponibilitat)
+        # completa fins 2 amb quota: primer intenta el que falti
+        if len(transf) < 2:
+            falta = 2 - len(transf)
+
+            # 1) Si NO hem aconseguit cultural, relaxa cultural abans de saltar a alta
+            # 1) Si NO hem aconseguit cultural, relaxa cultural abans de saltar a alta
+            if estil_cultural:
+                tecs_culturals_str = (base_estils.get(estil_cultural, {}) or {}).get("tecnniques_clau", "") or ""
+                tecs_culturals = {t.strip() for t in tecs_culturals_str.split("|") if t.strip()}
+                te_cultural_real = any((x.get("nom") or "").strip() in tecs_culturals for x in transf)
+            else:
+                te_cultural_real = False
+
+            if estil_cultural and not te_cultural_real:
+                extra_c = triar_tecniques_per_plat(
+                    plat=plat,
+                    nom_estil=estil_cultural,
+                    base_estils=base_estils,
+                    base_tecnniques=base_tecnniques,
+                    kb=kb,
+                    max_tecniques=falta,
+                    min_score=max(1, min_score - 2),   # relax suau
+                    tecniques_ja_usades=tecniques_ja_usades,
+                    debug=debug,
+                )
+                for t in extra_c:
+                    if len(transf) >= 2:
+                        break
+                    if t["nom"] not in {x["nom"] for x in transf}:
+                        transf.append(t)
+                        tecniques_ja_usades.add(t["nom"])
+
+            # 2) Si encara falta, llavors sí: omple amb alta
+            if len(transf) < 2 and estil_alta:
+                extra_a = triar_tecniques_per_plat(
+                    plat=plat,
+                    nom_estil=estil_alta,
+                    base_estils=base_estils,
+                    base_tecnniques=base_tecnniques,
+                    kb=kb,
+                    max_tecniques=2 - len(transf),
+                    min_score=max(1, min_score - 2),
+                    tecniques_ja_usades=tecniques_ja_usades,
+                    debug=debug,
+                )
+                for t in extra_a:
+                    if len(transf) >= 2:
+                        break
+                    if t["nom"] not in {x["nom"] for x in transf}:
+                        transf.append(t)
+                        tecniques_ja_usades.add(t["nom"])
+
+        return transf[:2]
+
+    elif mode == "cultural":
+        if not estil_cultural:
+            return []
+        transf = triar_tecniques_per_plat(
+            plat=plat,
+            nom_estil=estil_cultural,
+            base_estils=base_estils,
+            base_tecnniques=base_tecnniques,
+            kb=kb,
+            max_tecniques=2,
+            min_score=min_score,
+            tecniques_ja_usades=tecniques_ja_usades,
+            debug=debug,
+        )
+        transf = _completa_fins_a_n(
+            transformacions=transf,
+            plat=plat,
+            nom_estil=estil_cultural,
+            base_estils=base_estils,
+            base_tecnniques=base_tecnniques,
+            kb=kb,
+            n_objectiu=2,
+            tecniques_ja_usades=tecniques_ja_usades,
+            min_score=min_score,
+            debug=debug,
+        )
+        tecniques_ja_usades.update(x["nom"] for x in transf)
+        return transf[:2]
+
+    else:
+        # "alta" (default)
+        if not estil_alta:
+            return []
+        transf = triar_tecniques_per_plat(
+            plat=plat,
+            nom_estil=estil_alta,
+            base_estils=base_estils,
+            base_tecnniques=base_tecnniques,
+            kb=kb,
+            max_tecniques=2,
+            min_score=min_score,
+            tecniques_ja_usades=tecniques_ja_usades,
+            debug=debug,
+        )
+        transf = _completa_fins_a_n(
+            transformacions=transf,
+            plat=plat,
+            nom_estil=estil_alta,
+            base_estils=base_estils,
+            base_tecnniques=base_tecnniques,
+            kb=kb,
+            n_objectiu=2,
+            tecniques_ja_usades=tecniques_ja_usades,
+            min_score=min_score,
+            debug=debug,
+        )
+        tecniques_ja_usades.update(x["nom"] for x in transf)
+        return transf[:2]
+
+
+def triar_tecniques_2_operadors_per_menu(
+    plats: list[dict],
+    mode: str,                 # "cultural" | "alta" | "mixt"
+    estil_cultural: str | None,
+    estil_alta: str | None,
+    base_estils: dict,
+    base_tecnniques: dict,
+    kb,
+    min_score: int = 5,
+    debug: bool = False,
+) -> list[list[dict]]:
+    tecniques_ja_usades = set()
+    result = []
+
+    for plat in plats:
+        transf = triar_tecniques_2_operadors_per_plat(
+            plat=plat,
+            mode=mode,
+            estil_cultural=estil_cultural,
+            estil_alta=estil_alta,
+            base_estils=base_estils,
+            base_tecnniques=base_tecnniques,
+            kb=kb,
+            tecniques_ja_usades=tecniques_ja_usades,
+            min_score=min_score,
+            debug=debug,
+        )
+        result.append(transf)
+
+    return result
+
+def _score_tecnica_per_plat(tecnica_row: Dict, plat: Dict, info_ings: List[Dict]) -> int:
+    curs = (plat.get("curs", "") or "").lower()
+    categoria_tecnica = (tecnica_row.get("categoria") or "").lower()
+
+    aplica_estat = set(_split_pipe(tecnica_row.get("aplica_estat")))
+    aplica_macro = {_norm_macro(x) for x in _split_pipe(tecnica_row.get("aplica_macro"))}
+    aplica_family = set(_split_pipe(tecnica_row.get("aplica_family")))
+    aplica_curs = set(_split_pipe(tecnica_row.get("aplicable_curs") or ""))  # safe
+ 
+
+    score = 0
+
+    # curs (si existeix)
+    if aplica_curs and curs in aplica_curs:
+        score += 2
+
+    # match ingredient-level: comptem si existeix com a mínim 1 ingredient compatible
+    any_estat = False
+    any_macro = False
+    any_family = False
+
+    for info in info_ings:
+        macro_raw = (info.get("macro_category") or info.get("categoria_macro") or "")
+        macro = _norm_macro(macro_raw)
+        fam = (info.get("family") or info.get("familia") or "").lower()
+        estat = _estat_ingredient(info)
+
+        if aplica_estat and estat in aplica_estat:
+            any_estat = True
+        if aplica_macro and macro in aplica_macro:
+            any_macro = True
+        if aplica_family and fam in aplica_family:
+            any_family = True
+
+    if any_macro:
+        score += 4
+    if any_estat:
+        score += 3
+    if any_family:
+        score += 2
+
+    # bonus molecular si hi ha líquid/semi-líquid al plat
+    if categoria_tecnica == "molecular":
+        if any(_estat_ingredient(i) in ("liquid", "semi_liquid") for i in info_ings):
+            score += 2
+
+    return score
+
+def debug_tecniques_applicables_per_ingredient(plat, kb, base_tecnniques):
+    info_ings = _get_info_ingredients_plat(plat, kb)
+    curs = (plat.get("curs", "") or "").lower()
+
+    out = {}
+    for info in info_ings:
+        ing = info.get("nom_ingredient") or info.get("ingredient_name") or info.get("name")
+        if not ing:
+            continue
+        macro = _norm_macro(info.get("macro_category") or info.get("categoria_macro") or "")
+        fam = (info.get("family") or info.get("familia") or "").lower()
+        estat = _estat_ingredient(info)
+
+        aplicables = []
+        for nom_tecnica, tec in base_tecnniques.items():
+            aplica_estat = set(_split_pipe(tec.get("aplica_estat")))
+            aplica_macro = {_norm_macro(x) for x in _split_pipe(tec.get("aplica_macro"))}
+            aplica_family = set(_split_pipe(tec.get("aplica_family")))
+            aplica_curs = set(_split_pipe(tec.get("aplicable_curs") or ""))
+
+            evita_macro = set(_split_pipe(tec.get("evita_macro")))
+            evita_family = set(_split_pipe(tec.get("evita_family")))
+
+            if macro in evita_macro:
+                continue
+            if fam in evita_family:
+                continue
+            if aplica_curs and curs not in aplica_curs:
+                continue
+            if aplica_estat and estat not in aplica_estat:
+                continue
+            if aplica_macro and macro not in aplica_macro:
+                continue
+            # aquí decideixes si family és dur o no:
+            if aplica_family and fam not in aplica_family:
+                continue
+
+            aplicables.append(nom_tecnica)
+
+        out[ing] = sorted(aplicables)
+
+    return out
+
+
 def triar_tecniques_per_plat(
     plat,
     nom_estil,
     base_estils,
     base_tecnniques,
-    base_ingredients,
+    kb,
     max_tecniques=2,
     min_score=5,
     tecniques_ja_usades=None,
+    ingredients_usats_global: Optional[Set[str]] = None,  # <-- AFEGIT
     debug=False,
 ):
     """
@@ -353,13 +840,16 @@ def triar_tecniques_per_plat(
         tecniques_ja_usades = set()
 
     nom_plat = plat.get("nom", "<sense_nom>")
-    info_ings = _get_info_ingredients_plat(plat, base_ingredients)
+    info_ings = _get_info_ingredients_plat(plat,kb)
 
     estil_row = base_estils.get(nom_estil)
     if estil_row is None:
         if debug:
             print(f"[TEC] Estil '{nom_estil}' no trobat per al plat '{nom_plat}'.")
         return []
+
+    tipus_estil = (estil_row.get("tipus") or "").strip().lower()
+
 
     tecnniques_str = estil_row.get("tecnniques_clau", "")
     if not tecnniques_str:
@@ -386,6 +876,16 @@ def triar_tecniques_per_plat(
             print(f"[SCORE] Plat '{nom_plat}', tècnica '{nom_tecnica}' → {base_score}")
 
         if base_score >= min_score:
+            # Pre-check: la tècnica ha de tenir com a mínim 1 ingredient objectiu possible
+            tmp_usats = set()
+            _, obj_ing_test = _troba_ingredient_aplicable(
+                tec_row, plat, info_ings, tmp_usats, compat_counts=None
+            )
+            if obj_ing_test is None:
+                if debug:
+                    print(f"[SKIP] '{nom_tecnica}' sense objectiu aplicable a '{nom_plat}'")
+                continue
+
             scored.append({"nom": nom_tecnica, "score": base_score})
 
     if not scored:
@@ -436,77 +936,76 @@ def triar_tecniques_per_plat(
     if not seleccionades_raw and scored:
         seleccionades_raw = [scored[0]]
 
-    # 3) Assignem ingredient/curs a cada tècnica
-    transformacions = []
-    ingredients_usats = set()
+    # Comptem quins ingredients són "escassos" entre les tècniques seleccionades,
+    # per evitar que una tècnica flexible "robi" l'ingredient que només serveix per una altra.
+    compat_counts = _compta_compat_per_ingredients(
+        tecniques_raw=seleccionades_raw,
+        base_tecnniques=base_tecnniques,
+        info_ings=info_ings,
+    )
 
+    # 3) Assignem ingredient/curs a cada tècnica
+    # 3) Assignem ingredient/curs a cada tècnica (robust: tècniques més restringides primer)
+    transformacions = []
+    ingredients_usats = ingredients_usats_global if ingredients_usats_global is not None else set()
+
+    # calculem quants ingredients possibles té cada tècnica
+    sel_ordenades = []
     for r in seleccionades_raw:
+        nom_tecnica = r["nom"]
+        tec_row = base_tecnniques.get(nom_tecnica) or {}
+        poss = _llista_ingredients_aplicables(tec_row, info_ings)
+        sel_ordenades.append((len(poss), r))
+
+    # primer les més “difícils” (menys opcions)
+    sel_ordenades.sort(key=lambda x: x[0])
+
+    for _, r in sel_ordenades:
         nom_tecnica = r["nom"]
         tec_row = base_tecnniques.get(nom_tecnica)
         if tec_row is None:
             continue
 
         objectiu_frase, obj_ing = _troba_ingredient_aplicable(
-            tec_row, plat, info_ings, ingredients_usats
+            tec_row, plat, info_ings, ingredients_usats, compat_counts=compat_counts
         )
 
-        impacte_textura = [
-            t for t in (tec_row.get("impacte_textura") or "").split("|") if t
-        ]
-        impacte_sabor = [
-            s for s in (tec_row.get("impacte_sabor") or "").split("|") if s
-        ]
+        if obj_ing is None:
+            continue
 
-        transformacions.append(
-            {
-                "nom": nom_tecnica,
-                "display": tec_row.get("display_nom", nom_tecnica),
-                "objectiu_frase": objectiu_frase,
-                "objectiu_ingredient": obj_ing,
-                "descripcio": tec_row.get("descripcio", ""),
-                "impacte_textura": impacte_textura,
-                "impacte_sabor": impacte_sabor,
-            }
-        )
+        impacte_textura = [t for t in (tec_row.get("impacte_textura") or "").split("|") if t]
+        impacte_sabor = [s for s in (tec_row.get("impacte_sabor") or "").split("|") if s]
+
+        transformacions.append({
+            "nom": nom_tecnica,
+            "display": tec_row.get("display_nom", nom_tecnica),
+            "objectiu_frase": objectiu_frase,
+            "objectiu_ingredient": obj_ing,
+            "descripcio": tec_row.get("descripcio", ""),
+            "impacte_textura": impacte_textura,
+            "impacte_sabor": impacte_sabor,
+        })
+
 
     return transformacions
 
-#afegit!!!!!!!!!!!!!!!!!!
-def triar_tecniques_per_menu(
-    plats,              # llista de dicts [primer, segon, postres]
-    nom_estil,
-    base_estils,
-    base_tecnniques,
-    base_ingredients,
-    max_tecniques_per_plat=2,
-    min_score=5,
-    debug=False,
-):
+def _es_ingredient_buit_o_portador(nom: str, info: dict) -> bool:
     """
-    Donada una llista de plats i un estil, tria tècniques per a cada plat
-    intentant maximitzar la varietat a nivell de menú.
-    Retorna una llista paral·lela de llistes de transformacions.
+    Ingredients 'portadors' que sovint no volem com a objectiu d'una tècnica,
+    perquè són massa genèrics (aigua, etc.).
     """
-    tecniques_ja_usades = set()
-    resultats = []
+    n = (nom or "").strip().lower()
+    fam = (info.get("family") or info.get("familia") or "").strip().lower()
+    macro = _norm_macro(info.get("macro_category") or info.get("categoria_macro") or "")
 
-    for plat in plats:
-        transf = triar_tecniques_per_plat(
-            plat=plat,
-            nom_estil=nom_estil,
-            base_estils=base_estils,
-            base_tecnniques=base_tecnniques,
-            base_ingredients=base_ingredients,
-            max_tecniques=max_tecniques_per_plat,
-            min_score=min_score,
-            tecniques_ja_usades=tecniques_ja_usades,
-            debug=debug,
-        )
-        tecniques_ja_usades.update(t["nom"] for t in transf)
-        resultats.append(transf)
+    if n in {"water", "aigua"}:
+        return True
 
-    return resultats
+    # si a la teva KB aigua surt com other/emulsion, també ho capturem
+    if macro == "other" and fam in {"emulsion"} and n in {"water", "aigua"}:
+        return True
 
+    return False
 
 
 def _extreu_camp_resposta(text: str, etiqueta: str) -> str | None:

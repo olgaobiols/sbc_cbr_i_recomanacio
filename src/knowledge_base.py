@@ -6,12 +6,8 @@ from typing import Any, Dict, List, Optional
 
 from Retain import retain_case as retain_case_impl
 
+
 class KnowledgeBase:
-    """
-    Implementació del patró Singleton per gestionar l'Ontologia i el Coneixement del Domini
-    tal com es defineix al Capítol 3 (Representació del Coneixement).
-    Carrega els vocabularis controlats i les jerarquies d'ingredients.
-    """
     _instance = None
 
     def __new__(cls):
@@ -23,24 +19,21 @@ class KnowledgeBase:
     def __init__(self):
         if self._inicialitzat:
             return
-        
-        # Estructures de dades en memòria
-        self.ingredients: Dict[str, Dict] = {}  # {nom_normalitzat: fila_csv}
+
+        self.ingredients: Dict[str, Dict] = {}
         self.estils: Dict[str, Dict] = {}
         self.tecniques: Dict[str, Dict] = {}
         self.estils_latents: Dict = {}
         self.begudes: Dict[str, Dict] = {}
-        
-        # Camins als fitxers de dades
+
         self.data_dir = "data"
-        
-        # Càrrega
+
         self._carregar_ingredients()
         self._carregar_estils()
         self._carregar_tecniques()
         self._carregar_latents()
         self._carregar_begudes()
-        
+
         self._inicialitzat = True
         print(
             f"✅ [KnowledgeBase] Ontologia carregada: "
@@ -48,65 +41,68 @@ class KnowledgeBase:
         )
 
     def _normalize(self, text: str) -> str:
-        """Normalització estàndard per a claus de diccionari."""
         if not text:
             return ""
         text = unicodedata.normalize("NFKD", str(text))
         text = text.encode("ascii", "ignore").decode("ascii")
         return text.strip().lower().replace("-", " ").replace("_", " ")
 
-    def _carregar_ingredients(self):
+    # -------------------------
+    # Carregues
+    # -------------------------
+    def _carregar_ingredients(self) -> None:
         path = os.path.join(self.data_dir, "ingredients_en.csv")
         try:
             with open(path, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
+
                 nom_keys = ["nom_ingredient", "ingredient_name", "name"]
-                # Try to match the column name present in the CSV
-                if reader.fieldnames:
-                    try:
-                        nom_idx = next(
-                            key for key in nom_keys if key in reader.fieldnames
-                        )
-                    except StopIteration:
-                        raise KeyError(
-                            f"No s'ha trobat cap columna de nom a {path}. "
-                            f"Esperat alguna de {', '.join(nom_keys)}"
-                        )
-                else:
+                if not reader.fieldnames:
+                    raise KeyError(f"No s'han detectat columnes a {path}")
+
+                try:
+                    nom_col = next(k for k in nom_keys if k in reader.fieldnames)
+                except StopIteration:
                     raise KeyError(
-                        f"No s'han detectat columnes al fitxer {path}. "
-                        "Comprova el CSV."
+                        f"No s'ha trobat columna de nom a {path}. "
+                        f"Esperat alguna de {', '.join(nom_keys)}"
                     )
+
                 for row in reader:
-                    nom = self._normalize(row.get(nom_idx, ""))
+                    nom = self._normalize(row.get(nom_col, ""))
                     if nom:
                         self.ingredients[nom] = row
+
         except FileNotFoundError:
             print(f"⚠️ [KnowledgeBase] No s'ha trobat {path}")
         except KeyError as exc:
             print(f"⚠️ [KnowledgeBase] Error carregant ingredients: {exc}")
 
-    def _carregar_estils(self):
+    def _carregar_estils(self) -> None:
         path = os.path.join(self.data_dir, "estils.csv")
         try:
             with open(path, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    self.estils[row["nom_estil"]] = row
+                    nom = row.get("nom_estil")
+                    if nom:
+                        self.estils[nom] = row
         except FileNotFoundError:
             print(f"⚠️ [KnowledgeBase] No s'ha trobat {path}")
 
-    def _carregar_tecniques(self):
+    def _carregar_tecniques(self) -> None:
         path = os.path.join(self.data_dir, "tecniques.csv")
         try:
             with open(path, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    self.tecniques[row["nom_tecnica"]] = row
+                    nom = row.get("nom_tecnica")
+                    if nom:
+                        self.tecniques[nom] = row
         except FileNotFoundError:
             pass
 
-    def _carregar_latents(self):
+    def _carregar_latents(self) -> None:
         path = os.path.join(self.data_dir, "estils_latents.json")
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -114,18 +110,21 @@ class KnowledgeBase:
         except FileNotFoundError:
             pass
 
-    def _carregar_begudes(self):
+    def _carregar_begudes(self) -> None:
         path = os.path.join(self.data_dir, "begudes_en.csv")
         try:
             with open(path, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    key = row.get("id") or row.get("nom")
+                    key = (row.get("id") or row.get("nom") or "").strip()
                     if key:
                         self.begudes[key] = row
         except FileNotFoundError:
             print(f"⚠️ [KnowledgeBase] No s'ha trobat {path}")
 
+    # -------------------------
+    # RETAIN
+    # -------------------------
     def retain_case(
         self,
         new_case: Dict,
@@ -143,56 +142,91 @@ class KnowledgeBase:
             retriever_instance,
         )
 
-    # --- API Pública per al Cicle CBR ---
-
+    # -------------------------
+    # API pública
+    # -------------------------
     def get_info_ingredient(self, nom: str) -> Optional[Dict]:
         row = self.ingredients.get(self._normalize(nom))
         if not row:
             return None
 
-        # Retornem una còpia + camps "compatibles" amb els operadors antics
         out = dict(row)
 
-        # Alias del nom
         if "ingredient_name" not in out:
-            out["ingredient_name"] = out.get("nom_ingredient", "")
+            out["ingredient_name"] = out.get("nom_ingredient", "") or out.get("name", "")
 
-        # Alias de categoria macro
         if "macro_category" not in out:
             out["macro_category"] = out.get("categoria_macro", "")
 
-        # Alias de família
         if "family" not in out:
             out["family"] = out.get("familia", "")
 
         return out
 
     def get_info_estil(self, nom_estil: str) -> Optional[Dict]:
-        """Retorna la informació d'un estil culinari."""
         return self.estils.get(nom_estil)
-    
+
     def get_info_tecnica(self, nom_tecnica: str) -> Optional[Dict]:
-        """Retorna la informació d'una tècnica culinària."""
         return self.tecniques.get(nom_tecnica)
 
-    def llista_estils(self) -> List[str]:
-        """
-        Mostra per pantalla els estils culinaris disponibles, numerats,
-        a partir del fitxer estils.csv carregat a la base de coneixement.
+    # -------------------------
+    # Helpers d'estils (els teus)
+    # -------------------------
+    def llista_estils_per_tipus(self, tipus: str) -> List[str]:
+        tipus = (tipus or "").strip().lower()
+        result = []
+        for nom, row in (self.estils or {}).items():
+            t = (row.get("tipus") or "").strip().lower()
+            if t == tipus:
+                result.append(nom)
+        return sorted(result)
 
-        La llista s'actualitza automàticament en afegir nous estils
-        al CSV i tornar a executar el programa.
-        """
-        noms_estils = list(self.estils.keys())
+    def imprimir_estils_per_tipus(self, tipus: str) -> List[str]:
+        estils = self.llista_estils_per_tipus(tipus)
+        print(f"\n Estils disponibles ({tipus}):")
+        if not estils:
+            print("   (cap)")
+            return []
+        for i, nom in enumerate(estils, start=1):
+            print(f"   {i}. {nom}")
+        return estils
 
-        if not noms_estils:
-            print("⚠️ [KnowledgeBase] No hi ha estils disponibles.")
+    def _split_pipe(self, s: str) -> List[str]:
+        if not s:
+            return []
+        return [x.strip().lower() for x in str(s).split("|") if x.strip()]
+
+    def get_sabors_estil(self, nom_estil: str) -> List[str]:
+        row = self.estils.get(nom_estil)
+        if not row:
+            return []
+        return self._split_pipe(row.get("sabors_clau", ""))
+
+    def suggerir_estils_culturals_per_latent(self, latent: str, top_k: int = 6) -> List[str]:
+        latent = (latent or "").strip().lower()
+        if not latent:
             return []
 
-        noms_estils.sort()
+        candidats = []
+        for nom_estil, row in (self.estils or {}).items():
+            if not isinstance(row, dict):
+                continue
 
-        print("\n Estils culinaris disponibles:")
-        for i, nom in enumerate(noms_estils, start=1):
-            print(f"  {i:>2}. {nom}")
+            tipus = (row.get("tipus") or "").strip().lower()
+            if tipus != "cultural":
+                continue
 
-        return noms_estils
+            sabors = self._split_pipe(row.get("sabors_clau", ""))
+
+            score = 0
+            for s in sabors:
+                if s == latent:
+                    score = max(score, 2)
+                elif latent in s:
+                    score = max(score, 1)
+
+            if score > 0:
+                candidats.append((score, nom_estil))
+
+        candidats.sort(key=lambda x: x[0], reverse=True)
+        return [nom for _, nom in candidats[:top_k]]

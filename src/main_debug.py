@@ -9,11 +9,13 @@ from knowledge_base import KnowledgeBase
 from gestor_feedback import GestorRevise
 from operadors_transformacio_realista import (
     substituir_ingredient, 
-    triar_tecniques_per_plat, 
+    triar_tecniques_2_operadors_per_menu, 
     genera_descripcio_llm, 
     construir_prompt_imatge_menu, 
-    genera_imatge_menu_hf
+    genera_imatge_menu_hf,
+    llista_tecniques_applicables_per_ingredient,
 )
+
 from operador_ingredients import (
     FG_WRAPPER,
     ingredients_incompatibles,
@@ -266,32 +268,61 @@ def imprimir_resum_adaptacio(
     return afegits, resum
 
 
-def imprimir_tecnniques_proposades(etiqueta_plat: str, plat: dict, transf: list[dict]):
+def imprimir_resum_plat_net(
+    etiqueta_plat: str,
+    plat: dict,
+    transf: list[dict],
+    estil_cultural: str | None,
+    estil_alta: str | None,
+):
     nom_plat = plat.get("nom", "—")
-    print(f"\n🧪 TÈCNIQUES PROPOSADES — {etiqueta_plat}: {nom_plat}")
+    ings = ", ".join(plat.get("ingredients", []) or [])
+    print(f"\n{etiqueta_plat}: {nom_plat}")
+    print(f"  Ingredients: {ings if ings else '—'}")
 
     if not transf:
-        print("   (Cap tècnica aplicada)")
+        print("  Tècniques: cap")
         return
 
-    for i, t in enumerate(transf, start=1):
-        display = t.get("display") or t.get("nom") or "tècnica"
-        obj_frase = t.get("objectiu_frase") or "un element del plat"
-        desc = (t.get("descripcio") or "").strip()
+    # intentem etiquetar cada tècnica amb l'estil d'origen (cultural vs alta)
+    tecs_culturals = set()
+    if estil_cultural:
+        row_c = kb.estils.get(estil_cultural, {}) or {}
+        tecs_culturals = {t.strip() for t in (row_c.get("tecnniques_clau", "") or "").split("|") if t.strip()}
 
-        tx = t.get("impacte_textura", [])
-        sb = t.get("impacte_sabor", [])
-        tx_txt = ", ".join(tx) if isinstance(tx, list) and tx else ""
-        sb_txt = ", ".join(sb) if isinstance(sb, list) and sb else ""
+    for i, t in enumerate(transf, 1):
+        nom = (t.get("nom") or "").strip()
+        disp = (t.get("display") or nom or "tecnica").strip()
+        obj = (t.get("objectiu_ingredient") or "—").strip()
 
-        print(f"   {i}) {display} → {obj_frase}")
-        if desc:
-            print(f"      - què és: {desc}")
-        if tx_txt:
-            print(f"      - textura: {tx_txt}")
-        if sb_txt:
-            print(f"      - sabor:   {sb_txt}")
+        origen = "mixt"
+        if estil_cultural and not estil_alta:
+            origen = "cultural"
+        elif estil_alta and not estil_cultural:
+            origen = "alta"
+        else:
+            # mixt: intentem detectar si és cultural
+            origen = "alta"
+            if nom in tecs_culturals:
+                origen = "cultural"
 
+
+        print(f"  - ({origen}) {disp} → {obj}")
+
+def imprimir_menu_final_net(
+    plat1, transf_1,
+    plat2, transf_2,
+    postres, transf_post,
+    estil_cultural: str | None,
+    estil_alta: str | None,
+):
+    print("\n" + "="*52)
+    print("MENÚ ADAPTAT — INGREDIENTS I TÈCNIQUES")
+    print("="*52)
+
+    imprimir_resum_plat_net("PRIMER", plat1, transf_1, estil_cultural, estil_alta)
+    imprimir_resum_plat_net("SEGON",  plat2, transf_2, estil_cultural, estil_alta)
+    imprimir_resum_plat_net("POSTRES", postres, transf_post, estil_cultural, estil_alta)
 
 
 
@@ -439,7 +470,7 @@ def main():
             stored_alergies = []
 
     # 1) Inicialitzem el Retriever
-    retriever = Retriever("src/base_de_casos.json")
+    retriever = Retriever("base_de_casos.json")
 
     while True:
         print("\n📝 --- NOVA PETICIÓ ---")
@@ -625,24 +656,94 @@ def main():
         # debug_kb_match(postres, kb, "POSTRES")
 
         # 7) Adaptació 2: Tècniques i Presentació
-        print("\n✨ === FASE ADAPTACIÓ: TÈCNIQUES ===")
-        kb.llista_estils() # Podries imprimir-los
-        estil_tecnic = input_default("Vols aplicar un estil tècnic? (ex: cuina_molecular, rustica) [Enter per saltar]", "")
-        
+        # --- IMPORTANT: sempre inicialitzar per evitar UnboundLocalError ---
+        estil_cultural = ""   # pot quedar buit si l'usuari no tria cultural
+
+        if estil_latent:
+            suggerits = kb.suggerir_estils_culturals_per_latent(estil_latent, top_k=6)
+
+            if suggerits:
+                print(f"\n Ja s'han adaptat els ingredients a '{estil_latent}'.")
+                print("Alguns estils culturals que podrien encaixar són:")
+                for i, nom_estil in enumerate(suggerits, 1):
+                    row = kb.get_info_estil(nom_estil) or {}
+                    alias = row.get("alias") or nom_estil
+                    sabors = row.get("sabors_clau") or "—"
+                    print(f"  {i}) {alias} ({nom_estil}) | sabors: {sabors}")
+
+                txt = input_default("Vols adaptar el menú a algun estil cultural? (0 = no)", "0").strip()
+                try:
+                    idxc = int(txt)
+                except ValueError:
+                    idxc = 0
+
+                if 1 <= idxc <= len(suggerits):
+                    estil_cultural = suggerits[idxc - 1]
+            else:
+                print(f"\n Ja s'han adaptat els ingredients a '{estil_latent}', però no tinc estils culturals clars per aquest latent.")
+
+        print("\n✨ === FASE ADAPTACIÓ: TÈCNIQUES (ALTA CUINA) ===")
+        vol = input_default("Vols aplicar un estil d'ALTA CUINA? (s/n)", "n").strip().lower()
+
+        estil_tecnic = ""
+        if vol == "s":
+            estils_alta = kb.imprimir_estils_per_tipus("alta_cuina")
+            if estils_alta:
+                txt = input_default("Tria un número d'estil (0 = cap)", "0").strip()
+                try:
+                    idx = int(txt)
+                except ValueError:
+                    idx = 0
+
+                if 1 <= idx <= len(estils_alta):
+                    estil_tecnic = estils_alta[idx - 1]
+                else:
+                    estil_tecnic = ""
+
         transf_1, transf_2, transf_post = [], [], []
         info_llm_1, info_llm_2, info_llm_post = None, None, None
-        
-        if estil_tecnic and estil_tecnic in kb.estils:
-            print(f"⚙️  Aplicant tècniques de '{estil_tecnic}'...")
-            transf_1 = triar_tecniques_per_plat(plat1, estil_tecnic, kb.estils, kb.tecniques, base_ingredients_list, kb=kb)
-            transf_2 = triar_tecniques_per_plat(plat2, estil_tecnic, kb.estils, kb.tecniques, base_ingredients_list, kb=kb)
-            transf_post = triar_tecniques_per_plat(postres, estil_tecnic, kb.estils, kb.tecniques, base_ingredients_list, kb=kb)
 
-                # --- NOU: imprimir resum de canvis proposats abans del Gemini ---
-            print("\n🧾 RESUM D'ADAPTACIÓ (TÈCNIQUES)")
-            imprimir_tecnniques_proposades("PRIMER PLAT", plat1, transf_1)
-            imprimir_tecnniques_proposades("SEGON PLAT",  plat2, transf_2)
-            imprimir_tecnniques_proposades("POSTRES",     postres, transf_post)
+        te_cultural = bool(estil_cultural)
+        te_alta = bool(estil_tecnic)
+
+        if te_cultural and te_alta:
+            mode_ops = "mixt"
+        elif te_cultural:
+            mode_ops = "cultural"
+        elif te_alta:
+            mode_ops = "alta"
+        else:
+            mode_ops = ""
+
+        if mode_ops:
+            print(f"⚙️  Aplicant tècniques mode='{mode_ops}' (2 operadors per plat)...")
+
+            plats_llista = [plat1, plat2, postres]
+
+            t_menu = triar_tecniques_2_operadors_per_menu(
+                plats=plats_llista,
+                mode=mode_ops,
+                estil_cultural=estil_cultural if te_cultural else None,
+                estil_alta=estil_tecnic if te_alta else None,
+                base_estils=kb.estils,
+                base_tecnniques=kb.tecniques,
+                kb=kb,
+                min_score=5,
+                debug=False,
+            )
+
+            transf_1, transf_2, transf_post = t_menu[0], t_menu[1], t_menu[2]
+        else:
+            print(" No s'ha seleccionat cap estil cultural ni d'alta cuina. No s'apliquen tècniques.")
+
+        print("\n🧾 RESUM D'ADAPTACIÓ (TÈCNIQUES)")
+        imprimir_menu_final_net(
+            plat1, transf_1,
+            plat2, transf_2,
+            postres, transf_post,
+            estil_cultural=estil_cultural if te_cultural else None,
+            estil_alta=estil_tecnic if te_alta else None,
+        )
 
         # Generació de Text (Gemini)
         if input_default("Generar nous noms i descripcions amb Gemini? (s/n)", "n").lower() == 's':
