@@ -11,6 +11,9 @@
         ],
         "alergies": [
             "fish"
+        ],
+        "restriccions": [
+            "vegan"
         ]
     },
     "guest": {

@@ -1,0 +1,61 @@
+[
+    {
+        "id_cas": 1,
+        "problema": {
+            "tipus_esdeveniment": "casament",
+            "estil_culinari": "",
+            "temporada": "estiu",
+            "n_comensals": 80,
+            "preu_pers_objectiu": 50.0,
+            "servei": "assegut",
+            "formalitat": "indiferent",
+            "restriccions": [
+                "vegan"
+            ]
+        },
+        "solucio": {
+            "plats": [
+                {
+                    "curs": "primer",
+                    "nom": "Crema de marisc",
+                    "ingredients": [
+                        "smoked_tofu",
+                        "soy",
+                        "carrot",
+                        "onion",
+                        "seaweed",
+                        "fresh pineapple"
+                    ],
+                    "preu": 6.0
+                },
+                {
+                    "curs": "segon",
+                    "nom": "Vedella amb salsa de bolets",
+                    "ingredients": [
+                        "soybeans",
+                        "mushrooms",
+                        "white_wine",
+                        "oil",
+                        "salt",
+                        "mango"
+                    ],
+                    "preu": 18.0
+                },
+                {
+                    "curs": "postres",
+                    "nom": "Pastís de noces",
+                    "ingredients": [
+                        "flour",
+                        "sugar",
+                        "lime",
+                        "dark_sesame_oil",
+                        "lime zest"
+                    ],
+                    "preu": 5.0
+                }
+            ],
+            "begudes": [],
+            "preu_total_real": 29.0
+        }
+    }
+]

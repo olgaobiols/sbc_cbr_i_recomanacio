@@ -10,6 +10,14 @@ class GestorRevise:
         self.mem_personal = mem_personal
         self.mem_global = mem_global
 
+    def _format_stars(self, n: int) -> str:
+        return "★" * n + "☆" * (5 - n)
+
+    def _print_star_scale(self) -> None:
+        print("Escala de valoració:")
+        for i in range(1, 6):
+            print(f"  {i}: {self._format_stars(i)}")
+
     def input_nota(self, prompt: str) -> int:
         while True:
             try:
@@ -18,7 +26,7 @@ class GestorRevise:
                     return val
             except Exception:
                 pass
-            print("  Si us plau, introdueix un numero de 1 a 5.")
+            print("  Si us plau, introdueix un número de 1 a 5.")
 
     def _normalize_rejection(self, raw: str) -> str:
         return str(raw).strip().lower()
@@ -38,24 +46,24 @@ class GestorRevise:
         return parts[0], parts[1]
 
     def _prompt_rejection_motive(self) -> str:
-        motiu = input("   Rebuig per salut/al·lergia (C) o per gust/preferencia (S)? [C/S]: ").strip().lower()
+        motiu = input("   El rebuig és per salut/al·lèrgia (C) o per gust/preferència (S)? [C/S]: ").strip().lower()
         return "critical" if motiu == "c" else "soft"
 
     def collect_feedback(self, case: Dict, user_id: str) -> Dict[str, Any]:
-        print("\n🧐 --- FASE REVISE: AVALUACIO ---")
-        print("   [Revise] Arquitectura dual: Canal A (personal) + Canal B (global).")
-        n1 = self.input_nota("Puntua el menu globalment (1-5): ")
+        print("\n🧐 Avaluació final")
+        self._print_star_scale()
+        n1 = self.input_nota("Quina nota global li posaries al menú? (1-5): ")
 
-        print("Detalla una mica mes (sempre obligatori):")
-        n2_taste = self.input_nota("  Nota Gust (1-5): ")
-        n2_originality = self.input_nota("  Nota Originalitat (1-5): ")
+        print("Si pots, detalla una mica més:")
+        n2_taste = self.input_nota("  Sabor (1-5): ")
+        n2_originality = self.input_nota("  Originalitat (1-5): ")
 
         rejected_ingredients: List[str] = []
         rejected_pairs: List[str] = []
         rejected_health: List[str] = []
         rejected_taste: List[str] = []
 
-        print("\nHi ha algun ingredient o combinacio que vulguis vetar?")
+        print("\nHi ha algun ingredient o combinació que vulguis evitar a partir d'ara?")
         print("Escriu 'NO ingredient' (ex: 'NO api') o 'NO A+B' (ex: 'NO maduixa+all').")
         print("Escriu 'FI' per acabar.")
 
@@ -72,7 +80,7 @@ class GestorRevise:
             if self._is_pair(target):
                 pair = self._split_pair(target)
                 if not pair:
-                    print("  Format de parella invalid. Usa 'A+B'.")
+                    print("  Format de parella invàlid. Usa 'A+B'.")
                     continue
                 ing_a, ing_b = pair
                 self.mem_personal.registrar_rebuig_parella(user_id, ing_a, ing_b)
@@ -82,11 +90,11 @@ class GestorRevise:
                 motiu = self._prompt_rejection_motive()
                 if motiu == "critical":
                     rejected_health.append(normalized)
-                    print("   [Revise] Rebuig CRITICAL (salut/al·lergia) registrat.")
+                    print("   Entesos. Rebuig per salut/al·lèrgia registrat.")
                 else:
                     rejected_taste.append(normalized)
-                    print("   [Revise] Rebuig SOFT (gust/preferencia) registrat.")
-                print(f"   [Revise] Rebuig granular: parella '{normalized}' registrada a Canal A + Canal B.")
+                    print("   Entesos. Rebuig per gust/preferència registrat.")
+                print(f"   He enregistrat la parella '{normalized}'.")
             else:
                 self.mem_personal.registrar_rebuig_ingredient(user_id, target)
                 self.mem_global.acumular_evidencia_ingredient(target)
@@ -94,11 +102,11 @@ class GestorRevise:
                 motiu = self._prompt_rejection_motive()
                 if motiu == "critical":
                     rejected_health.append(target)
-                    print("   [Revise] Rebuig CRITICAL (salut/al·lergia) registrat.")
+                    print("   Entesos. Rebuig per salut/al·lèrgia registrat.")
                 else:
                     rejected_taste.append(target)
-                    print("   [Revise] Rebuig SOFT (gust/preferencia) registrat.")
-                print(f"   [Revise] Rebuig granular: ingredient '{target}' registrat a Canal A + Canal B.")
+                    print("   Entesos. Rebuig per gust/preferència registrat.")
+                print(f"   He enregistrat l'ingredient '{target}'.")
 
         return {
             "puntuacio_global": n1,
@@ -120,26 +128,26 @@ class GestorRevise:
         rejected_taste: List[str],
     ) -> str:
         if puntuacio_global <= 2:
-            print("   [Revise] CRITICAL_FAILURE: puntuacio global baixa (N1 <= 2).")
+            print("Resultat: puntuació global baixa.")
             return "CRITICAL_FAILURE"
         if rejected_health:
-            print("   [Revise] CRITICAL_FAILURE: rebuig per salut/al·lergia (N3) detectat.")
+            print("Resultat: s'ha detectat un rebuig per salut/al·lèrgia.")
             return "CRITICAL_FAILURE"
         if puntuacio_global == 3:
-            print("   [Revise] SOFT_FAILURE: puntuacio global moderada (N1 = 3).")
+            print("Resultat: puntuació moderada.")
             return "SOFT_FAILURE"
         if rejected_ingredients or rejected_pairs:
             if rejected_taste:
-                print("   [Revise] SOFT_FAILURE: rebuig per gust/preferencia (N3) detectat.")
+                print("Resultat: s'ha detectat un rebuig per gust/preferència.")
             else:
-                print("   [Revise] SOFT_FAILURE: rebuig granular (N3) sense salut/al·lergia.")
+                print("Resultat: hi ha rebuigs granulars pendents.")
             return "SOFT_FAILURE"
 
         if puntuacio_global >= 4:
-            print("   [Revise] SUCCESS: puntuacio global alta i cap violacio dura.")
+            print("Resultat: valoració alta i sense incidències.")
             return "SUCCESS"
 
-        print("   [Revise] SOFT_FAILURE: cas per defecte.")
+        print("Resultat: cas per defecte.")
         return "SOFT_FAILURE"
 
     def avaluar_proposta(self, cas_proposat: Dict, user_id: str = "guest") -> Dict[str, Any]:

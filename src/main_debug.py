@@ -31,7 +31,7 @@ from operadors_begudes import recomana_beguda_per_plat, get_ingredient_principal
 # 1. Carreguem el cervell (Ontologia + Estils)
 kb = KnowledgeBase()
 
-print("\n[KB] Estils latents disponibles:")
+print("\nEstils latents disponibles a la carta:")
 print(" - " + "\n - ".join(sorted(kb.estils_latents.keys())))
 
 # Com que els operadors antics esperen llistes de diccionaris, 
@@ -84,6 +84,46 @@ def parse_list_input(txt: str) -> Set[str]:
     if not txt: return set()
     return {x.strip().lower() for x in txt.split(",") if x.strip()}
 
+def _format_list(items: List[str]) -> str:
+    if not items:
+        return "—"
+    return ", ".join(items)
+
+def _format_pairs(pairs: List[str]) -> str:
+    if not pairs:
+        return "—"
+    pretty = []
+    for raw in pairs:
+        if "|" in raw:
+            a, b = [p.strip() for p in raw.split("|", 1)]
+            pretty.append(f"{a} + {b}")
+        else:
+            pretty.append(raw)
+    return ", ".join(pretty)
+
+def _parse_pairs_input(txt: str) -> List[str]:
+    if not txt:
+        return []
+    out = []
+    for part in txt.split(","):
+        token = part.strip()
+        if not token:
+            continue
+        if "+" in token:
+            a, b = [p.strip() for p in token.split("+", 1)]
+        elif "|" in token:
+            a, b = [p.strip() for p in token.split("|", 1)]
+        else:
+            continue
+        if a and b:
+            out.append("|".join(sorted([a.lower(), b.lower()])))
+    return out
+
+def _print_section(title: str) -> None:
+    print("\n" + "—" * 50)
+    print(title)
+    print("—" * 50)
+
 EU_ALLERGENS = [
     ("gluten", "Cereals amb gluten"),
     ("crustaceans", "Crustacis"),
@@ -105,7 +145,7 @@ def seleccionar_alergens() -> List[str]:
     print("\nALLERGENS UE (14)")
     for i, (key, label) in enumerate(EU_ALLERGENS, start=1):
         print(f"  {i:>2}. {label} [{key}]")
-    txt = input_default("Selecciona allergens (numeros separats per comes, Enter si cap)", "")
+    txt = input_default("Quins al·lèrgens hem d'evitar? (números separats per comes, Enter si cap)", "")
     if not txt:
         return []
     seleccionats = []
@@ -239,28 +279,28 @@ def imprimir_resum_adaptacio(
                 break
 
     canvi_text = "CAP CANVI"
-    motiu = "ja coherent amb l'estil / no millora pairing"
+    motiu = "ja és coherent amb l'estil i no cal tocar res"
     if trets and afegits:
         canvi_text = "SUBSTITUCIO"
-        motiu = "substitució vectorial compatible amb ontologia"
+        motiu = "substitució coherent amb l'estil del menú"
     elif afegits:
         canvi_text = "INSERCIO"
         if "fallback simbòlic" in log_text:
-            motiu = "similitud latent insuficient, inserció simbòlica vàlida amb millor pairing"
+            motiu = "petit toc simbòlic per reforçar l'estil"
         else:
-            motiu = "inserció vectorial compatible amb ontologia"
+            motiu = "afegit un toc que harmonitza amb l'estil"
     elif duplicat_proposat:
-        print(f"- Nota: ingredient proposat ja present ({duplicat_proposat}) -> ignorat per duplicat")
+        print(f"- Nota: l'ingredient ja hi era ({duplicat_proposat}) i no l'he duplicat")
         canvi_text = "CAP CANVI"
-        motiu = "inserció descartada (duplicat)"
+        motiu = "toc ja present al plat"
 
     if afegits:
         print(f"- Canvi: +{', '.join(afegits)}")
     elif trets:
         print(f"- Canvi: -{', '.join(trets)}")
 
-    print(f"- Pairing (plat): {sim_abans:.2f} -> {sim_despres:.2f} ({delta:+.2f})")
-    print(f"- Decisio: {canvi_text}")
+    print(f"- Afinitat amb l'estil: {sim_abans:.2f} -> {sim_despres:.2f} ({delta:+.2f})")
+    print(f"- Decisió: {canvi_text}")
     print(f"- Motiu: {motiu}")
     print("")
 
@@ -269,10 +309,10 @@ def imprimir_resum_adaptacio(
     elif canvi_text == "SUBSTITUCIO" and afegits and trets:
         resum = f"{trets[0]} -> {afegits[0]}"
     else:
-        resum = "cap"
+        resum = "cap canvi"
 
     if condiment:
-        if resum == "cap":
+        if resum == "cap canvi":
             resum = f"condiment: {condiment}"
         else:
             resum = f"{resum} | condiment: {condiment}"
@@ -328,9 +368,7 @@ def imprimir_menu_final_net(
     estil_cultural: str | None,
     estil_alta: str | None,
 ):
-    print("\n" + "="*52)
-    print("MENÚ ADAPTAT — INGREDIENTS I TÈCNIQUES")
-    print("="*52)
+    _print_section("Menú adaptat — ingredients i tècniques")
 
     imprimir_resum_plat_net("PRIMER", plat1, transf_1, estil_cultural, estil_alta)
     imprimir_resum_plat_net("SEGON",  plat2, transf_2, estil_cultural, estil_alta)
@@ -342,19 +380,18 @@ def imprimir_menu_final_net(
 def imprimir_casos(candidats, top_k=5):
     """Mostra els resultats del Retriever de forma ordenada."""
     if not candidats:
-        print("\n❌ No s'ha trobat cap cas similar.")
+        print("\nNo he trobat cap cas prou similar.")
         return
 
-    print(f"\n--- {len(candidats)} CASOS TROBATS (Top {min(top_k, len(candidats))}) ---")
+    print(f"\nHe trobat {len(candidats)} opcions. Et mostro les {min(top_k, len(candidats))} millors:")
 
     for i, c in enumerate(candidats[:top_k], start=1):
         cas = c["cas"]
         score = c["score_final"]
-        detall = c["detall"]
         sol = cas.get("solucio", {})
         pr = cas.get("problema", {})
 
-        etiqueta = "⭐ RECOMANAT" if i == 1 else f"#{i}"
+        etiqueta = "⭐ Recomanat" if i == 1 else f"Opció {i}"
         
         # Dades clau
         event = pr.get("tipus_esdeveniment", "?")
@@ -378,9 +415,9 @@ def imprimir_casos(candidats, top_k=5):
         p2 = _nom_plat("segon")
         p3 = _nom_plat("postres")
 
-        print(f"\n{etiqueta} [Similitud: {score:.1%}] - ID: {cas.get('id_cas', '?')}")
-        print(f"   Context:  {event} | {pr.get('temporada','?')} | {pr.get('servei','?')}{str_restr}")
-        print(f"   Menú:     1. {p1} | 2. {p2} | 3. {p3}")
+        print(f"\n{etiqueta} — Afinitat {score:.1%} (ID: {cas.get('id_cas', '?')})")
+        print(f"   Context: {event} | {pr.get('temporada','?')} | {pr.get('servei','?')}{str_restr}")
+        print(f"   Menú: 1) {p1}  2) {p2}  3) {p3}")
 
         # Detall complet dels plats
         def _ordre_plat(p: dict) -> int:
@@ -403,20 +440,14 @@ def imprimir_casos(candidats, top_k=5):
             if preu not in ("", None):
                 print(f"       Preu: {preu}")
 
-        # Detall de puntuació (útil per debug/demo)
-        parts = []
-        if "Restriccions" in detall: parts.append(f"Restr={detall['Restriccions']:.2f}")
-        if "Event" in detall: parts.append(f"Event={detall['Event']:.2f}")
-        print(f"   Detall:   {' | '.join(parts)}")
+        # Detall intern eliminat per simplicitat en l'experiència
 
 def imprimir_menu_final(
     plat1, transf_1, info_llm_1, beguda1, score1,
     plat2, transf_2, info_llm_2, beguda2, score2,
     postres, transf_post, info_llm_post, beguda_postres, score_postres
 ):
-    print("\n" + "="*40)
-    print("      🍽️  MENÚ ADAPTAT FINAL  🍽️")
-    print("="*40)
+    _print_section("🍽️  Proposta final de menú")
 
     for etiqueta, plat, info_llm, beguda, score in [
         ("PRIMER PLAT", plat1, info_llm_1, beguda1, score1),
@@ -426,23 +457,23 @@ def imprimir_menu_final(
         nom = info_llm.get("nom_nou", plat.get("nom", "—")) if info_llm else plat.get("nom", "—")
         desc = info_llm.get("descripcio_carta", "") if info_llm else "Plat clàssic."
         
-        print(f"\n🔹 {etiqueta}: {nom}")
+        print(f"\n🍽️  {etiqueta}: {nom}")
         ings = ", ".join(plat.get("ingredients", []))
-        print(f"   Ingredients: {ings}")
+        print(f"   Ingredients clau: {ings if ings else '—'}")
         if plat.get("condiment"):
             print(f"   Condiment: {plat.get('condiment')}")
         if desc:
-            print(f"   Carta: {desc}")
+            print(f"   Descripció: {desc}")
         
         if beguda is None:
-            print("   🍷 Beguda recomanada: ❌ No s'ha trobat cap beguda adequada")
+            print("   🍷 Maridatge: no he trobat una opció adequada.")
         else:
-            print(f"   🍷 Beguda recomanada: {beguda.get('nom', '—')} (score {score:.2f})")
+            print(f"   🍷 Maridatge: {beguda.get('nom', '—')} (afinitat {score:.2f})")
 
         # Si hi ha logs de canvis, els mostrem (Explicabilitat XCBR)
         logs = plat.get("log_transformacio", [])
         if logs:
-            print("   🛠️  Adaptacions realitzades:")
+            print("   Ajustos del xef:")
             for log in logs:
                 print(f"      - {log}")
 
@@ -460,60 +491,133 @@ def debug_kb_match(plat, kb, etiqueta=""):
 # =========================
 
 def main():
-    print("===========================================")
-    print("   RECOMANADOR DE MENÚS RicoRico 3.0")
-    print("   (CBR Híbrid: Ontologia + FlavorGraph)")
-    print("===========================================\n")
+    print("==================================================")
+    print("   🍷 Maître Digital — Recomanador de Menús 3.0")
+    print("==================================================\n")
 
-    user_id = input_default("Identificador d'usuari (per guardar preferencies)?", "guest")
+    user_id = input_default("Com et puc anomenar? (per guardar preferències)", "guest")
     user_profiles = _load_user_profiles(PATH_USER_PROFILES)
-    stored_alergies = []
     perfil_guardat = user_profiles.get(str(user_id), {})
-    if isinstance(perfil_guardat, dict):
-        stored_alergies = list(perfil_guardat.get("alergies", []) or [])
-    usar_alergies_guardades = False
+    if not isinstance(perfil_guardat, dict):
+        perfil_guardat = {}
+
+    stored_alergies = list(perfil_guardat.get("alergies", []) or [])
+    stored_pref = list(
+        perfil_guardat.get("ingredients_preferits", [])
+        or perfil_guardat.get("preferencies", [])
+        or perfil_guardat.get("preferred_ingredients", [])
+        or []
+    )
+    stored_restr = list(
+        perfil_guardat.get("restriccions", [])
+        or perfil_guardat.get("restriccions_dietetiques", [])
+        or perfil_guardat.get("dietary_restrictions", [])
+        or []
+    )
+    stored_dieta = perfil_guardat.get("dieta")
+    if stored_dieta and stored_dieta not in stored_restr:
+        stored_restr.append(stored_dieta)
+    stored_rejected_ing = list(perfil_guardat.get("rejected_ingredients", []) or [])
+    stored_rejected_pairs = list(perfil_guardat.get("rejected_pairs", []) or [])
+
+    _print_section(f"Hola {user_id}! Benvinguda/o al teu servei")
+    print("Això és el que tinc guardat del teu perfil:")
+    print(f"- Al·lèrgens: {_format_list(stored_alergies)}")
+    print(f"- Ingredients preferits: {_format_list(stored_pref)}")
+    print(f"- Restriccions dietètiques: {_format_list(stored_restr)}")
+    print(f"- Ingredients vetats: {_format_list(stored_rejected_ing)}")
+    print(f"- Parelles vetades: {_format_pairs(stored_rejected_pairs)}")
+
+    if input_default("Vols actualitzar alguna dada del teu perfil? (s/n)", "n").strip().lower() == "s":
+        if input_default("Volem revisar els al·lèrgens? (s/n)", "n").strip().lower() == "s":
+            stored_alergies = seleccionar_alergens()
+            perfil_guardat["alergies"] = list(stored_alergies)
+        if input_default("Vols actualitzar ingredients preferits? (s/n)", "n").strip().lower() == "s":
+            txt = input_default("Escriu-los separats per comes (Enter per cap)", "")
+            stored_pref = sorted(parse_list_input(txt))
+            perfil_guardat["ingredients_preferits"] = stored_pref
+        if input_default("Vols actualitzar restriccions dietètiques? (s/n)", "n").strip().lower() == "s":
+            txt = input_default("Restriccions (ex: vegan, celiac) [Enter per cap]", "")
+            stored_restr = sorted(parse_list_input(txt))
+            perfil_guardat["restriccions"] = stored_restr
+            perfil_guardat["dieta"] = "vegan" if "vegan" in stored_restr else (
+                "vegetarian" if "vegetarian" in stored_restr else perfil_guardat.get("dieta")
+            )
+        if input_default("Vols actualitzar ingredients vetats? (s/n)", "n").strip().lower() == "s":
+            txt = input_default("Ingredients vetats (separats per comes) [Enter per cap]", "")
+            stored_rejected_ing = sorted(parse_list_input(txt))
+            perfil_guardat["rejected_ingredients"] = stored_rejected_ing
+        if input_default("Vols actualitzar parelles vetades? (s/n)", "n").strip().lower() == "s":
+            txt = input_default("Parella en format A+B, separades per comes [Enter per cap]", "")
+            stored_rejected_pairs = _parse_pairs_input(txt)
+            perfil_guardat["rejected_pairs"] = stored_rejected_pairs
+
+        user_profiles[str(user_id)] = perfil_guardat
+        _save_user_profiles(PATH_USER_PROFILES, user_profiles)
+        print("Perfecte, actualització guardada.")
+
+    usar_alergies_guardades = bool(stored_alergies)
     if stored_alergies:
-        msg = f"Hola {user_id}! Recordem que ets alergica a: {', '.join(stored_alergies)}."
-        msg += " Vols mantenir aquesta restriccio? (s/n/c per esborrar)"
-        keep = input_default(msg, "s").strip().lower()
-        if keep == "s":
-            usar_alergies_guardades = True
-        elif keep == "c":
-            _store_user_alergies(user_profiles, user_id, [])
-            _save_user_profiles(PATH_USER_PROFILES, user_profiles)
-            stored_alergies = []
+        usar_alergies_guardades = (
+            input_default("Vols tenir en compte aquests al·lèrgens avui? (s/n)", "s")
+            .strip()
+            .lower()
+            == "s"
+        )
 
     # 1) Inicialitzem el Retriever
     retriever = Retriever(os.path.join("data", "base_de_casos.json"))
 
     while True:
-        print("\n📝 --- NOVA PETICIÓ ---")
+        _print_section("Comencem una nova petició")
+        print("Fem-ho fàcil: quatre preguntes i ens posem mans a l'obra.")
 
         # 2) Recollida de Dades (Inputs)
         tipus_esdeveniment = input_choice(
-            "Tipus d'esdeveniment?",
+            "Per a quina mena d'ocasió és el menú?",
             ["casament", "aniversari", "empresa", "congres", "comunio"],
             "casament"
         )
+        print("Perfecte, prenc nota.")
         temporada = input_choice(
-            "Temporada?",
+            "En quina temporada el servirem?",
             ["primavera", "estiu", "tardor", "hivern"],
             "estiu"
         )
+        print("Molt bona elecció.")
         servei = input_choice(
-            "Servei?",
+            "Com vols el servei?",
             ["assegut", "cocktail", "finger_food"],
             "assegut"
         )
-        n_comensals = input_int_default("Nombre de comensals?", 80)
-        preu_pers = input_float_default("Pressupost per persona (€)?", 50.0)
+        print("D'acord.")
+        n_comensals = input_int_default("Quants comensals esperem?", 80)
+        print("Perfecte.")
+        preu_pers = input_float_default("Quin pressupost per persona tenim (€)?", 50.0)
+        print("Genial.")
         
         # [NOU] Restriccions
-        restr_input = input_default("Tens restriccions? (ex: celiac, vegan) [separat per comes]", "")
+        restr_default = ", ".join(stored_restr) if stored_restr else ""
+        restr_input = input_default(
+            "Hi ha alguna restricció dietètica a tenir en compte? (ex: celiac, vegan)",
+            restr_default,
+        )
         restriccions = parse_list_input(restr_input)
+        if restriccions:
+            print("Perfecte, ho tindré en compte.")
+        else:
+            print("Cap restricció dietètica, perfecte.")
+        if restriccions != set(stored_restr):
+            perfil_guardat = _get_user_profile(user_profiles, user_id)
+            perfil_guardat["restriccions"] = sorted(restriccions)
+            _save_user_profiles(PATH_USER_PROFILES, user_profiles)
+            stored_restr = sorted(restriccions)
         if usar_alergies_guardades:
             alergies = list(stored_alergies)
+            if alergies:
+                print("Mantinc els al·lèrgens guardats.")
         else:
+            print("Revisem els al·lèrgens per seguretat.")
             alergies = seleccionar_alergens()
 
         if alergies != stored_alergies:
@@ -536,7 +640,8 @@ def main():
         if not perfil_usuari:
             perfil_usuari = None
         
-        alcohol = input_choice("Voldràs begudes amb alcohol?", ["si", "no"],"si")
+        alcohol = input_choice("Vols que proposem begudes amb alcohol?", ["si", "no"], "si")
+        print("Perfecte.")
         
         estil_culinari = ""
 
@@ -553,16 +658,20 @@ def main():
         )
 
         # 4) Recuperació (Retrieve)
-        print(f"\n🔍 Cercant casos similars (amb èmfasi en {', '.join(restriccions) if restriccions else 'estructura'})...")
+        _print_section("Buscant propostes a la nostra carta")
+        enfoc = ", ".join(restriccions) if restriccions else "estructura general"
+        print(f"He trobat coincidències tenint en compte: {enfoc}.")
         resultats = retriever.recuperar_casos_similars(problema, k=5)
         imprimir_casos(resultats, top_k=3)
 
         if not resultats:
-            if input_default("Vols provar de nou? (s/n)", "s").lower() != 's': break
+            if input_default("Vols provar amb una altra combinació? (s/n)", "s").lower() != 's':
+                break
             continue
 
         # 5) Selecció del Cas
-        idx = input_int_default("\nTria el número del cas base (1-3)", 1)
+        idx = input_int_default("\nQuina proposta vols que prenguem com a base? (1-3)", 1)
+        print("Molt bé, treballarem amb aquesta proposta.")
         cas_seleccionat = resultats[idx-1]["cas"]
         sol = cas_seleccionat["solucio"]
 
@@ -587,7 +696,8 @@ def main():
 
         # 5.5) Substitucio previa d'ingredients prohibits (al.lergens)
         if perfil_usuari:
-            print("\nFASE SUBSTITUCIO D'INGREDIENTS PROHIBITS")
+            _print_section("Primer pas: seguretat alimentària")
+            print("Reviso al·lèrgens i dietes per evitar riscos.")
             ingredients_usats = set()
             resums_prohibits = []
             plats_pre = [
@@ -619,28 +729,28 @@ def main():
                         resums_prohibits.append((etiqueta, logs_sub))
 
             if resums_prohibits:
-                print("\nRESUM SUBSTITUCIONS (ALERGENS)")
+                print("\nAjustos per seguretat:")
                 for etiqueta, logs_sub in resums_prohibits:
                     print(f"- {etiqueta}:")
                     for log in logs_sub:
                         print(f"  {log}")
 
         # 6) Adaptació d'ingredients
-        print("\nFASE ADAPTACIO INGREDIENTS")
-        print("Estils latents disponibles:", ", ".join(sorted(kb.estils_latents.keys())))
+        _print_section("Personalitzem els ingredients")
         suggeriment = estil_culinari if estil_culinari in kb.estils_latents else ""
+        estils_txt = " | ".join(sorted(kb.estils_latents.keys()))
         estil_latent = input_default(
-            f"Vols aplicar un 'toc' d'estil latent? (ex: picant, thai...) [{suggeriment}]",
+            f"Vols donar un toc d'estil latent? ({estils_txt})",
             suggeriment
         ).strip().lower()
 
         if estil_latent:
             if estil_latent not in kb.estils_latents:
-                print(f"\n⚠️  AVÍS: l'estil latent '{estil_latent}' no existeix a la KB.")
-                print("   Estils latents disponibles:", ", ".join(sorted(kb.estils_latents.keys())))
+                print(f"\nNo tinc l'estil '{estil_latent}' a la carta.")
+                print(f"Opcions disponibles: {estils_txt}")
 
-            intensitat = float(input_default("Intensitat de l'adaptació (0.1 - 0.9)?", "0.5"))
-            print(f"\nEstil latent: {estil_latent} | Intensitat: {intensitat}")
+            intensitat = float(input_default("Quina intensitat vols? (0.1 - 0.9)", "0.5"))
+            print(f"\nPerfecte. Apliquem l'estil {estil_latent} amb intensitat {intensitat}.")
 
             plats = [
                 ("PRIMER PLAT", plat1),
@@ -682,7 +792,7 @@ def main():
                 )
                 resums.append((etiqueta_short, resum))
 
-            print(f"\nRESUM CANVIS ({estil_latent})")
+            print(f"\nResum del toc d'estil ({estil_latent}):")
             for etiqueta, resum in resums:
                 print(f"{etiqueta.capitalize()}: {resum}")
         # debug_kb_match(plat1, kb, "PRIMER")
@@ -697,15 +807,15 @@ def main():
             suggerits = kb.suggerir_estils_culturals_per_latent(estil_latent, top_k=6)
 
             if suggerits:
-                print(f"\n Ja s'han adaptat els ingredients a '{estil_latent}'.")
-                print("Alguns estils culturals que podrien encaixar són:")
+                print(f"\nJa hem donat el toc '{estil_latent}'.")
+                print("Si vols, podem afegir un estil cultural que hi combini:")
                 for i, nom_estil in enumerate(suggerits, 1):
                     row = kb.get_info_estil(nom_estil) or {}
                     alias = row.get("alias") or nom_estil
                     sabors = row.get("sabors_clau") or "—"
                     print(f"  {i}) {alias} ({nom_estil}) | sabors: {sabors}")
 
-                txt = input_default("Vols adaptar el menú a algun estil cultural? (0 = no)", "0").strip()
+                txt = input_default("En vols triar un? (0 = no)", "0").strip()
                 try:
                     idxc = int(txt)
                 except ValueError:
@@ -714,16 +824,16 @@ def main():
                 if 1 <= idxc <= len(suggerits):
                     estil_cultural = suggerits[idxc - 1]
             else:
-                print(f"\n Ja s'han adaptat els ingredients a '{estil_latent}', però no tinc estils culturals clars per aquest latent.")
+                print(f"\nJa hem adaptat a '{estil_latent}', però no tinc estils culturals clars per aquest toc.")
 
-        print("\n✨ === FASE ADAPTACIÓ: TÈCNIQUES (ALTA CUINA) ===")
-        vol = input_default("Vols aplicar un estil d'ALTA CUINA? (s/n)", "n").strip().lower()
+        _print_section("Tècniques i presentació")
+        vol = input_default("Vols donar un toc d'alta cuina? (s/n)", "n").strip().lower()
 
         estil_tecnic = ""
         if vol == "s":
             estils_alta = kb.imprimir_estils_per_tipus("alta_cuina")
             if estils_alta:
-                txt = input_default("Tria un número d'estil (0 = cap)", "0").strip()
+                txt = input_default("Tria el número d'estil (0 = cap)", "0").strip()
                 try:
                     idx = int(txt)
                 except ValueError:
@@ -750,7 +860,7 @@ def main():
             mode_ops = ""
 
         if mode_ops:
-            print(f"⚙️  Aplicant tècniques mode='{mode_ops}' (2 operadors per plat)...")
+            print(f"Perfecte. Apliquem tècniques en mode '{mode_ops}' (fins a 2 per plat).")
 
             plats_llista = [plat1, plat2, postres]
 
@@ -768,9 +878,9 @@ def main():
 
             transf_1, transf_2, transf_post = t_menu[0], t_menu[1], t_menu[2]
         else:
-            print(" No s'ha seleccionat cap estil cultural ni d'alta cuina. No s'apliquen tècniques.")
+            print("Cap estil cultural ni d'alta cuina seleccionat. Ho deixem clàssic.")
 
-        print("\n🧾 RESUM D'ADAPTACIÓ (TÈCNIQUES)")
+        print("\nResum de tècniques aplicades:")
         imprimir_menu_final_net(
             plat1, transf_1,
             plat2, transf_2,
@@ -780,7 +890,7 @@ def main():
         )
 
         # Generació de Text (Gemini)
-        if input_default("Generar nous noms i descripcions amb Gemini? (s/n)", "n").lower() == 's':
+        if input_default("Vols que redacti noms i descripcions més elegants? (s/n)", "n").lower() == 's':
             estil_tecnic_llm = estil_tecnic if estil_tecnic else "classic"
             estil_row = kb.estils.get(estil_tecnic)
             info_llm_1 = genera_descripcio_llm(plat1, transf_1, estil_tecnic_llm, servei, estil_row)
@@ -798,9 +908,7 @@ def main():
             restriccions_beguda.update(r.lower() for r in restriccions)
 
         restriccions_beguda = list(restriccions_beguda)
-        ## BORRA SEGÜENT LINIA NOMÉS PER DEBUG
-        print(f"Alergens: {restriccions_beguda}")
-        print("\n✨ === FASE ADAPTACIÓ: BEGUDES ===")
+        _print_section("Maridatge de begudes")
         beguda1, score1 = recomana_beguda_per_plat(plat1, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol)
         beguda2, score2 = recomana_beguda_per_plat(plat2, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol)
         beguda_postres, score_postres = recomana_beguda_per_plat(postres, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol)
@@ -810,7 +918,7 @@ def main():
         imprimir_menu_final(plat1, transf_1, info_llm_1, beguda1, score1, plat2, transf_2, info_llm_2, beguda2, score2, postres, transf_post, info_llm_post, beguda_postres, score_postres)
 
         # 9.1) Imatge del menú (opcional)
-        if input_default("Generar imatge detallada del menú? (s/n)", "n").lower() == 's':
+        if input_default("Vols generar una imatge detallada del menú? (s/n)", "n").lower() == 's':
             plats_info = []
             for plat, info in [
                 (plat1, info_llm_1),
@@ -841,11 +949,11 @@ def main():
             "solucio": {"primer": plat1, "segon": plat2, "postres": postres}
         }
         resultat_avaluacio = gestor_revise.avaluar_proposta(cas_proposat, user_id)
-        print(f"\nResultat de la revisió: {resultat_avaluacio['tipus_resultat']}")
+        print(f"\nGràcies pel feedback. Resultat global: {resultat_avaluacio['tipus_resultat']}")
 
         # 11) FASE RETAIN (Política de memòria)
-        print("\n🧠 --- FASE RETAIN ---")
-        print("   [Retain] Criteris: Seguretat -> Utilitat -> Redundància.")
+        _print_section("Memòria del sistema")
+        print("Decideixo si aquest cas s'ha de recordar per al futur.")
         map_resultat = {
             "CRITICAL_FAILURE": "fracas_critic",
             "SOFT_FAILURE": "fracas_suau",
@@ -871,12 +979,12 @@ def main():
             retriever_instance=retriever,
         )
         if saved:
-            print("✅ [RETAIN] Decisió final: el cas s'ha guardat a la memòria.")
+            print("Perfecte. Guardem aquest cas com a referència.")
         else:
-            print("❌ [RETAIN] Decisió final: el cas NO s'ha guardat a la memòria.")
+            print("D'acord. No el guardem aquesta vegada.")
 
-        if input_default("\nSortir? (s/n)", "n").lower() == 's':
-            print("Bon profit! 👋")
+        if input_default("\nVols preparar un altre menú? (s/n)", "n").lower() != 's':
+            print("Gràcies! Bon profit i fins aviat. 👋")
             break
 
 if __name__ == "__main__":
