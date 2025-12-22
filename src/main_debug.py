@@ -8,13 +8,17 @@ from Retriever import Retriever
 from knowledge_base import KnowledgeBase
 from gestor_feedback import GestorRevise
 from operadors_transformacio_realista import (
-    substituir_ingredient, 
-    triar_tecniques_2_operadors_per_menu, 
-    genera_descripcio_llm, 
-    construir_prompt_imatge_menu, 
+    substituir_ingredient,
+    triar_tecniques_2_operadors_per_menu,
+    genera_fitxes_menu_llm_1call,   # <-- NOU
+    construir_prompt_imatge_menu,
     genera_imatge_menu_hf,
     llista_tecniques_applicables_per_ingredient,
+    ingredients_ca_llista,
+    ingredient_ca,
+    model_gemini
 )
+
 
 from operador_ingredients import (
     FG_WRAPPER,
@@ -601,59 +605,128 @@ def imprimir_casos(candidats, top_k=5):
 
         # Detall intern eliminat per simplicitat en l'experiència
 
+import re
+
 def imprimir_menu_final(
+    kb,
     plat1, transf_1, info_llm_1, beguda1, score1,
     plat2, transf_2, info_llm_2, beguda2, score2,
-    postres, transf_post, info_llm_post, beguda_postres, score_postres
+    postres, transf_post, info_llm_post, beguda_postres, score_postres,
+    mostrar_logs=True,
 ):
-    _print_section("🍽️  Proposta final de menú")
+    _print_section("  Proposta final de menú")
+
+    def _cap(text: str) -> str:
+        return (text or "").strip()
+
+    def _ingredients_ca(plat: dict) -> str:
+        ings_en = plat.get("ingredients", []) or []
+        ings_ca = ingredients_ca_llista(kb, ings_en) if kb else ings_en
+        return ", ".join([x for x in ings_ca if x]) if ings_ca else "—"
+
+    def _bloc(titol: str, text: str, indent="   "):
+        txt = _cap(text)
+        if not txt:
+            return
+        print(f"{indent}{titol}")
+        for line in txt.splitlines():
+            line = line.strip()
+            if line:
+                print(f"{indent}  {line}")
+
+    # --- NOU: neteja del log (treu fallback + ingredient en català quan toca) ---
+    def _neteja_log(log: str) -> str:
+        txt = _cap(log)
+        if not txt:
+            return ""
+
+        # 1) treu "(Fallback Simbòlic)" (i variants)
+        txt = re.sub(r"\(\s*fallback\s*simb[oò]lic\s*\)", "", txt, flags=re.IGNORECASE)
+        txt = re.sub(r"\s{2,}", " ", txt).strip(" -·")
+
+        # 2) casos típics: "Afegit X" o "Tret X" -> X en català via KB
+        m = re.search(r"\b(Afegit|Tret)\s+([A-Za-z_\-]+)\b", txt, flags=re.IGNORECASE)
+        if m and kb:
+            verb = m.group(1)
+            ing_en = m.group(2)
+            ing_ca = ingredient_ca(kb, ing_en.lower())
+            if ing_ca and ing_ca.lower() != ing_en.lower():
+                txt = re.sub(rf"\b{re.escape(ing_en)}\b", ing_ca, txt)
+
+        return txt.strip()
+
+    # --- NOU (opcional): catalanitza 4 tokens típics dins condiment ---
+    def _neteja_condiment(cond: str) -> str:
+        c = _cap(cond)
+        if not c or not kb:
+            return c
+        # només intentem substituir paraules “ingredient-like”
+        tokens = re.findall(r"[A-Za-z][A-Za-z_\-]*", c)
+        for tok in sorted(set(tokens), key=len, reverse=True):
+            ca = ingredient_ca(kb, tok.lower())
+            if ca and ca.lower() != tok.lower():
+                c = re.sub(rf"\b{re.escape(tok)}\b", ca, c)
+        return c
 
     preu_total_menu = 0.0
 
-    for etiqueta, plat, info_llm, beguda, score in [
+    plats_iter = [
         ("PRIMER PLAT", plat1, info_llm_1, beguda1, score1),
         ("SEGON PLAT",  plat2, info_llm_2, beguda2, score2),
         ("POSTRES",     postres, info_llm_post, beguda_postres, score_postres),
-    ]:
-        nom = info_llm.get("nom_nou", plat.get("nom", "—")) if info_llm else plat.get("nom", "—")
-        desc = info_llm.get("descripcio_carta", "") if info_llm else "Plat clàssic."
-        
+    ]
+
+    for idx, (etiqueta, plat, info_llm, beguda, score) in enumerate(plats_iter, start=1):
+        nom = _cap((info_llm or {}).get("nom_nou")) or _cap(plat.get("nom")) or "—"
+        desc = _cap((info_llm or {}).get("descripcio_carta")) or "Plat clàssic."
+        pres = _cap((info_llm or {}).get("presentacio"))
+        notes = _cap((info_llm or {}).get("notes_tecnniques"))
+        beguda_llm = _cap((info_llm or {}).get("beguda_llm"))
+        condiment = _neteja_condiment(plat.get("condiment", ""))  # <-- canvi petit
+
         preu_plat = float(plat.get("preu", 0.0) or 0.0)
         preu_total_menu += preu_plat
-        
-        print(f"\n🍽️  {etiqueta}: {nom}")
-        ings = ", ".join(plat.get("ingredients", []))
-        print(f"   Ingredients clau: {ings if ings else '—'}")
-        
-        if plat.get("condiment"):
-            print(f"   Condiment: {plat.get('condiment')}")
-        if desc:
-            print(f"   Descripció: {desc}")
-        
-        
 
-        # Si hi ha logs de canvis, els mostrem (Explicabilitat XCBR)
-        logs = plat.get("log_transformacio", [])
-        if logs:
-            print("   Ajustos del xef:")
+        print("\n" + "═" * 56)
+        print(f"{idx}. {nom.upper()}")
+        print("─" * 56)
+
+        print(f"Ingredients: {_ingredients_ca(plat)}")
+
+        if condiment:
+            print(f"Acabat: {condiment}")  # <-- (opcional) en lloc de "Condiment"
+
+        _bloc("Descripció", desc)
+        _bloc("Presentació", pres)
+
+        if notes:
+            _bloc("Notes del xef", notes)
+
+        logs = plat.get("log_transformacio", []) or []
+        if mostrar_logs and logs:
+            print("   Ajustos aplicats")
             for log in logs:
-                print(f"      - {log}")
-        
-        # Mostrem el preu total d'aquest curs (Plat)
-        print(f"   💵  Preu {etiqueta.lower()}: {preu_plat:.2f}€")
-        
-        if beguda is None:
-                    print("   🍷 Maridatge: no he trobat una opció adequada.")
-        else:
+                log_net = _neteja_log(log)   # <-- canvi clau
+                if log_net:
+                    print(f"     · {log_net}")
+
+        print("\n   Maridatge")
+        if beguda is not None:
             preu_beguda = float(beguda.get("preu_cost", 0.0) or 0.0)
             preu_total_menu += preu_beguda
-            print(f"   🍷 Maridatge: {beguda.get('nom', '—')} (afinitat {score:.2f})")
-            print(f"         Preu beguda: {preu_beguda:.2f}€")
-            
-    # Secció final de resum econòmic
-    print("\n" + "="*30)
-    print(f"💰 PREU TOTAL DEL MENÚ: {preu_total_menu:.2f}€")
-    print("="*30)
+            nom_beguda = _cap(beguda.get("nom")) or "—"
+            print(f"     {nom_beguda} · afinitat {score:.2f} · {preu_beguda:.2f}€")
+        else:
+            if beguda_llm and beguda_llm.lower() != "sense recomanació de beguda":
+                print(f"     {beguda_llm}")
+            else:
+                print("     No he trobat una opció adequada.")
+
+        print(f"\n   Preu plat: {preu_plat:.2f}€")
+
+    print("\n" + "═" * 56)
+    print(f"TOTAL MENÚ (plats + begudes): {preu_total_menu:.2f}€")
+    print("═" * 56)
 
 
 def debug_kb_match(plat, kb, etiqueta=""):
@@ -1188,15 +1261,6 @@ def main():
             estil_alta=estil_tecnic if te_alta else None,
         )
 
-        # Generació de Text (Gemini)
-        if input_default("Vols que redacti noms i descripcions més elegants? (s/n)", "n").lower() == 's':
-            estil_tecnic_llm = estil_tecnic if estil_tecnic else "classic"
-            estil_row = kb.estils.get(estil_tecnic)
-            info_llm_1 = genera_descripcio_llm(plat1, transf_1, estil_tecnic_llm, servei, estil_row)
-            info_llm_2 = genera_descripcio_llm(plat2, transf_2, estil_tecnic_llm, servei, estil_row)
-            info_llm_post = genera_descripcio_llm(postres, transf_post, estil_tecnic_llm, servei, estil_row)
-
-
         # 8) Afegir begudes
         # --- NOU: combinar restriccions + al·lèrgies guardades ---
         restriccions_beguda = set()
@@ -1215,10 +1279,56 @@ def main():
         beguda2, score2, detail2 = recomana_beguda_per_plat(plat2, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol, begudes_usades)
         beguda_postres, score_postres, detail_postres = recomana_beguda_per_plat(postres, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol, begudes_usades)
 
-        
+
+        # Generació de Text (Gemini) - DESPRÉS de begudes
+        if input_default("Vols que redacti noms i descripcions més elegants? (s/n)", "n").lower() == 's':
+
+            plats_llm = [plat1, plat2, postres]
+            transf_llm = [transf_1, transf_2, transf_post]
+
+            # begudes per plat, en el mateix ordre
+            begudes_llm = [beguda1, beguda2, beguda_postres]
+
+            fitxes = genera_fitxes_menu_llm_1call(
+                plats=plats_llm,
+                transformacions_per_plat=transf_llm,
+                estil_cultural=estil_cultural if te_cultural else None,
+                estil_alta=estil_tecnic if te_alta else None,
+                servei=servei,
+                kb=kb,
+                beguda_per_plat=begudes_llm,
+                model_gemini= model_gemini,  # o passa-hi el model si el tens accessible; si no, que la funció internament el gestioni
+            )
+
+            # Converteix al format que espera la teva funció d'impressió actual
+            by_id = {f["id"]: f for f in (fitxes or [])}
+            f1 = by_id.get(0, {})
+            f2 = by_id.get(1, {})
+            f3 = by_id.get(2, {})
+
+            def _map_fitxa(f: dict) -> dict:
+                return {
+                    "nom_nou": f.get("nom_plat_ca", ""),
+                    "descripcio_carta": f.get("descripcio_ca", ""),
+                    "presentacio": f.get("presentacio_ca", ""),
+                    "beguda_llm": f.get("beguda_recomanada_ca", ""),
+                    "notes_tecnniques": f.get("notes_tecnniques_ca", ""),
+                    "image_sentence_en": f.get("image_sentence_en", ""),
+                }
+
+            info_llm_1 = _map_fitxa(f1)
+            info_llm_2 = _map_fitxa(f2)
+            info_llm_post = _map_fitxa(f3)
+
+
         # 9) Resultat Final
-        imprimir_menu_final(plat1, transf_1, info_llm_1, beguda1, score1, plat2, transf_2, info_llm_2, beguda2, score2, postres, transf_post, info_llm_post, beguda_postres, score_postres)
-        
+        imprimir_menu_final(
+                kb,
+                plat1, transf_1, info_llm_1, beguda1, score1,
+                plat2, transf_2, info_llm_2, beguda2, score2,
+                postres, transf_post, info_llm_post, beguda_postres, score_postres
+            )
+
         # 9.1) Imatge del menú (opcional)
         if input_default("Vols generar una imatge detallada del menú? (s/n)", "n").lower() == 's':
             plats_info = []

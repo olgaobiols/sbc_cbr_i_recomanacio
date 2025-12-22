@@ -4,7 +4,7 @@ from typing import List, Dict, Set, Any, Optional
 import google.generativeai as genai
 import requests
 from collections import defaultdict
-
+import re
 
 
 # Importem la lògica latent ja adaptada a KB
@@ -116,13 +116,19 @@ def _norm_macro(m: str) -> str:
 
 
 def _get_info_ingredients_plat(plat: Dict, kb: Any) -> List[Dict]:
-    """Recupera la info de tots els ingredients del plat usant la KB."""
+    """Recupera la info de tots els ingredients del plat usant la KB.
+    Si algun ingredient no existeix a KB, retorna un dict mínim amb el nom.
+    """
     infos = []
-    for nom in plat.get("ingredients", []):
-        info = kb.get_info_ingredient(nom)
+    for nom in plat.get("ingredients", []) or []:
+        info = kb.get_info_ingredient(nom) if kb is not None else None
         if info:
             infos.append(info)
+        else:
+            # Fallback mínim: així no perdem ingredients
+            infos.append({"nom_ingredient": nom, "categoria_macro": "", "familia": ""})
     return infos
+
 
 def _llista_ingredients_aplicables(tecnica_row: Dict, info_ings: List[Dict]) -> list[str]:
     aplica_estat = set(_split_pipe(tecnica_row.get("aplica_estat")))
@@ -301,6 +307,7 @@ def substituir_ingredient(
             parelles_prohibides=parelles_prohibides,
         )
     return plat
+
 
 def _completa_fins_a_n(
     transformacions: list[dict],
@@ -1010,268 +1017,215 @@ def _es_ingredient_buit_o_portador(nom: str, info: dict) -> bool:
     return False
 
 
-def _extreu_camp_resposta(text: str, etiqueta: str) -> str | None:
-    """
-    Donat un text del LLM, extreu la línia que comença per, per exemple:
-       'NOM:' o 'DESCRIPCIO:' ...
-    i en retorna el contingut després dels dos punts.
-    """
-    etiqueta_upper = etiqueta.upper() + ":"
-    for linia in text.splitlines():
-        linia = linia.strip()
-        if linia.upper().startswith(etiqueta_upper):
-            return linia.split(":", 1)[1].strip()
-    return None
+
+import json
+import re
+from typing import Any, Dict, List, Optional
+
+# Reutilitzes el teu model_gemini i _get_info_ingredients_plat si vols (no és obligatori)
+# model_gemini = genai.GenerativeModel("gemini-2.5-flash")
 
 
 
-#CANVIADA!!!!!!!!
-def _format_transformacions_per_prompt(transformacions: list[dict]) -> str:
-    """
-    Genera un text breu i estructurat amb les tècniques aplicades,
-    de manera que el LLM pugui reutilitzar literalment noms de tècniques i ingredients.
-    """
-    if not transformacions:
-        # Indiquem clarament que NO hi ha tècniques perquè el model no se les inventi
-        return (
-            "En aquest plat no s'ha aplicat cap tècnica especial; el plat es manté clàssic. "
-            "Descriu-lo com un plat ben executat dins l'estil, però sense mencionar tècniques."
-        )
+def _json_from_text(text: str) -> Optional[dict]:
+    if not text:
+        return None
+    text = text.strip()
+    text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\s*```$", "", text)
+    try:
+        return json.loads(text)
+    except Exception:
+        m = re.search(r"\{.*\}", text, flags=re.DOTALL)
+        if not m:
+            return None
+        try:
+            return json.loads(m.group(0))
+        except Exception:
+            return None
 
-    linies = [
-        "TÈCNIQUES APLICADES AL PLAT (usa aquests textos exactes quan parlis de tècniques):"
-    ]
-    for i, t in enumerate(transformacions, start=1):
-        nom = t.get("display") or t.get("nom") or ""
-        ing_nom = t.get("objectiu_ingredient") or "un ingredient del plat"
-        linies.append(f"{i}) {nom} sobre {ing_nom}")
+def _neteja(s: str) -> str:
+    s = (s or "").strip()
+    s = s.replace("...", "").replace("**", "")
+    return s
 
-    return "\n".join(linies)
+def ingredient_ca(kb, nom_en: str) -> str:
+    info = kb.get_info_ingredient(nom_en) if kb else None
+    ca = (info or {}).get("nom_catala") or (info or {}).get("nom_ca")
+    return (ca or nom_en).strip()
 
-
-def _descripcio_conte_tecnica(descripcio: str, transformacions: list[dict]) -> bool:
-    """
-    Comprova si la descripció generada conté almenys un nom de tècnica.
-    Serveix per saber si el model ha fet cas a les transformacions.
-    """
-    if not descripcio or not transformacions:
-        return False
-
-    text_lower = descripcio.lower()
-    for t in transformacions:
-        nom_disp = (t.get("display") or t.get("nom") or "").lower()
-        if nom_disp and nom_disp in text_lower:
-            return True
-    return False
+def ingredients_ca_llista(kb, ingredients_en: list[str]) -> list[str]:
+    return [ingredient_ca(kb, x) for x in ingredients_en]
 
 
-def genera_descripcio_llm(
-    plat: dict,
-    transformacions: list[dict],
-    estil_tecnic: str,
+def genera_fitxes_menu_llm_1call(
+    plats: List[dict],
+    transformacions_per_plat: List[List[dict]],
+    estil_cultural: Optional[str],
+    estil_alta: Optional[str],
     servei: str,
-    estil_row: dict | None = None,
-) -> dict:
+    kb: Any,
+    beguda_per_plat: Optional[List[Optional[dict]]] = None,
+    model_gemini=None,
+) -> List[Dict[str, Any]]:
     """
-    Genera NOM, DESCRIPCIO i PRESENTACIO pensats per:
-      - sonar bé en carta
-      - però sobretot ser útils per generar una imatge acurada
+    UNA SOLA CRIDA LLM PER TOT EL MENÚ.
+    - Ingredients_ca es construeixen amb KB (nom_catala) -> el LLM NO els inventa ni els tradueix.
+    - El LLM retorna: nom_plat_ca, descripcio_ca, presentacio_ca, notes_tecnniques_ca,
+      beguda_recomanada_ca, i una frase anglesa per imatge.
     """
+    if beguda_per_plat is None:
+        beguda_per_plat = [None] * len(plats)
 
-    nom_plat = plat.get("nom", "Plat sense nom")
-    ingredients_llista = plat.get("ingredients", []) or []
-    curs = (plat.get("curs", "") or "").strip().lower()
-    servei_norm = (servei or "indiferent").strip().lower()
+    # Precompute (0 quota)
+    plats_input = []
+    for i, plat in enumerate(plats):
+        ingredients_en = list(plat.get("ingredients", []) or [])
+        ingredients_ca = ingredients_ca_llista(kb, ingredients_en)
 
-    # Ingredients (sense fer-ho etern)
-    if not ingredients_llista:
-        ingredients_txt = "ingredients diversos"
-        ingredients_full = ""
-    else:
-        ingredients_txt = ", ".join(ingredients_llista[:8])
-        ingredients_full = ", ".join(ingredients_llista)
+        # tècniques en format curt
+        tecs = []
+        for t in (transformacions_per_plat[i] or []):
+            tec = (t.get("display") or t.get("nom") or "").strip()
+            obj_en = (t.get("objectiu_ingredient") or "").strip()
+            obj_ca = ingredient_ca(kb, obj_en) if obj_en else ""
+            if tec:
+                tecs.append({
+                    "tecnica": tec,
+                    "objectiu_ingredient_ca": obj_ca,
+                })
 
-    # Info estil (estils.csv)
-    tipus = ""
-    sabors_clau = []
-    caracteristiques = []
-    evita = []
-    if isinstance(estil_row, dict):
-        tipus = estil_row.get("tipus", "") or ""
-        sabors_clau = [x for x in (estil_row.get("sabors_clau") or "").split("|") if x]
-        caracteristiques = [x for x in (estil_row.get("caracteristiques") or "").split("|") if x]
-        evita = [x for x in (estil_row.get("evita") or "").split("|") if x]
+        beg = beguda_per_plat[i] or {}
+        beg_en = (beg.get("nom") or beg.get("name") or "").strip()
 
-    txt_sabors = ", ".join(sabors_clau) if sabors_clau else "—"
-    txt_caract = ", ".join(caracteristiques) if caracteristiques else "—"
-    txt_evita = ", ".join(evita) if evita else "—"
+        plats_input.append({
+            "id": i,
+            "nom_original_en": plat.get("nom", "Unnamed dish"),
+            "curs": (plat.get("curs", "") or "").strip().lower(),
+            "ingredients_en": ingredients_en,
+            "ingredients_ca_fixos": ingredients_ca,  # <- Llista tancada, ja traduïda
+            "tecnniques": tecs,
+            "beguda_recomanada_en": beg_en or None,
+        })
 
-    # -------------------------
-    # Helpers: format servei
-    # -------------------------
-    def _guia_servei(s: str) -> tuple[str, str]:
-        if s == "assegut":
-            return (
-                "FORMAT SERVEI: ASSEGUT (plat individual gran, emplatament de restaurant).",
-                "Prohibit descriure-ho com mini, mos, cullera, broqueta, vaset, safata o peces repetides."
-            )
-        if s == "cocktail":
-            return (
-                "FORMAT SERVEI: COCKTAIL (peça petita 1–2 mossegades, servida en cullera/vaset/mini platet o broqueta).",
-                "Prohibit descriure-ho com un plat gran complet o una ració principal."
-            )
-        if s == "finger_food":
-            return (
-                "FORMAT SERVEI: FINGER FOOD (unitats que es poden agafar amb la mà: tartaleta, croqueta, mini entrepà, wrap, broqueta...).",
-                "Evita formats que requereixin ganivet i forquilla; parla d'unitats petites repetibles."
-            )
-        return (
-            "FORMAT SERVEI: INDIFERENT (sigues coherent amb el plat, sense forçar format).",
-            "—"
-        )
+    guia_servei = {
+        "assegut": "Servei assegut: plat individual gran, emplatament de restaurant. No format mini.",
+        "cocktail": "Servei còctel: peça petita 1–2 mossegades (cullera, vaset, mini platet o broqueta). No plat gran.",
+        "finger_food": "Servei finger food: unitats agafables amb la mà. Evita ganivet i forquilla.",
+    }.get((servei or "indiferent").strip().lower(), "Servei indiferent: mantén coherència amb el plat.")
 
-    guia_servei, prohibit_servei = _guia_servei(servei_norm)
+    if model_gemini is None:
+        # fallback local sense LLM
+        out = []
+        for p in plats_input:
+            out.append({
+                "id": p["id"],
+                "nom_plat_ca": p["nom_original_en"],
+                "ingredients_ca": p["ingredients_ca_fixos"],
+                "descripcio_ca": "Descripció no disponible (LLM no configurat).",
+                "presentacio_ca": "Presentació no disponible (LLM no configurat).",
+                "beguda_recomanada_ca": "Sense recomanació de beguda",
+                "notes_tecnniques_ca": "Sense dades LLM.",
+                "image_sentence_en": "A single white round plate with the listed ingredients arranged in a clean modern composition.",
+            })
+        return out
 
-    # -------------------------
-    # Helpers: tècniques -> spec
-    # -------------------------
-    def _resum_transformacions_specs(transformacions: list[dict]) -> str:
-        """
-        Construeix un bloc curt però molt informatiu:
-        - Display + objectiu ingredient
-        - Descripcio tècnica
-        - Impacte textura i sabor (per convertir-ho en visuals)
-        """
-        if not transformacions:
-            return (
-                "TÈCNIQUES:\n"
-                "- Cap tècnica especial aplicada (plat clàssic)."
-            )
-
-        lines = ["TÈCNIQUES (usa-les i fes-les visibles):"]
-        for i, t in enumerate(transformacions, 1):
-            disp = (t.get("display") or t.get("nom") or "").strip()
-            obj = (t.get("objectiu_ingredient") or "").strip()
-            if not obj:
-                # si no hi ha ingredient concret, fem servir objectiu_frase curt
-                obj = (t.get("objectiu_frase") or "un element del plat").strip()
-
-            desc_tec = (t.get("descripcio") or "").strip()
-
-            tx = t.get("impacte_textura", [])
-            sb = t.get("impacte_sabor", [])
-
-            if isinstance(tx, str):
-                tx = [x for x in tx.split("|") if x]
-            if isinstance(sb, str):
-                sb = [x for x in sb.split("|") if x]
-
-            tx_txt = ", ".join(tx) if tx else "—"
-            sb_txt = ", ".join(sb) if sb else "—"
-
-            lines.append(
-                f"{i}) {disp} sobre {obj} | textura: {tx_txt} | sabor: {sb_txt} | definició: {desc_tec}"
-            )
-        return "\n".join(lines)
-
-    txt_transformacions_specs = _resum_transformacions_specs(transformacions)
-
-    # També mantenim el teu format curt “Tècnica sobre ingredient” perquè Gemini ho copiï literalment
-    txt_transformacions_literal = _format_transformacions_per_prompt(transformacions)
-
-    # -------------------------
-    # Prompt nou: més curt però més precís
-    # -------------------------
     prompt = f"""
-Ets un xef català i també un estilista gastronòmic per fotografia.
-Objectiu: descriure el plat perquè algú el pugui EMPLATAR i FOTOGRAFIAR amb precisió.
+Ets un xef català i redactor/a de carta professional.
 
-DADES DEL PLAT
-- Nom original: {nom_plat}
-- Curs: {curs or "—"}
-- Ingredients (llista): {ingredients_txt}
-- Ingredients (complet, per no inventar): {ingredients_full or ingredients_txt}
+OBJECTIU
+Genera la fitxa de CADA plat (en català) i, per a cada plat, UNA frase en anglès per a un model d'imatge (top-down plating).
 
-ESTIL
-- Estil tècnic: {estil_tecnic}
-- Tipus: {tipus or "—"}
-- Sabors clau: {txt_sabors}
-- Característiques: {txt_caract}
-- Evita: {txt_evita}
+IMPORTANT (RESTRICCIONS)
+- Els ingredients en català ja són FIXOS i te'ls dono com a llista tancada per a cada plat.
+- NO pots afegir ingredients nous ni sinònims d'ingredients fora de la llista.
+- Si no hi ha tècniques, no n'inventis.
+- Estil català natural, professional i sobri. No poesia.
 
-{guia_servei}
+SERVEI
+- {guia_servei}
 
-TÈCNIQUES APLICADES (importantíssim per la imatge)
-A) LITERAL (copia exactament aquests noms quan les mencionis):
-{txt_transformacions_literal}
+ESTILS (poden ser buits)
+- Estil cultural: {estil_cultural or "cap"}
+- Estil d'alta cuina: {estil_alta or "cap"}
 
-B) ESPECIFICACIÓ (fes que siguin visibles i coherents amb la definició i impactes):
-{txt_transformacions_specs}
+ENTRADA (JSON)
+{json.dumps(plats_input, ensure_ascii=False)}
+NOM DEL PLAT (molt important)
+- El nom ha de ser atractiu i de carta (2–7 paraules), sense poesia.
+- Si hi ha tècniques: el nom HA d’incloure com a mínim 1 tècnica (en català) i 1 ingredient clau de ingredients_ca_fixos.
+- Si hi ha estils (cultural/alta): fes-ne una referència subtil (p.ex. "cítric", "caribeny", "creatiu", "contemporani"), sense inventar ingredients.
+- No tradueixis ni canviïs ingredients: només els pots mencionar si estan a ingredients_ca_fixos.
 
-TASCA (retorna EXACTAMENT 3 línies, sense text extra):
+SORTIDA
+Retorna NOMÉS un JSON vàlid amb aquest esquema:
 
-NOM: (2 a 6 paraules) nom de carta coherent amb el servei "{servei_norm}" i l'estil, sense paraules grandiloqüents.
+{{
+  "plats": [
+    {{
+      "id": 0,
+      "nom_plat_ca": "... (2–7 paraules)",
+      "ingredients_ca": ["... EXACTAMENT els mateixos que ingredients_ca_fixos, mateix ordre i longitud ..."],
+      "descripcio_ca": "... (minim 200 caràcters, 2–3 frases, sense llistes ni markdown)",
+      "presentacio_ca": "... (mínim 300 caràcters, molt visual i concreta)",
+      "beguda_recomanada_ca": "... (si beguda_recomanada_en és null -> 'Sense recomanació de beguda')",
+      "notes_tecnniques_ca": "... (si hi ha tècniques: frase breu. si no: 'Sense tècniques especials.')",
+      "image_sentence_en": "... (EXACTAMENT 1 frase en anglès, max 30 paraules, només visible on-plate; no emocions)"
+    }}
+  ]
+}}
 
-DESCRIPCIO: (1 frase, màx 38 paraules) descripció de carta PERÒ útil per imatge:
-- menciona ingredient principal + 1-2 elements secundaris visibles,
-- si hi ha tècniques, HAS D'ESMENTAR TOTES les tècniques del bloc A, indicant sobre quin ingredient s'aplica cadascuna,
-- inclou 1 pista visual de textura (p.ex. gel/cubs/escuma/laminat/cruixent/pols) sense inventar ingredients.
-
-PRESENTACIO: (1 frase, màx 55 paraules) instruccions VISUALS per dibuixar el plat:
-- posició (centre/anell/línia/racó), alçada (pla/elevat), formes (cubs, làmines, esferes, quenelle, gotes, pols),
-- nombre aproximat d'elements repetits (p.ex. 6 gotes, 10 esferes, 3 làmines),
-- colors principals i a quin ingredient corresponen,
-- coherent amb el servei "{servei_norm}" (assegut = plat gran; cocktail = peça mini; finger = unitats).
-
-RESTRICCIONS DURes
-- No inventis ingredients que no siguin a la llista.
-- No inventis tècniques ni noms artístics addicionals.
-- No parlis d'emocions, viatges, sorpresa, experiència, explosió.
-- No posis punts suspensius.
-- {prohibit_servei}
+CONDICIÓ TÈCNIQUES (molt important)
+- Si un plat té tècniques, a descripcio_ca has d'integrar-les en un mateix paràgraf com:
+  "TÈCNICA sobre INGREDIENT" (ingredient en català). NO posis la primera lletra de la tècnica en majúscula
 """.strip()
 
-    try:
-        resp = model_gemini.generate_content(prompt)
-        text = resp.text or ""
-    except Exception as e:
-        print(f"[LLM] Error cridant Gemini: {e}")
-        return {
-            "nom_nou": f"{nom_plat} (versió {estil_tecnic})",
-            "descripcio_carta": f"Versió adaptada del plat en clau {estil_tecnic.replace('_', ' ')}.",
-            "proposta_presentacio": "Presentació neta i ordenada, ressaltant el producte principal.",
-        }
+    resp = model_gemini.generate_content(prompt)
+    data = _json_from_text((resp.text or "").strip()) or {}
+    plats_out = data.get("plats") if isinstance(data.get("plats"), list) else []
 
-    nom_nou = _extreu_camp_resposta(text, "NOM")
-    descripcio = _extreu_camp_resposta(text, "DESCRIPCIO")
-    presentacio = _extreu_camp_resposta(text, "PRESENTACIO")
+    # Post-validació suau (sense segona crida!)
+    out = []
+    by_id = {p["id"]: p for p in plats_out if isinstance(p, dict) and "id" in p}
 
-    # Safety net: si hi ha tècniques però la descripció no en cita cap, forcem la primera
-    if transformacions and descripcio:
-        if not _descripcio_conte_tecnica(descripcio, transformacions):
-            t0 = transformacions[0]
-            nom_tecnica = (t0.get("display") or t0.get("nom") or "")
-            obj = t0.get("objectiu_ingredient") or t0.get("objectiu_frase") or "un element del plat"
-            descripcio = descripcio.rstrip(".")
-            descripcio = f"{descripcio}. {nom_tecnica} sobre {obj}."
+    for p in plats_input:
+        got = by_id.get(p["id"], {}) or {}
+        ingredients_ca_fixos = p["ingredients_ca_fixos"]
 
-    if not nom_nou:
-        nom_nou = f"{nom_plat} (versió {estil_tecnic})"
-    if not descripcio:
-        descripcio = f"Versió adaptada del plat en clau {estil_tecnic.replace('_', ' ')}."
-    if not presentacio:
-        presentacio = "Presentació neta i ordenada, ressaltant el producte principal."
+        # força ingredients exactes (0 invents)
+        got["ingredients_ca"] = ingredients_ca_fixos
 
-    def _neteja(txt: str) -> str:
-        txt = (txt or "").strip()
-        txt = txt.replace("...", "")
-        return txt
+        got.setdefault("nom_plat_ca", p["nom_original_en"])
+        got.setdefault("descripcio_ca", "—")
+        got.setdefault("presentacio_ca", "—")
+        got.setdefault("notes_tecnniques_ca", "Sense tècniques especials." if not p["tecnniques"] else "Tècniques aplicades segons fitxa.")
+        got.setdefault("beguda_recomanada_ca", "Sense recomanació de beguda")
+        got.setdefault("image_sentence_en", "A single white round plate with the listed ingredients arranged in a clean modern composition.")
 
-    return {
-        "nom_nou": _neteja(nom_nou),
-        "descripcio_carta": _neteja(descripcio),
-        "proposta_presentacio": _neteja(presentacio),
-    }
+        # neteja
+        for k in ["nom_plat_ca","descripcio_ca","presentacio_ca","beguda_recomanada_ca","notes_tecnniques_ca","image_sentence_en"]:
+            got[k] = _neteja(got.get(k, ""))
+
+        # llindars mínims -> fallback local (sense reintentar)
+        if len(got["descripcio_ca"]) < 220:
+            got["descripcio_ca"] = "Plat executat amb precisió, amb els ingredients indicats i un perfil de sabor coherent amb l'estil. Textura i contrast equilibrats, amb un acabat net i professional."
+        if len(got["presentacio_ca"]) < 320:
+            got["presentacio_ca"] = "Plat sobre un plat rodó blanc. Emplatament net i contemporani: els elements principals centrats, guarnicions distribuïdes amb simetria suau i alçades moderades. Salses o cremes aplicades en traç fi o punts controlats. Colors i textures visibles dels ingredients, sense decoració externa ni elements no comestibles."
+
+        out.append({
+            "id": p["id"],
+            "nom_plat_ca": got["nom_plat_ca"],
+            "ingredients_ca": got["ingredients_ca"],
+            "descripcio_ca": got["descripcio_ca"],
+            "presentacio_ca": got["presentacio_ca"],
+            "beguda_recomanada_ca": got["beguda_recomanada_ca"],
+            "notes_tecnniques_ca": got["notes_tecnniques_ca"],
+            "image_sentence_en": got["image_sentence_en"],
+        })
+
+    return out
+
+
 
 def _resum_plat_en_angles_per_imatge(plat: dict) -> str:
     """
