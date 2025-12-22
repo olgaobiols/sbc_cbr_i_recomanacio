@@ -89,52 +89,77 @@ def passa_restriccions(beguda_row, restriccions, alcohol):
 
 def score_beguda_per_plat(beguda_row, ingredient_principal, llista_ingredients):
     total_score = 0
-
+    breakdown = {
+        "ingredient_principal": None,
+        "ingredients_secundaris": []
+    }
+    
     # ------------------------------
     # Funció interna per puntuar 1 ingredient
     # ------------------------------
     def score_per_ingredient(ingredient):
         if not ingredient:
-            return 0
-        
+            return 0, {}
+
         score = 0
-        
+        detalls = {
+            "nom": ingredient.get("nom_ingredient"),
+            "familia": None,
+            "categoria_macro": None,
+            "sabors_match": [],
+            "sabors_conflicte": []
+        }
+
         # --- Famílies ---
         fam_beguda = set(beguda_row["va_be_amb_familia"].split("|"))
         if ingredient["familia"] in fam_beguda:
             score += 2
+            detalls["familia"] = ingredient["familia"]
 
         # --- Macro categories ---
         macro_beguda = set(beguda_row["va_be_amb_categoria_macro"].split("|"))
         if ingredient["categoria_macro"] in macro_beguda:
             score += 2
+            detalls["categoria_macro"] = ingredient["categoria_macro"]
 
         # --- Sabors ---
         sabors_beguda = set(beguda_row["va_be_amb_sabors"].split("|"))
         evita_sabors = set(beguda_row["evita_sabors"].split("|"))
         sabors_ing = set(ingredient["sabors_base"].split("|"))
 
-        # Suma per coincidència de sabors
-        score += len(sabors_ing & sabors_beguda)
+        match = sabors_ing & sabors_beguda
+        conflict = sabors_ing & evita_sabors
 
-        # Resta per sabors conflictius
-        score -= len(sabors_ing & evita_sabors)
+        score += len(match)
+        score -= len(conflict)
 
-        return score
+        detalls["sabors_match"] = sorted(match)
+        detalls["sabors_conflicte"] = sorted(conflict)
+
+        return score, detalls
+
 
     # ---------------------------------------------------------
     # 1) Puntuar ingredients normals
     # ---------------------------------------------------------
     for ing in llista_ingredients:
-        total_score += score_per_ingredient(ing)
+        sc, det = score_per_ingredient(ing)
+        total_score += sc
+        breakdown["ingredients_secundaris"].append(det)
 
     # ---------------------------------------------------------
     # 2) Puntuar ingredient principal (DOBLE)
     # ---------------------------------------------------------
     if ingredient_principal:
-        total_score += 2 * score_per_ingredient(ingredient_principal)
+        sc, det = score_per_ingredient(ingredient_principal)
+        det["pes_principal"] = "x2"
+        det["subtotal"] = sc * 2
+        total_score += sc * 2
+        breakdown["ingredient_principal"] = det
 
-    return total_score
+    breakdown["total_score"] = total_score
+
+    return total_score, breakdown
 
 def recomana_beguda_per_plat(plat, base_begudes, base_ingredients, restriccions, alcohol, begudes_usades):
     candidates = []
@@ -155,12 +180,14 @@ def recomana_beguda_per_plat(plat, base_begudes, base_ingredients, restriccions,
     millor_score = float("-inf")
 
     for row in candidates:
-        sc = score_beguda_per_plat(row, ing_main, llista_ing)
+        sc, breakdown = score_beguda_per_plat(row, ing_main, llista_ing)
         if sc > millor_score:
             millor = row
             millor_score = sc
+            millor_breakdown = breakdown
+
     
     if millor is not None:
         begudes_usades.add(millor.get("id"))
 
-    return millor, millor_score
+    return millor, millor_score, millor_breakdown
