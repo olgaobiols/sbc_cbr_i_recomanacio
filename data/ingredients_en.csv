@@ -18,6 +18,7 @@ ham,protein_animal,meat_cured,salty|cured|savory,false,False,True,side,cured,col
 honey,sweet,confectionery,sweet|floral,false,False,False,seasoning,raw,liquid,none,omnivore|vegetarian|halal_friendly|kosher_friendly
 lettuce,plant_vegetal,green_leaf,fresh|watery|crisp,false,False,False,base,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
 minced_meat,protein_animal,meat_poultry|meat_cured,umami|fatty,false,False,True,main,cooked,minced,none,omnivore
+fresh_brussels_sprout,vegetable,cruciferous,slightly_bitter|green|earthy,false,False,False,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
 parmesan,dairy,dairy_cheese,salty|umami|nutty,false,True,False,side,ripened,grated,milk,omnivore|vegetarian
 pasta,grain,processed_cereal,neutral|grainy,true,False,False,base,cooked,noodle,gluten,omnivore|vegetarian|vegan
 potato,vegetable,root,earthy|starchy|neutral,false,False,False,base,raw,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly

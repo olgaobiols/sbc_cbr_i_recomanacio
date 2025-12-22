@@ -28,6 +28,11 @@ def _normalize_text(value: str) -> str:
     text = unicodedata.normalize("NFKD", str(value)).encode("ascii", "ignore").decode("ascii")
     return " ".join(text.replace("-", " ").replace("_", " ").lower().split())
 
+def _is_empty_tag(value: str) -> bool:
+    if not value:
+        return True
+    return _normalize_text(value) in {"none", "no", "null", "nan", "n/a", "na"}
+
 def _normalize_category(value: str) -> str:
     if not value:
         return ""
@@ -62,9 +67,17 @@ def _check_compatibilitat(ingredient_info: Dict, perfil_usuari: Optional[Dict]) 
     if not perfil_usuari: return True
 
     # Validació d'al·lèrgies
-    alergies_usuari = {_normalize_text(a) for a in perfil_usuari.get('alergies', []) if a}
+    alergies_usuari = {
+        _normalize_text(a)
+        for a in perfil_usuari.get('alergies', [])
+        if a and not _is_empty_tag(a)
+    }
     if alergies_usuari:
-        alergens_ing = {_normalize_text(p) for p in str(ingredient_info.get('allergens', '')).split('|') if p}
+        alergens_ing = {
+            _normalize_text(p)
+            for p in str(ingredient_info.get('allergens', '')).split('|')
+            if p and not _is_empty_tag(p)
+        }
         familia_ing = _normalize_text(ingredient_info.get('family'))
         if alergies_usuari.intersection(alergens_ing) or (familia_ing and familia_ing in alergies_usuari):
             return False
@@ -103,7 +116,9 @@ def _build_perfil_context(perfil_base: Optional[Dict], info_prohibit: Dict) -> D
     
     # Afegim al·lèrgens de l'ingredient prohibit al context de cerca
     for tag in str(info_prohibit.get('allergens', '')).split('|'):
-        if t := _normalize_text(tag): alergies.add(t)
+        if t := _normalize_text(tag):
+            if not _is_empty_tag(t):
+                alergies.add(t)
     if fam := _normalize_text(info_prohibit.get('family')): alergies.add(fam)
     
     perfil['alergies'] = alergies
@@ -556,17 +571,19 @@ def adaptar_plat_a_estil_latent(plat: Dict[str, Any], nom_estil: str, kb: Any, b
 
 def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits: Set[str], kb: Any,
                                      perfil_usuari: Optional[Dict] = None, llista_blanca: Optional[Set[str]] = None,
-                                     ingredients_usats: Optional[Set[str]] = None, parelles_prohibides: Optional[Set[str]] = None) -> Dict[str, Any]:
+                                     ingredients_usats: Optional[Set[str]] = None, parelles_prohibides: Optional[Set[str]] = None,
+                                     preferits: Optional[Set[str]] = None) -> Dict[str, Any]:
     """
     Substitueix ingredients que violen restriccions dures.
     Utilitza una estratègia híbrida: cerca candidats via ontologia i selecciona el millor via FlavorGraph.
     """
     nou_plat = plat.copy()
     nou_plat['ingredients'] = list(plat['ingredients'])
-    log_canvis = []
+    log_canvis = list(plat.get('log_transformacio', []))
     
     prohibits_norm = {_normalize_text(i) for i in ingredients_prohibits}
     whitelist_norm = ({_normalize_text(i) for i in llista_blanca} if llista_blanca else None)
+    preferits = list(preferits or [])
 
     for i, ing_nom in enumerate(nou_plat['ingredients']):
         ing_norm = _normalize_text(ing_nom)
@@ -609,8 +626,29 @@ def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits
             else:
                 candidats_finals = list(candidats_dup_map.values())
             if not candidats_finals:
-                log_canvis.append(f"Avís: No s'ha trobat substitut segur per {ing_nom}")
-                continue
+                candidats_relax = []
+                for cat in cats_candidats:
+                    for cand_nom in _get_candidats_per_categoria(cat, kb):
+                        c_norm = _normalize_text(cand_nom)
+                        if c_norm == ing_norm or c_norm in prohibits_norm:
+                            continue
+                        if whitelist_norm and c_norm not in whitelist_norm:
+                            continue
+                        if parelles_prohibides and _check_parelles_prohibides(cand_nom, context_ingredients, parelles_prohibides):
+                            continue
+                        info_cand = kb.get_info_ingredient(cand_nom)
+                        if info_cand and _check_compatibilitat(info_cand, perfil_context):
+                            candidats_relax.append(cand_nom)
+
+                if candidats_relax:
+                    vistos = set()
+                    candidats_finals = []
+                    for cand in candidats_relax:
+                        c_norm = _normalize_text(cand)
+                        if c_norm in vistos:
+                            continue
+                        vistos.add(c_norm)
+                        candidats_finals.append(cand)
 
             # Selecció Híbrida: Vectors (FlavorGraph) > Ontologia
             millor_substitut = None
@@ -621,18 +659,67 @@ def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits
             vec_context = _calcular_vector_context(context_ingredients)
             use_vectors = vec_orig is not None or vec_context is not None
 
-            if use_vectors:
-                for cand in candidats_finals:
+            # Preferències d'usuari (prioritat si encaixa)
+            best_pref = None
+            best_pref_score = -99.0
+            pref_threshold = 0.08 if use_vectors else 0.0
+            pref_candidates = []
+            pref_dup_candidates = []
+            for pref in preferits:
+                info_pref = kb.get_info_ingredient(pref)
+                if not info_pref:
+                    continue
+                pref_name = info_pref.get("ingredient_name") or pref
+                pref_norm = _normalize_text(pref_name)
+                if pref_norm == ing_norm or pref_norm in prohibits_norm:
+                    continue
+                if whitelist_norm and pref_norm not in whitelist_norm:
+                    continue
+                if parelles_prohibides and _check_parelles_prohibides(pref_name, context_ingredients, parelles_prohibides):
+                    continue
+                if not _check_compatibilitat(info_pref, perfil_context):
+                    continue
+                if not _es_candidat_coherent(info_orig, info_pref, _normalize_category(cat_macro)):
+                    continue
+                if pref_norm in context_norm:
+                    pref_dup_candidates.append(pref_name)
+                else:
+                    pref_candidates.append(pref_name)
+
+            pref_pool = pref_candidates or pref_dup_candidates
+            if pref_pool:
+                for cand in pref_pool:
                     sim_self = FG_WRAPPER.similarity_with_vector(cand, vec_orig) if vec_orig is not None else None
                     sim_pair = FG_WRAPPER.similarity_with_vector(cand, vec_context) if vec_context is not None else None
-
                     score = (0.65 * (sim_self or 0)) + (0.35 * (sim_pair or 0))
-                    if score > millor_score:
-                        millor_score = score
-                        millor_substitut = cand
+                    if score > best_pref_score:
+                        best_pref_score = score
+                        best_pref = cand
+                if best_pref is not None:
+                    effective_threshold = pref_threshold if candidats_finals else 0.0
+                    if best_pref_score >= effective_threshold:
+                        millor_substitut = best_pref
+                        millor_score = best_pref_score
+                        justificacio = "Preferència d'usuari"
+
+            if millor_substitut is None and not candidats_finals:
+                log_canvis.append(f"Avís: No s'ha trobat substitut segur per {ing_nom}")
+                continue
+
+            if use_vectors:
+                if millor_substitut is None:
+                    for cand in candidats_finals:
+                        sim_self = FG_WRAPPER.similarity_with_vector(cand, vec_orig) if vec_orig is not None else None
+                        sim_pair = FG_WRAPPER.similarity_with_vector(cand, vec_context) if vec_context is not None else None
+
+                        score = (0.65 * (sim_self or 0)) + (0.35 * (sim_pair or 0))
+                        if score > millor_score:
+                            millor_score = score
+                            millor_substitut = cand
 
             if millor_substitut:
-                justificacio = f"FlavorGraph (similitud+pairing {millor_score:.2f})"
+                if not justificacio:
+                    justificacio = f"FlavorGraph (similitud+pairing {millor_score:.2f})"
             else:
                 if ordenats := _ordenar_candidats_per_afinitat(candidats_finals, kb, info_orig):
                     millor_substitut = ordenats[0]

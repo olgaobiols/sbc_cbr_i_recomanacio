@@ -283,6 +283,7 @@ def substituir_ingredient(
     intensitat=0.4,
     ingredients_estil_usats=None,
     perfil_usuari: Optional[Dict] = None,
+    parelles_prohibides: Optional[Set[str]] = None,
 ):
     """
     Wrapper que connecta amb l'Operador d'Ingredients Refactoritzat.
@@ -297,6 +298,7 @@ def substituir_ingredient(
             intensitat=intensitat,
             ingredients_estil_usats=ingredients_estil_usats,
             perfil_usuari=perfil_usuari,
+            parelles_prohibides=parelles_prohibides,
         )
     return plat
 

@@ -2,10 +2,7 @@
     "olga": {
         "rejected_ingredients": [
             "tomato",
-            "ceba",
-            "soy",
-            "lemon"
-        ],
+            "soy_sauce"        ],
         "rejected_pairs": [
             "lemon|water"
         ],
@@ -21,11 +18,9 @@
     },
     "guest": {
         "rejected_ingredients": [
-            "ceba"
         ],
         "rejected_pairs": [],
         "alergies": [
-            "fish"
         ]
     }
 }
