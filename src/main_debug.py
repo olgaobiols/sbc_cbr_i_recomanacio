@@ -608,6 +608,8 @@ def imprimir_menu_final(
 ):
     _print_section("🍽️  Proposta final de menú")
 
+    preu_total_menu = 0.0
+
     for etiqueta, plat, info_llm, beguda, score in [
         ("PRIMER PLAT", plat1, info_llm_1, beguda1, score1),
         ("SEGON PLAT",  plat2, info_llm_2, beguda2, score2),
@@ -616,18 +618,19 @@ def imprimir_menu_final(
         nom = info_llm.get("nom_nou", plat.get("nom", "—")) if info_llm else plat.get("nom", "—")
         desc = info_llm.get("descripcio_carta", "") if info_llm else "Plat clàssic."
         
+        preu_plat = float(plat.get("preu", 0.0) or 0.0)
+        preu_total_menu += preu_plat
+        
         print(f"\n🍽️  {etiqueta}: {nom}")
         ings = ", ".join(plat.get("ingredients", []))
         print(f"   Ingredients clau: {ings if ings else '—'}")
+        
         if plat.get("condiment"):
             print(f"   Condiment: {plat.get('condiment')}")
         if desc:
             print(f"   Descripció: {desc}")
         
-        if beguda is None:
-            print("   🍷 Maridatge: no he trobat una opció adequada.")
-        else:
-            print(f"   🍷 Maridatge: {beguda.get('nom', '—')} (afinitat {score:.2f})")
+        
 
         # Si hi ha logs de canvis, els mostrem (Explicabilitat XCBR)
         logs = plat.get("log_transformacio", [])
@@ -635,6 +638,22 @@ def imprimir_menu_final(
             print("   Ajustos del xef:")
             for log in logs:
                 print(f"      - {log}")
+        
+        # Mostrem el preu total d'aquest curs (Plat)
+        print(f"   💵  Preu {etiqueta.lower()}: {preu_plat:.2f}€")
+        
+        if beguda is None:
+                    print("   🍷 Maridatge: no he trobat una opció adequada.")
+        else:
+            preu_beguda = float(beguda.get("preu_cost", 0.0) or 0.0)
+            preu_total_menu += preu_beguda
+            print(f"   🍷 Maridatge: {beguda.get('nom', '—')} (afinitat {score:.2f})")
+            print(f"         Preu beguda: {preu_beguda:.2f}€")
+            
+    # Secció final de resum econòmic
+    print("\n" + "="*30)
+    print(f"💰 PREU TOTAL DEL MENÚ: {preu_total_menu:.2f}€")
+    print("="*30)
 
 
 def debug_kb_match(plat, kb, etiqueta=""):
@@ -653,6 +672,10 @@ def main():
     print("==================================================")
     print("   🍷 Maître Digital — Recomanador de Menús 3.0")
     print("==================================================\n")
+
+    COST_INGREDIENT_EXTRA = 3
+    COST_TECNICA_ALTA = 10
+    COST_TECNICA_CULTURAL = 5
 
     user_id_raw = input_default("Com et puc anomenar? (per guardar preferències)", "guest").strip()
     user_id = (user_id_raw or "guest").lower()
@@ -964,10 +987,13 @@ def main():
             ingredients_estil_usats = set()
 
             resums = []
+            
             for etiqueta, p in plats:
                 etiqueta_short = etiqueta.split()[0]
+                
                 ingredients_abans = list(p.get("ingredients", []) or [])
-
+                n_abans = len(ingredients_abans)
+                
                 resultat = substituir_ingredient(
                     p,
                     estil_latent,
@@ -984,6 +1010,16 @@ def main():
                     p.clear()
                     p.update(resultat)
 
+                ingredients_despres = p.get("ingredients", []) or []
+                n_despres = len(ingredients_despres)
+                
+                diferencia = n_despres - n_abans
+                if diferencia > 0:
+                    increment = diferencia * COST_INGREDIENT_EXTRA
+                    preu_actual = float(p.get("preu", 0.0) or 0.0)
+                    p["preu"] = preu_actual + increment
+                
+                
                 _, resum = imprimir_resum_adaptacio(
                     etiqueta_short,
                     p,
@@ -1119,6 +1155,27 @@ def main():
             )
 
             transf_1, transf_2, transf_post = t_menu[0], t_menu[1], t_menu[2]
+            
+            # --- ACTUALITZACIÓ DE PREUS PER TÈCNIQUES ---
+            # Mapegem cada llista de transformacions al seu plat corresponent
+            vincle_t = [
+                ("Primer", plat1, transf_1), 
+                ("Segon", plat2, transf_2), 
+                ("Postres", postres, transf_post)
+            ]
+
+            for nom_curs, p, llista_t in vincle_t:
+                if llista_t and isinstance(llista_t, list):
+                    n_tecs = len(llista_t)
+                    if n_tecs > 0:
+                        # Determinem el cost segons si és alta cuina o només cultural
+                        # Si és mode 'mixt' o 'alta', apliquem el preu més alt
+                        preu_u = COST_TECNICA_ALTA if (mode_ops in ["alta", "mixt"]) else COST_TECNICA_CULTURAL
+                        increment_total = n_tecs * preu_u
+                        
+                        preu_actual = float(p.get("preu", 0.0) or 0.0)
+                        p["preu"] = preu_actual + increment_total
+                        
         else:
             print("Cap estil cultural ni d'alta cuina seleccionat. Ho deixem clàssic.")
 
@@ -1151,31 +1208,12 @@ def main():
 
         restriccions_beguda = list(restriccions_beguda)
         _print_section("Maridatge de begudes")
+        
         begudes_usades = set()
-        beguda1, score1 = recomana_beguda_per_plat(
-            plat1,
-            list(kb.begudes.values()),
-            base_ingredients_list,
-            restriccions_beguda,
-            alcohol,
-            begudes_usades,
-        )
-        beguda2, score2 = recomana_beguda_per_plat(
-            plat2,
-            list(kb.begudes.values()),
-            base_ingredients_list,
-            restriccions_beguda,
-            alcohol,
-            begudes_usades,
-        )
-        beguda_postres, score_postres = recomana_beguda_per_plat(
-            postres,
-            list(kb.begudes.values()),
-            base_ingredients_list,
-            restriccions_beguda,
-            alcohol,
-            begudes_usades,
-        )
+        
+        beguda1, score1 = recomana_beguda_per_plat(plat1, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol, begudes_usades)
+        beguda2, score2 = recomana_beguda_per_plat(plat2, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol, begudes_usades)
+        beguda_postres, score_postres = recomana_beguda_per_plat(postres, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol, begudes_usades)
 
         
         # 9) Resultat Final
