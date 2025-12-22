@@ -693,9 +693,6 @@ def imprimir_menu_final(
 
         print(f"Ingredients: {_ingredients_ca(plat)}")
 
-        if condiment:
-            print(f"Acabat: {condiment}")  # <-- (opcional) en lloc de "Condiment"
-
         _bloc("Descripció", desc)
         _bloc("Presentació", pres)
 
