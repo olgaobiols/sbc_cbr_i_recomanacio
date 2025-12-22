@@ -40,9 +40,14 @@ def get_ingredient_principal(plat, base_ingredients):
 
     return ingredient_principal, llista_ingredients
 
-def passa_filtre_dur(plat, beguda_row):
+def passa_filtre_dur(plat, beguda_row, begudes_usades):
     curs = plat.get("curs", "")
     ordre = beguda_row.get("maridatge_ordre", "").strip()
+    id = beguda_row.get("id", "").strip()
+    
+    # Si la beguda ja ha estat usada no passa:
+    if id in begudes_usades:
+        return False
     
     # Si la beguda és general passa directament
     if beguda_row.get("es_general", "").strip().lower() == "si":
@@ -131,13 +136,13 @@ def score_beguda_per_plat(beguda_row, ingredient_principal, llista_ingredients):
 
     return total_score
 
-def recomana_beguda_per_plat(plat, base_begudes, base_ingredients, restriccions, alcohol):
+def recomana_beguda_per_plat(plat, base_begudes, base_ingredients, restriccions, alcohol, begudes_usades):
     candidates = []
     
     ing_main, llista_ing = get_ingredient_principal(plat, base_ingredients)
 
     for row in base_begudes:
-        if not passa_filtre_dur(plat, row):
+        if not passa_filtre_dur(plat, row, begudes_usades):
             continue
         if not passa_restriccions(row, restriccions, alcohol):
             continue
@@ -154,5 +159,8 @@ def recomana_beguda_per_plat(plat, base_begudes, base_ingredients, restriccions,
         if sc > millor_score:
             millor = row
             millor_score = sc
+    
+    if millor is not None:
+        begudes_usades.add(millor.get("id"))
 
     return millor, millor_score
