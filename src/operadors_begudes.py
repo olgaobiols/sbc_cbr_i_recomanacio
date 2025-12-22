@@ -64,17 +64,18 @@ def passa_restriccions(beguda_row, restriccions, alcohol):
     dietes_beguda = set(beguda_row["dietes"].split("|"))
     
      # 1. Comprovació alcohol
-    if alcohol != alcohol_beguda:
+    if alcohol.lower() == "no" and alcohol_beguda == "si":
         return False
 
-    # 2. Cap restricció pot estar als al·lèrgens
+    # 2. Al·lèrgens: cap restricció d’al·lèrgens ha d’estar present
     for restriccio in restriccions:
-        if restriccio in alergens_beguda:
+        if restriccio.lower() in alergens_beguda:
             return False
 
-    # 3. Totes les restriccions han d’estar a dietes
+    # 3. Dietes: si alguna restricció és tipus dieta, ha d’estar present a la beguda
+    restriccions_dieta = {'vegan', 'vegetarian', 'kosher_friendly', 'halal_friendly'}
     for restriccio in restriccions:
-        if restriccio not in dietes_beguda:
+        if restriccio.lower() in restriccions_dieta and restriccio.lower() not in dietes_beguda:
             return False
 
     return True
@@ -132,15 +133,13 @@ def score_beguda_per_plat(beguda_row, ingredient_principal, llista_ingredients):
 
 def recomana_beguda_per_plat(plat, base_begudes, base_ingredients, restriccions, alcohol):
     candidates = []
-    restriccions_permeses = ['vegan', 'vegetarian', 'kosher_friendly', 'halal_friendly']
-    restriccions_beguda = [r for r in restriccions if r in restriccions_permeses]
     
     ing_main, llista_ing = get_ingredient_principal(plat, base_ingredients)
 
     for row in base_begudes:
         if not passa_filtre_dur(plat, row):
             continue
-        if not passa_restriccions(row, restriccions_beguda, alcohol):
+        if not passa_restriccions(row, restriccions, alcohol):
             continue
         candidates.append(row)
 

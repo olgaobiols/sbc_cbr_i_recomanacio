@@ -654,10 +654,21 @@ def main():
 
 
         # 8) Afegir begudes
+        # --- NOU: combinar restriccions + al·lèrgies guardades ---
+        restriccions_beguda = set()
+        if perfil_usuari and perfil_usuari.get("alergies"):
+            restriccions_beguda.update(perfil_usuari["alergies"])  
+        
+        if restriccions:
+            restriccions_beguda.update(r.lower() for r in restriccions)
+
+        restriccions_beguda = list(restriccions_beguda)
+        ## BORRA SEGÜENT LINIA NOMÉS PER DEBUG
+        print(f"Alergens: {restriccions_beguda}")
         print("\n✨ === FASE ADAPTACIÓ: BEGUDES ===")
-        beguda1, score1 = recomana_beguda_per_plat(plat1, list(kb.begudes.values()), base_ingredients_list, restriccions, alcohol)
-        beguda2, score2 = recomana_beguda_per_plat(plat2, list(kb.begudes.values()), base_ingredients_list, restriccions, alcohol)
-        beguda_postres, score_postres = recomana_beguda_per_plat(postres, list(kb.begudes.values()), base_ingredients_list, restriccions, alcohol)
+        beguda1, score1 = recomana_beguda_per_plat(plat1, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol)
+        beguda2, score2 = recomana_beguda_per_plat(plat2, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol)
+        beguda_postres, score_postres = recomana_beguda_per_plat(postres, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol)
 
         
         # 9) Resultat Final
