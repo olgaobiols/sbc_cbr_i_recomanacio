@@ -29,6 +29,7 @@ class DescripcioProblema:
     preu_pers_objectiu: float   # Canviat de 'preu_pers' per claredat
     temporada: str              # Vocabulari: estiu, hivern...
     servei: str                 # Vocabulari: assegut, cocktail...
+    alcohol: str # {si o no}
     
     # Camps NOUS (Segons Memòria 3.2)
     estil_culinari: str = ""    # Objectiu d'adaptació (ex: 'japonès')
