@@ -115,7 +115,7 @@ class KnowledgeBase:
             pass
 
     def _carregar_begudes(self):
-        path = os.path.join(self.data_dir, "begudes.csv")
+        path = os.path.join(self.data_dir, "begudes_en.csv")
         try:
             with open(path, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
