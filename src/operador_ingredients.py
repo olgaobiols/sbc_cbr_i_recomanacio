@@ -242,6 +242,44 @@ def _check_role_compatibility(cat_orig: str, cat_cand: str) -> bool:
 
     return cat_cand == cat_orig
 
+_DESSERT_ALLOWED_CATEGORIES = {
+    "fruit",
+    "sweet",
+    "sweetener",
+    "dairy",
+    "fat",
+    "nuts",
+    "nut",
+    "spice",
+    "seasoning",
+    "sauce",
+    "other",
+    "alcohol",
+}
+_DESSERT_SAVORY_FLAVORS = {"salty", "umami", "savory", "meaty", "fishy", "smoky"}
+_DESSERT_SOFT_FLAVORS = {"sweet", "mild_sweet", "creamy", "mild"}
+
+def _es_apte_postres(info: Dict, intensitat: float) -> bool:
+    """Filtre per evitar ingredients salats/umami en postres."""
+    if not info:
+        return False
+    cat = _normalize_text(info.get("macro_category") or info.get("categoria_macro"))
+    if cat not in _DESSERT_ALLOWED_CATEGORIES:
+        return False
+
+    fam = _normalize_text(info.get("family") or info.get("familia"))
+    flavors_raw = info.get("base_flavors") or info.get("sabors_base") or ""
+    flavors = {_normalize_text(f) for f in str(flavors_raw).split("|") if f}
+
+    if flavors & _DESSERT_SAVORY_FLAVORS:
+        return False
+
+    # Evita formatges salats en postres, a no ser que siguin suaus/dolcos.
+    if "cheese" in fam and not (flavors & _DESSERT_SOFT_FLAVORS):
+        return False
+
+    return True
+
 # ---------------------------------------------------------------------
 # OPERADORS PRINCIPALS (INTERFÍCIE)
 # ---------------------------------------------------------------------
@@ -411,11 +449,13 @@ def _adaptar_latent_core(plat: Dict, nom_estil: str, kb: Any, base_estils_latent
             if parelles_prohibides and _check_parelles_prohibides(cand, context_noms, parelles_prohibides): continue
             if not _check_compatibilitat(info_cand, perfil_usuari): continue
             
-            cat_cand = str(info_cand.get('macro_category') or "unknown").lower()
+            cat_cand = _normalize_text(info_cand.get("macro_category") or "unknown")
             if es_postres:
-                if cat_cand not in {"sweet", "fruit", "dairy", "sweetener", "nut", "alcohol", "spice"}: continue
-                # Relaxació per postres (permet canviar fruita per dolç si intensitat és alta)
-                if cat_orig == "fruit" and cat_cand not in {"fruit", "nut"} and not (intensitat > 0.6 and cat_cand == "sweetener"): continue
+                if not _es_apte_postres(info_cand, intensitat):
+                    continue
+                # Relaxacio per postres (permet canviar fruita per dolc si intensitat es alta)
+                if cat_orig == "fruit" and cat_cand not in {"fruit", "nuts"} and not (intensitat > 0.6 and cat_cand == "sweetener"):
+                    continue
             else:
                 if not _check_role_compatibility(cat_orig, cat_cand): continue
 
@@ -466,7 +506,7 @@ def _adaptar_latent_core(plat: Dict, nom_estil: str, kb: Any, base_estils_latent
                 if parelles_prohibides and _check_parelles_prohibides(cand, nou_plat['ingredients'], parelles_prohibides): continue
                 if not _check_compatibilitat(info_cand, perfil_usuari): continue
                 
-                if es_postres and str(info_cand.get('macro_category')).lower() not in {"sweet", "fruit", "dairy", "sweetener", "nut", "alcohol"}:
+                if es_postres and not _es_apte_postres(info_cand, intensitat):
                     continue
 
                 pairing = 0.0
@@ -502,7 +542,8 @@ def _adaptar_latent_core(plat: Dict, nom_estil: str, kb: Any, base_estils_latent
             if info := kb.get_info_ingredient(cand):
                 if not _check_compatibilitat(info, perfil_usuari): continue
                 cat = _normalize_text(info.get("macro_category") or "unknown")
-                if es_postres and cat not in {"fruit", "sweet", "dairy", "nut", "sweetener"}: continue
+                if es_postres and not _es_apte_postres(info, intensitat):
+                    continue
                 
                 sim = 0.0
                 if vec_ctx is not None:
