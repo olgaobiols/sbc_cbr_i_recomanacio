@@ -1,25 +1,13 @@
-def _get_ing_field(ing_row, *keys):
-    for key in keys:
-        if key in ing_row:
-            return ing_row[key]
-    return None
-
-def _norm_text(value):
-    return str(value).strip().lower() if value is not None else ""
-
 def get_ingredient_principal(plat, base_ingredients):
     """Retorna l'ingredient del plat amb typical_role = main."""
     ingredient_principal = None
     llista_ingredients = []
     
     for ing in plat.get("ingredients", []):
-        ing_norm = _norm_text(ing)
         for ing_row in base_ingredients:
-            nom = _get_ing_field(ing_row, "nom_ingredient", "ingredient_name", "name")
-            if _norm_text(nom) == ing_norm:
+            if ing_row['nom_ingredient'] == ing:
                 llista_ingredients.append(ing_row)
-                rol = _get_ing_field(ing_row, "rol_tipic", "typical_role")
-                if _norm_text(rol) == "main":
+                if ing_row['rol_tipic'] == "main":
                     ingredient_principal = ing_row
     
     # Fallback: si no hi ha ingredient principal, escollim el primer ingredient reconegut
@@ -46,6 +34,27 @@ def passa_filtre_dur(plat, beguda_row):
     else:
         return False
 
+def passa_restriccions(beguda_row, restriccions, alcohol):
+    alcohol_beguda = beguda_row.get("alcohol", "").strip()
+    alergens_beguda = set(beguda_row["alergen"].split("|"))
+    dietes_beguda = set(beguda_row["dietes"].split("|"))
+    
+     # 1. Comprovació alcohol
+    if alcohol != alcohol_beguda:
+        return False
+
+    # 2. Cap restricció pot estar als al·lèrgens
+    for restriccio in restriccions:
+        if restriccio in alergens_beguda:
+            return False
+
+    # 3. Totes les restriccions han d’estar a dietes
+    for restriccio in restriccions:
+        if restriccio not in dietes_beguda:
+            return False
+
+    return True
+    
     
 
 def score_beguda_per_plat(beguda_row, ingredient_principal, llista_ingredients):
@@ -61,22 +70,19 @@ def score_beguda_per_plat(beguda_row, ingredient_principal, llista_ingredients):
         score = 0
         
         # --- Famílies ---
-        fam_beguda = set(beguda_row.get("va_be_amb_familia", "").split("|"))
-        fam_ing = _get_ing_field(ingredient, "familia", "family")
-        if fam_ing and fam_ing in fam_beguda:
+        fam_beguda = set(beguda_row["va_be_amb_familia"].split("|"))
+        if ingredient["familia"] in fam_beguda:
             score += 2
 
         # --- Macro categories ---
-        macro_beguda = set(beguda_row.get("va_be_amb_categoria_macro", "").split("|"))
-        macro_ing = _get_ing_field(ingredient, "categoria_macro", "macro_category")
-        if macro_ing and macro_ing in macro_beguda:
+        macro_beguda = set(beguda_row["va_be_amb_categoria_macro"].split("|"))
+        if ingredient["categoria_macro"] in macro_beguda:
             score += 2
 
         # --- Sabors ---
-        sabors_beguda = set(beguda_row.get("va_be_amb_sabors", "").split("|"))
-        evita_sabors = set(beguda_row.get("evita_sabors", "").split("|"))
-        sabors_ing_raw = _get_ing_field(ingredient, "sabors_base", "base_flavors")
-        sabors_ing = set((sabors_ing_raw or "").split("|"))
+        sabors_beguda = set(beguda_row["va_be_amb_sabors"].split("|"))
+        evita_sabors = set(beguda_row["evita_sabors"].split("|"))
+        sabors_ing = set(ingredient["sabors_base"].split("|"))
 
         # Suma per coincidència de sabors
         score += len(sabors_ing & sabors_beguda)
@@ -100,26 +106,28 @@ def score_beguda_per_plat(beguda_row, ingredient_principal, llista_ingredients):
 
     return total_score
 
-def recomana_beguda_per_plat(plat, base_begudes, base_ingredients):
+def recomana_beguda_per_plat(plat, base_begudes, base_ingredients, restriccions, alcohol):
     candidates = []
-
-    # 1. Trobar l'ingredient principal del plat 
+    restriccions_permeses = ['vegan', 'vegetarian', 'kosher_friendly', 'halal_friendly']
+    restriccions_beguda = [r for r in restriccions if r in restriccions_permeses]
+    
     ing_main, llista_ing = get_ingredient_principal(plat, base_ingredients)
-    
-    # 2. FILTRE DUR (amb 'es_general') per cada beguda
+
     for row in base_begudes:
-        if passa_filtre_dur(plat, row):
-            candidates.append(row)
-    
+        if not passa_filtre_dur(plat, row):
+            continue
+        if not passa_restriccions(row, restriccions_beguda, alcohol):
+            continue
+        candidates.append(row)
+
     if not candidates:
         return None, None
 
-    # 3. Escollir la millor beguda per scoring
     millor = None
-    millor_score = -999
+    millor_score = float("-inf")
+
     for row in candidates:
         sc = score_beguda_per_plat(row, ing_main, llista_ing)
-        
         if sc > millor_score:
             millor = row
             millor_score = sc
