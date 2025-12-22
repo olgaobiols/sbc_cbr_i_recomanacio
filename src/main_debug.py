@@ -4,7 +4,7 @@ from typing import List, Set, Dict, Any, Optional, Tuple
 import numpy as np
 
 from estructura_cas import DescripcioProblema
-from retriever_nuevo import Retriever
+from Retriever import Retriever
 from knowledge_base import KnowledgeBase
 from gestor_feedback import GestorRevise
 from operadors_transformacio_realista import (
