@@ -1734,7 +1734,10 @@ def main():
             info_llm_1 = _map_fitxa(f1)
             info_llm_2 = _map_fitxa(f2)
             info_llm_post = _map_fitxa(f3)
-
+            
+            plat1["nom"] = fitxes[0]['nom_plat_ca']
+            plat2["nom"] = fitxes[1]['nom_plat_ca']
+            postres["nom"] = fitxes[2]['nom_plat_ca']
 
         # 9) Resultat Final
         imprimir_menu_final(
