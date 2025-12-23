@@ -1,439 +1,438 @@
-ingredient_name,macro_category,family,base_flavors,contains_gluten,contains_lactose,is_animal,typical_role,processing_level,product_form,allergens,allowed_diets
-arugula,plant_vegetal,green_leaf,herbaceous|slightly_bitter|green,false,False,False,base,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-beef,protein_animal,meat_cured,rich|umami|fatty,false,False,True,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly
-beetroot,vegetable,root,earthy|sweet,false,False,False,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-berries,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-blackberries,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-béchamel,sauce,emulsion,creamy|mild|savory,true,True,False,sauce,cooked,cream,gluten|milk,omnivore|vegetarian
-caesar sauce,sauce,emulsion,creamy|savory|salty,false,True,False,sauce,processed,emulsion,egg|fish|milk,omnivore
-croutons,grain,processed_cereal,crusty|toasted|slightly_salty,true,False,False,side,baked,cubes,gluten,omnivore|vegetarian|vegan
-eggs,protein_animal,egg,rich|mild,false,False,True,main,fresh,raw,egg,omnivore
-flour,grain,processed_cereal,neutral|grainy,true,False,False,base,ground,flour,gluten,omnivore|vegetarian|vegan
-garlic,vegetable,allium,pungent|aromatic|sharp,false,False,False,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-gelatin,other,animal_gelatin,neutral,False,False,True,structure,processed,powder,animal_gelatin,omnivore|halal_friendly
-goat cheese,dairy,dairy_cheese,creamy|lactic|salty,false,True,False,side,ripened,block,milk,omnivore|vegetarian
-green tea matcha,plant_vegetal,aromatic_leaf,bitter|earthy|slightly_bitter,false,False,False,base,ground,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-hake,protein_animal,fish_white,lean|mild|umami,false,False,True,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly
-ham,protein_animal,meat_cured,salty|cured|savory,false,False,True,side,cured,cold_cut,none,omnivore
-honey,sweet,confectionery,sweet|floral,false,False,False,seasoning,raw,liquid,none,omnivore|vegetarian|halal_friendly|kosher_friendly
-lettuce,plant_vegetal,green_leaf,fresh|watery|crisp,false,False,False,base,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-minced_meat,protein_animal,meat_poultry|meat_cured,umami|fatty,false,False,True,main,cooked,minced,none,omnivore
-fresh_brussels_sprout,vegetable,cruciferous,slightly_bitter|green|earthy,false,False,False,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-parmesan,dairy,dairy_cheese,salty|umami|nutty,false,True,False,side,ripened,grated,milk,omnivore|vegetarian
-pasta,grain,processed_cereal,neutral|grainy,true,False,False,base,cooked,noodle,gluten,omnivore|vegetarian|vegan
-potato,vegetable,root,earthy|starchy|neutral,false,False,False,base,raw,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-potatoes,vegetable,root,earthy|starchy|neutral,false,False,False,base,raw,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-prawn,protein_animal,crustacean,umami|briny|sweet,false,False,True,main,cooked,whole,crustaceans,omnivore|halal_friendly
-pumpkin,vegetable,root,sweet|earthy,false,False,False,base,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-quinoa,grain,rice,nutty|earthy,false,False,False,base,cooked,grain,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-rice_flour,grain,rice,neutral|grainy,true,False,False,base,ground,flour,gluten,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-sea_bream,protein_animal,fish_white,lean|mild|umami,false,False,True,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly
-soy_sauce,sauce,asian_acetic,salty|umami|fermented,false,False,False,seasoning,fermented,liquid,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-spring_onion,vegetable,allium,fresh|aromatic|slightly_pungent,false,False,False,seasoning,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-strawberries,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-strawberry,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-teriyaki_sauce,sauce,asian_acetic,sweet|salty|umami,false,False,False,sauce,processed,liquid,soy,omnivore|vegetarian|vegan
-vegetables,vegetable,root|green_leaf|cucurbit,neutral|fresh,false,False,False,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-water,other,emulsion,neutral,false,False,False,base,raw,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-white_fish,protein_animal,fish_white,lean|mild|umami,false,False,True,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly
-white_wine,other,acetic,acidic|fruity|aromatic,false,False,False,seasoning,fermented,liquid,sulfites,omnivore|vegetarian|vegan
-yogurt,dairy,dairy_yogurt,creamy|lactic,false,True,False,base,fermented,cream,milk,omnivore|vegetarian
-seaweed,plant_vegetal,algae,umami|salty|marine,false,false,false,side,dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-basil,spice,aromatic_herb,fresh|herbaceous,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-eggplant,vegetable,solanaceae,mild_bitter|earthy,false,false,false,main|side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-almonds,fat,almond_nut,sweet|fatty|slightly_bitter,false,false,false,side,raw,whole,nuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-anchovies,protein_animal,fish_oily,umami|salty,false,false,true,side,cured,fillet,fish,omnivore|halal_friendly|kosher_friendly
-rice,grain,rice,neutral,false,false,false,base,dried,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-black_glutinous_rice,grain,rice,neutral|slightly_nutty,false,false,false,base,dried,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-hazelnuts,fat,hazelnut_nut,sweet|fatty|roasted,false,false,false,side,roasted,whole,nuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-cod,protein_animal,fish_white,umami|salty,false,false,true,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly
-bacon,protein_animal,meat_cured,salty|umami|smoky|fatty,false,false,true,side,cured,cold_cut,none,omnivore
-balsamic,sauce,wine_reduction,acidic|sweet,false,false,false,sauce,fermented,liquid,sulfites,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-corn,vegetable,sweet_corn,sweet,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-mushrooms,vegetable,fungus,earthy|umami,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-broth,sauce,cooking_stock,umami|salty,false,false,false,sauce,cooked,broth,depends,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-peanut,fat,peanut_nut,fatty|slightly_sweet,false,false,false,side,raw,whole,peanuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-cinnamon,spice,sweet_spice,sweet|spicy|woody,false,false,false,seasoning,ground,spice,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-zucchini,vegetable,cucurbit,mild|slightly_sweet,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-onion,vegetable,allium,sweet|umami|pungent,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-spring_onion,vegetable,allium,fresh|mild_pungent,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-puffed_cereals,grain,processed_cereal,sweet|toasted,true,false,false,side,processed,puffed,gluten,omnivore|vegetarian
-chili,spice,strong_spice,spicy,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-egg_whites,protein_animal,egg,umami|mild,false,false,true,structure,fresh,raw,egg,omnivore|halal_friendly|kosher_friendly
-clove,spice,strong_spice,spiced|intense,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-coconut,fruit,tropical_fruit,sweet|fatty|tropical,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-grated_coconut,fruit,tropical_fruit,sweet|fatty|tropical,false,false,false,side,dried,grated,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-cucumber,vegetable,cucurbit,fresh|watery,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-cabbage,vegetable,cruciferous,fresh|slightly_bitter,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-coulis,sauce,sweet_sauce,sweet|fruity,false,false,false,sauce,processed,liquid,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-crab,protein_animal,crustacean,umami|sweet_salty,false,false,true,main,fresh,whole,crustaceans,omnivore
-cream,dairy,dairy_cream,fatty|mild_lactic,false,true,true,sauce|structure,fresh,liquid,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-cheddar_cream,dairy,dairy_cheese,umami|salty|fatty,false,true,true,sauce,processed,cream, milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-curry,spice,spice_blend,spiced|spicy|aromatic,false,false,false,seasoning,ground,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-daikon,vegetable,root,crunchy|slightly_spicy,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-dashi,sauce,fermented_base,umami|marine,true,false,false,sauce,fermented,liquid,soy|gluten,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-endives,vegetable,bitter_leaf,bitter|fresh,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-spices,spice,spice_mix,spiced,false,false,false,seasoning,ground,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-filling,other,variable,variable,false,false,false,side,processed,variable,depends,omnivore|vegetarian|vegan
-feta,dairy,dairy_cheese,salty|acidic|umami,false,true,true,side,cured,block,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-noodles,grain,wheat,neutral,true,false,false,base,processed,noodle,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly
-crispy_noodles,grain,wheat,neutral|toasted,true,false,false,side,processed,fried_noodle,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly
-cheese,dairy,dairy_cheese,umami|salty|fatty,false,true,true,side,cured,block,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-fresh_cheese,dairy,soft_dairy_cheese,mild|mild_acidic,false,true,true,side,fresh,soft_cheese,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-soft_cheese,dairy,soft_dairy_cheese,mild|umami,true,true,true,side,fresh,soft_cheese,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-fruit,fruit,general_fruit,sweet|acidic,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-ginger,spice,root,spicy|citrusy|fresh,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-fat,fat,general_fat,fatty,false,false,false,base,processed,fat,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-herbs,seasoning,aromatic_herb,herbaceous,false,false,false,seasoning,fresh,mix,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-turkey,protein_animal,meat_poultry,umami|mild_fatty,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly
-duck,protein_animal,meat_poultry,umami|fatty|gamey,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly
-quail,protein_animal,meat_poultry,umami|mild_gamey,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly
-icing_sugar,sweetener,sugar,very_sweet,false,false,false,side,processed,powder,none,omnivore|vegetarian|vegan
-greek_yogurt,dairy,dairy_yogurt,acidic|creamy,false,true,true,side,fermented,creamy,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-jackfruit,fruit,tropical_fruit,sweet|tropical,false,false,false,main|side,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-parsley,seasoning,aromatic_herb,fresh|herbaceous,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-milk,dairy,basic_dairy,lactic|mild_sweet,false,true,true,base,fresh,liquid,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-coconut_milk,other,dairy_substitute,fatty|tropical|sweet,false,false,false,side,processed,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-lemon,seasoning,citrus,acidic|citrusy,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-lime,seasoning,citrus,acidic|citrusy,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-macaroni,grain,wheat,neutral,true,false,false,base,processed,pasta,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly
-mayonnaise,sauce,emulsion,fatty|mild_acidic,false,false,false,sauce,processed,emulsion,egg,omnivore|vegetarian|halal_friendly|kosher_friendly
-butter,fat,dairy_butter,fatty|slightly_sweet,false,true,true,fat,fresh,block,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-peanut_butter,fat,peanut_nut,fatty|sweet,false,false,false,side,processed,paste,peanuts,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-marshmallows,sweet,confectionery,very_sweet,false,false,false,side,processed,confection,animal_gelatin,omnivore
-mint,spice,aromatic_herb,fresh|herbaceous,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-meringue,sweet,confectionery,very_sweet,false,false,true,structure,processed,foam,egg,omnivore|halal_friendly|kosher_friendly
-mirin,sauce,fermented,sweet|slightly_acidic,false,false,false,sauce,fermented,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-miso,plant_vegetal,fermented,umami|salty|fermented,false,false,false,sauce|base,fermented,paste,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-mozzarella,dairy,soft_dairy_cheese,mild|slightly_salty,false,true,true,side,fresh,soft_cheese,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-mustard,seasoning,seed,spicy|acidic,false,false,false,seasoning,ground,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-cream,dairy,dairy_cream,fatty|mild_sweet,false,true,true,side,fresh,liquid,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-sour_cream,dairy,dairy_cream,acidic|fatty,false,true,true,side,fermented,creamy,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-nutmeg,spice,spice,spiced|mild_sweet,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-walnuts,nuts,walnut_nut,fatty|earthy|slightly_bitter,false,false,false,side,roasted,whole,nuts,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-nori,plant_vegetal,algae,umami|marine,false,false,false,side,dried,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-nyora,spice,dried_pepper,sweet|fruity|slightly_smoky,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-oil,fat,general_fat,fatty|neutral,false,false,false,fat,processed,oil,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-sesame_oil,fat,semi_toasted_oils,fatty|toasted,false,false,false,fat,processed,oil,sesame,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-olive_oil,fat,mediterranean_oils,fatty|fruity,false,false,false,fat,processed,oil,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-worcestershire_sauce,sauce,fermented,umami|acidic|sweet_salty,false,false,false,sauce,processed,liquid,fish|sulfites,omnivore
-salmon,protein_animal,fish_oily,umami|fatty,false,false,true,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly
-sesame,nuts,seed,fatty|toasted,false,false,false,side,roasted,seed,sesame,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-soy,plant_vegetal,legume,umami|mild,false,false,false,main|base,fresh,whole,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-sugar,sweetener,sweetener,sweet,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-white_sugar,sweetener,sweetener,very_sweet,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-palm_sugar,sweetener,sweetener,sweet|caramelized,false,false,false,structure,processed,block,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-icing_sugar,sweetener,sweetener,very_sweet,false,false,false,decoration,processed,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-brown_sugar,sweetener,sweetener,sweet|caramelized,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-suya,sauce,african_sauce,spiced|spicy|umami,false,false,false,sauce,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-tamarind,seasoning,tropical_fruit,acidic|fruity,false,false,false,side,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-paprika_sweet,spice,spice,sweet|smoky,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-bell_pepper,vegetable,solanaceae,sweet|slightly_herbaceous,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-peas,vegetable,legume,sweet|fresh,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-fresh_pineapple,fruit,tropical_fruit,sweet|acidic|tropical,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-chicken,protein_animal,meat_poultry,umami|mild_fatty,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly
-raisins,fruit,dried_fruit,sweet|caramelized,false,false,false,side,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-rosemary,spice,aromatic_herb,herbaceous|resinous,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-salt,seasoning,salt,salty,false,false,false,seasoning,raw,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-salami,protein_animal,meat_cured,umami|salty|cured,false,false,true,main,cured,sausage,none,omnivore
-oyster_sauce,sauce,seafood,umami|sweet_salty,false,false,false,sauce,processed,liquid,crustaceans|molluscs,omnivore
-soy_sauce,sauce,fermented,umami|salty,false,false,false,sauce,fermented,liquid,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-olives,fruit,stone_fruit,bitter|salty|fatty,false,false,false,side,brined,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-oregano,spice,aromatic_herb,herbaceous|mediterranean,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-oysters,protein_animal,mollusc,umami|salty,false,false,true,main,fresh,whole,crustaceans|molluscs,omnivore
-egg,protein_animal,egg,umami|mild_fatty,false,false,true,structure,fresh,whole,egg,omnivore|halal_friendly|kosher_friendly
-bread,grain,wheat,neutral|toasted,true,false,false,base,baked,loaf,gluten,omnivore|vegetarian|halal_friendly|kosher_friendly
-breadcrumbs,grain,wheat,neutral|toasted,true,false,false,structure,processed,crumbs,gluten,omnivore|vegetarian|halal_friendly|kosher_friendly
-pandan,seasoning,aromatic_leaf,herbaceous|mild_sweet,false,false,false,aroma,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-paprika,spice,spice,smoky|mild_sweet,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-carrot,vegetable,root,sweet|earthy,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-citrus_peel,seasoning,citrus,acidic|citrusy|mild_bitter,false,false,false,aroma,dried,peel,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-pepper,spice,spice,mild_spicy,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-tofu,plant_vegetal,soy_derivative,mild_umami,false,false,false,main|substitute,processed,block,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-tomato,vegetable,solanaceae,acidic|sweet,false,false,false,base|side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-tuna,protein_animal,fish_oily,umami|mild_fatty,false,false,true,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly
-tuna_canned,protein_animal,fish_oily,umami|mild_fatty,false,false,true,main,canned,flakes,fish,omnivore|halal_friendly|kosher_friendly
-umeboshi,seasoning,japanese_fermented,very_acidic|salty,false,false,false,seasoning,fermented,pickled,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-vanilla,seasoning,aromatic_seed,sweet|floral,false,false,false,aroma,dried,extract,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-vinegar,seasoning,acetic,acidic,false,false,false,seasoning,fermented,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-balsamic_vinegar,seasoning,acetic,acidic|sweet,false,false,false,seasoning,fermented,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-rice_vinegar,seasoning,asian_acetic,mild_acidic,false,false,false,seasoning,fermented,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-wakame,plant_vegetal,algae,umami|marine,false,false,false,side,dried,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-chili,spice,strong_spice,spicy,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-chocolate,sweetener,cacao,sweet|mild_bitter,false,false,false,side,processed,block,none,omnivore|vegetarian|vegan
-zucchini,vegetable,cucurbit,mild|watery,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-clams,protein_animal,mollusc,umami|salty,false,false,true,main,fresh,whole,molluscs,omnivore
-tofu,plant_vegetal,soy,neutral,false,false,false,main,processed,block,soy,omnivore|vegetarian|vegan
-seitan,plant_vegetal,wheat,savory,true,false,false,main,processed,block,gluten,omnivore|vegetarian|vegan
-tempeh,plant_vegetal,soy,earthy,false,false,false,main,fermented,block,soy,omnivore|vegetarian|vegan
-chickpeas,plant_vegetal,legume,nutty,false,false,false,main,cooked,whole,none,omnivore|vegetarian|vegan
-lentils,plant_vegetal,legume,earthy,false,false,false,main,cooked,whole,none,omnivore|vegetarian|vegan
-nori,plant_vegetal,algae,umami|marine,false,false,false,side,dried,leaf,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-wakame,plant_vegetal,algae,umami|marine,false,false,false,side,dried,leaf,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-thai_basil,spice,aromatic_herb,fresh|aniseed,false,false,false,seasoning,fresh,leaf,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-lemongrass,spice,aromatic_herb,citrusy|fresh,false,false,false,seasoning,fresh,stem,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-zucchini,vegetable,cucurbit,mild|watery,false,false,false,main|side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-bell_pepper,vegetable,solanaceae,sweet|slightly_herbaceous,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-hazelnuts,nuts,hazelnut_nut,sweet|fatty|roasted,false,false,false,side,roasted,whole,nuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-walnuts,nuts,walnut_nut,fatty|earthy|slightly_bitter,false,false,false,side,roasted,whole,nuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-sardines,protein_animal,fish_oily,umami|salty|fatty,false,false,true,side,canned,whole,fish,omnivore|halal_friendly|kosher_friendly
-mackerel,protein_animal,fish_oily,umami|fatty,false,false,true,main,smoked,fillet,fish,omnivore|halal_friendly|kosher_friendly
-basmati_rice,grain,rice,neutral|aromatic,false,false,false,base,dried,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-jasmine_rice,grain,rice,neutral|floral,false,false,false,base,dried,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-forbidden_rice,grain,rice,nutty|earthy,false,false,false,base,dried,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-red_rice,grain,rice,earthy|slightly_nutty,false,false,false,base,dried,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-almonds,fat,almond_nut,sweet|fatty|slightly_bitter,false,false,false,side,raw,whole,nuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-pecans,nuts,pecan_nut,sweet|buttery,false,false,false,side,roasted,whole,nuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-haddock,protein_animal,fish_white,umami|mild,false,false,true,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly
-pollock,protein_animal,fish_white,umami|mild,false,false,true,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly
-prosciutto,protein_animal,meat_cured,salty|umami,false,false,true,side,cured,cold_cut,none,omnivore
-speck,protein_animal,meat_cured,smoky|salty|umami,false,false,true,side,smoked,cold_cut,none,omnivore
-sherry_vinegar,sauce,wine_reduction,acidic|nutty,false,false,false,sauce,fermented,liquid,sulfites,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-baby_corn,vegetable,sweet_corn,sweet|crunchy,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-corn_kernels,vegetable,sweet_corn,sweet,false,false,false,side,cooked,kernel,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-shiitake,vegetable,fungus,earthy|umami|smoky,false,false,false,side,dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-oyster_mushroom,vegetable,fungus,earthy|mild,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-vegetable_stock,sauce,cooking_stock,umami|savory,false,false,false,sauce,cooked,liquid,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-chicken_stock,sauce,cooking_stock,umami|salty,false,false,true,sauce,cooked,liquid,none,omnivore|halal_friendly
-roasted_peanut,nuts,peanut_nut,fatty|toasted,false,false,false,side,roasted,whole,peanuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-peanut_halves,nuts,peanut_nut,fatty|slightly_sweet,false,false,false,side,raw,halves,peanuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-cassia,spice,sweet_spice,spicy|woody,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-cinnamon_powder,spice,sweet_spice,sweet|spicy,false,false,false,seasoning,ground,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-yellow_squash,vegetable,cucurbit,mild|slightly_sweet,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-pattypan_squash,vegetable,cucurbit,mild|fresh,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-red_onion,vegetable,allium,sweet|pungent,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-shallot,vegetable,allium,mild|sweet,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-green_onion,vegetable,allium,fresh|mild_pungent,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-leek,vegetable,allium,mild|sweet,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-rice_puffs,grain,processed_cereal,neutral|toasted,false,false,false,side,processed,puffed,none,omnivore|vegetarian|vegan
-corn_puffs,grain,processed_cereal,sweet|toasted,false,false,false,side,processed,puffed,none,omnivore|vegetarian|vegan
-red_chili,spice,strong_spice,spicy,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-dried_chili,spice,strong_spice,spicy|smoky,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-egg_yolk,protein_animal,egg,fatty|umami,false,false,true,structure,fresh,raw,egg,omnivore|halal_friendly|kosher_friendly
-whole_egg,protein_animal,egg,umami|mild_fatty,false,false,true,structure,fresh,whole,egg,omnivore|halal_friendly|kosher_friendly
-cassia_bark,spice,strong_spice,woody|spiced,false,false,false,seasoning,dried,stick,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-clove_powder,spice,strong_spice,spiced|intense,false,false,false,seasoning,ground,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-coconut_meat,fruit,tropical_fruit,sweet|fatty,false,false,false,side,fresh,shredded,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-young_coconut,fruit,tropical_fruit,mild_sweet|tropical,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-desiccated_coconut,fruit,tropical_fruit,sweet|fatty,false,false,false,side,dried,shredded,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-toasted_coconut,fruit,tropical_fruit,sweet|fatty|toasted,false,false,false,side,roasted,shredded,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-persian_cucumber,vegetable,cucurbit,fresh|crisp,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-english_cucumber,vegetable,cucurbit,fresh|mild,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-savoy_cabbage,vegetable,cruciferous,fresh|mild,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-red_cabbage,vegetable,cruciferous,earthy|slightly_bitter,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-fruit_purée,sauce,sweet_sauce,fruity|sweet,false,false,false,sauce,processed,liquid,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-berry_coulis,sauce,sweet_sauce,sweet|tart,false,false,false,sauce,processed,liquid,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-king_crab,protein_animal,crustacean,umami|sweet,false,false,true,main,fresh,whole,crustaceans,omnivore
-crab_meat,protein_animal,crustacean,umami|sweet,false,false,true,main,cooked,flakes,crustaceans,omnivore
-heavy_cream,dairy,dairy_cream,fatty|mild_lactic,false,true,true,sauce|structure,fresh,liquid,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-whipping_cream,dairy,dairy_cream,fatty|mild_sweet,false,true,true,structure,fresh,liquid,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-cheddar_sauce,dairy,dairy_cheese,umami|salty|fatty,false,true,true,sauce,processed,liquid,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-cheese_spread,dairy,dairy_cheese,umami|salty|fatty,false,true,true,side,processed,cream,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-madras_curry,spice,spice_blend,spicy|aromatic,false,false,false,seasoning,ground,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-garam_masala,spice,spice_blend,warm|aromatic,false,false,false,seasoning,ground,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-korean_radish,vegetable,root,crunchy|mild,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-pickled_daikon,vegetable,root,sour|crunchy,false,false,false,side,pickled,slices,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-kombu_broth,sauce,fermented_base,umami|marine,false,false,false,sauce,cooked,liquid,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-fish_dashi,sauce,fermented_base,umami|marine,false,false,true,sauce,cooked,liquid,fish,omnivore|halal_friendly|kosher_friendly
-belgian_endive,vegetable,bitter_leaf,bitter|fresh,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-curly_endive,vegetable,bitter_leaf,slightly_bitter|fresh,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-five_spice,spice,spice_mix,warm|aromatic,false,false,false,seasoning,ground,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-baharat,spice,spice_mix,spicy|warm,false,false,false,seasoning,ground,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-baby_spinach,vegetable,green_leaf,green|mild,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-chard,vegetable,green_leaf,earthy|mild,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-lemon_thyme,spice,aromatic_herb,citrusy|herbaceous,false,false,false,seasoning, dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-oregano,spice,aromatic_herb,herbaceous|mediterranean,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-whole_wheat_flour,grain,wheat,nutty|slightly_sweet,true,false,false,structure,ground,powder,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly
-bread_flour,grain,wheat,neutral|mild,true,false,false,structure,ground,powder,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly
-rice_flour,grain,rice,neutral,false,false,false,structure,ground,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-sticky_rice_flour,grain,rice,neutral|slightly_sweet,false,false,false,structure,ground,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-masa_harina,grain,corn,earthy|mild_sweet,false,false,false,structure,processed,flour,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-cornmeal,grain,corn,neutral|grainy,false,false,false,structure,ground,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-tapioca_flour,grain,tuber,neutral,false,false,false,structure,ground,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-cassava_starch,grain,tuber,neutral,false,false,false,structure,processed,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-stuffing_mix,other,variable,variable,false,false,false,side,processed,mix,depends,omnivore|vegetarian|vegan
-dumpling_filling,other,variable,umami|savory,false,false,false,side,processed,minced,depends,omnivore|vegetarian|vegan
-feta_block,dairy,dairy_cheese,salty|acidic,false,true,true,side,cured,block,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-feta_crumbled,dairy,dairy_cheese,salty|acidic,false,true,true,side,cured,crumbled,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-udon_noodles,grain,wheat,neutral,true,false,false,base,processed,noodle,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly
-ramen_noodles,grain,wheat,neutral|slightly_salty,true,false,false,base,processed,noodle,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly
-fried_noodle_crisps,grain,wheat,toasted|savory,true,false,false,side,fried,puffed_noodle,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly
-wonton_strips,grain,wheat,neutral|crisp,true,false,false,side,fried,strip,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly
-cheddar,dairy,dairy_cheese,salty|umami|fatty,false,true,true,side,cured,block,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-gouda,dairy,dairy_cheese,umami|mild_sweet|fatty,false,true,true,side,cured,block,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-ricotta,dairy,soft_dairy_cheese,mild|creamy,false,true,true,side,fresh,soft_cheese,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-cream_cheese,dairy,soft_dairy_cheese,mild|slightly_acidic,false,true,true,side,fresh,soft_cheese,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-brie,dairy,soft_dairy_cheese,mild|buttery|umami,true,true,true,side,ripened,soft_cheese,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-camembert,dairy,soft_dairy_cheese,mild|earthy|creamy,true,true,true,side,ripened,soft_cheese,milk,omnivore|vegetarian|kosher_friendly|halal_friendly
-apple,fruit,general_fruit,sweet|fresh,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-mango,fruit,tropical_fruit,sweet|tropical,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-galangal,spice,root,spicy|citrusy|earthy,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-ginger_powder,spice,root,spicy|warm,false,false,false,seasoning,dried,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-lard,fat,general_fat,fatty,false,false,true,fat,processed,fat,none,omnivore|halal_friendly|kosher_friendly
-clarified_butter,fat,general_fat,fatty|buttery,false,true,true,fat,processed,oil,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-mixed_herbs,seasoning,aromatic_herb,herbaceous|fresh,false,false,false,seasoning,dried,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-italian_herbs,seasoning,aromatic_herb,herbaceous|mediterranean,false,false,false,seasoning,dried,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly
-turkey_breast,protein_animal,meat_poultry,umami|mild,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly
-ground_turkey,protein_animal,meat_poultry,umami|mild_fatty,false,false,true,main,processed,minced,none,omnivore|halal_friendly|kosher_friendly
-duck_breast,protein_animal,meat_poultry,umami|fatty|gamey,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly
-confit_duck,protein_animal,meat_poultry,umami|fatty|rich,false,false,true,main,processed,meat_piece,none,omnivore|halal_friendly|kosher_friendly
-quail_legs,protein_animal,meat_poultry,umami|mild_gamey,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly
-quail_breast,protein_animal,meat_poultry,umami|delicate,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly
-icing_mix,sweetener,sugar,very_sweet,false,false,false,decoration,processed,powder,none,omnivore|vegetarian|vegan
-powdered_sugar,sweetener,sugar,very_sweet,false,false,false,structure,processed,powder,none,omnivore|vegetarian|vegan
-strained_yogurt,dairy,dairy_yogurt,creamy|acidic,false,true,true,side,fermented,creamy,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-yogurt_spread,dairy,dairy_yogurt,creamy|mild_sweet,false,true,true,side,fermented,soft,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-young_jackfruit,fruit,tropical_fruit,mild|neutral,false,false,false,main,fresh,chunks,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-jackfruit_chunks,fruit,tropical_fruit,sweet|tropical,false,false,false,side,fresh,chunks,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-curly_parsley,seasoning,aromatic_herb,fresh|herbaceous,false,false,false,seasoning,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-flat_parsley,seasoning,aromatic_herb,herbaceous|fresh,false,false,false,seasoning,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-whole_milk,dairy,basic_dairy,creamy|mild_sweet,false,true,true,base,fresh,liquid,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-skim_milk,dairy,basic_dairy,mild_sweet,false,true,true,base,fresh,liquid,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-coconut_cream,other,dairy_substitute,fatty|tropical,false,false,false,side,processed,cream,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-light_coconut_milk,other,dairy_substitute,mild_fatty|tropical,false,false,false,side,processed,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-meyer_lemon,seasoning,citrus,acidic|fruity,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-lemon_zest,seasoning,citrus,citrusy|aromatic,false,false,false,aroma,fresh,grated,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-key_lime,seasoning,citrus,acidic|aromatic,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-lime_zest,seasoning,citrus,citrusy|aromatic,false,false,false,aroma,fresh,grated,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-elbow_macaroni,grain,wheat,neutral,true,false,false,base,processed,pasta,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly
-rigatoni,grain,wheat,neutral,true,false,false,base,processed,pasta,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly
-aioli,sauce,emulsion,garlic|fatty,false,false,false,sauce,processed,emulsion,egg,omnivore|vegetarian|halal_friendly|kosher_friendly
-kewpie_mayo,sauce,emulsion,fatty|umami,false,false,false,sauce,processed,emulsion,egg,omnivore|vegetarian|halal_friendly|kosher_friendly
-clarified_butter,fat,dairy_butter,buttery|fatty,false,true,true,fat,processed,oil,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-ghee,fat,dairy_butter,buttery|nutty,false,true,true,fat,processed,oil,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-chunky_peanut_butter,fat,peanut_nut,fatty|sweet,false,false,false,side,processed,paste,peanuts,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-honey_peanut_butter,fat,peanut_nut,fatty|sweet|caramel,false,false,false,side,processed,paste,peanuts,omnivore|vegetarian|halal_friendly|kosher_friendly
-vegan_marshmallows,sweet,confectionery,very_sweet,false,false,false,side,processed,confection,none,omnivore|vegetarian|vegan
-marshmallow_fluff,sweet,confectionery,very_sweet,false,false,false,side,processed,foam,none,omnivore|vegetarian
-spearmint,spice,aromatic_herb,fresh|minty,false,false,false,seasoning,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-mint_powder,spice,aromatic_herb,herbaceous|fresh,false,false,false,seasoning,dried,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-italian_meringue,sweet,confectionery,very_sweet,false,false,true,structure,processed,foam,egg,omnivore|halal_friendly|kosher_friendly
-swiss_meringue,sweet,confectionery,very_sweet,false,false,true,structure,processed,foam,egg,omnivore|halal_friendly|kosher_friendly
-sweet_mirin,sauce,fermented,sweet|mild_acidic,false,false,false,sauce,fermented,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-mirin_reduction,sauce,fermented,sweet|caramelized,false,false,false,sauce,cooked,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-white_miso,plant_vegetal,fermented,mild_umami|slightly_sweet,false,false,false,sauce|base,fermented,paste,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-red_miso,plant_vegetal,fermented,umami|salty|intense,false,false,false,sauce|base,fermented,paste,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-buffalo_mozzarella,dairy,soft_dairy_cheese,mild|milky,false,true,true,side,fresh,soft_cheese,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-low_moisture_mozzarella,dairy,soft_dairy_cheese,mild|slightly_salty,false,true,true,side,processed,block,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-wholegrain_mustard,seasoning,seed,spicy|tangy,false,false,false,seasoning,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-mustard_powder,seasoning,seed,spicy|sharp,false,false,false,seasoning,dried,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-heavy_cream,dairy,dairy_cream,fatty|mild_sweet,false,true,true,side,fresh,liquid,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-light_cream,dairy,dairy_cream,mild_sweet|fatty,false,true,true,side,fresh,liquid,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-creme_fraiche,dairy,dairy_cream,acidic|creamy,false,true,true,side,fermented,creamy,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-cultured_cream,dairy,dairy_cream,acidic|fatty,false,true,true,side,fermented,creamy,milk,omnivore|vegetarian|halal_friendly|kosher_friendly
-whole_nutmeg,spice,spice,spiced|warm,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-nutmeg_powder,spice,spice,spiced|mild_sweet,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-walnut_halves,nuts,walnut_nut,earthy|fatty,false,false,false,side,raw,whole,nuts,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-walnut_pieces,nuts,walnut_nut,fatty|earthy,false,false,false,side,raw,chopped,nuts,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-nori_sheets,plant_vegetal,algae,umami|marine,false,false,false,side,dried,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-nori_flakes,plant_vegetal,algae,umami|salty,false,false,false,seasoning,dried,flakes,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-nyora_powder,spice,dried_pepper,smoky|sweet,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-dried_peppers,spice,dried_pepper,smoky|fruity,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-neutral_oil,fat,general_fat,neutral|fatty,false,false,false,fat,processed,oil,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-vegetable_oil,fat,general_fat,neutral|fatty,false,false,false,fat,processed,oil,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-dark_sesame_oil,fat,semi_toasted_oils,toasted|nutty,false,false,false,fat,processed,oil,sesame,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-light_sesame_oil,fat,semi_toasted_oils,fatty|mild_toasted,false,false,false,fat,processed,oil,sesame,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-extra_virgin_olive_oil,fat,mediterranean_oils,fruity|grassy,false,false,false,fat,processed,oil,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-light_olive_oil,fat,mediterranean_oils,fatty|neutral,false,false,false,fat,processed,oil,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-olive_slices,fruit,stone_fruit,salty|fatty,false,false,false,side,brined,sliced,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-olive_paste,fruit,stone_fruit,salty|fatty,false,false,false,side,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-oregano_powder,spice,aromatic_herb,herbaceous,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-mediterranean_oregano,spice,aromatic_herb,herbaceous|aromatic,false,false,false,seasoning,dried,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-shucked_oysters,protein_animal,mollusc,umami|salty,false,false,true,main,fresh,meat,crustaceans|molluscs,omnivore
-smoked_oysters,protein_animal,mollusc,umami|salty|smoky,false,false,true,side,smoked,whole,crustaceans|molluscs,omnivore
-egg_yolk,protein_animal,egg,rich|umami,false,false,true,structure,fresh,raw,egg,omnivore|halal_friendly|kosher_friendly
-egg_whole,protein_animal,egg,umami|mild_fatty,false,false,true,structure,fresh,whole,egg,omnivore|halal_friendly|kosher_friendly
-baguette,grain,wheat,neutral|crusty,true,false,false,base,baked,loaf,gluten,omnivore|vegetarian|halal_friendly|kosher_friendly
-bread_rolls,grain,wheat,neutral|soft,true,false,false,side,baked,rolls,gluten,omnivore|vegetarian|halal_friendly|kosher_friendly
-panko,grain,wheat,neutral|toasted,true,false,false,structure,processed,crumbs,gluten,omnivore|vegetarian|halal_friendly|kosher_friendly
-fine_breadcrumbs,grain,wheat,neutral|toasted,true,false,false,structure,processed,crumbs,gluten,omnivore|vegetarian|halal_friendly|kosher_friendly
-pandan_extract,seasoning,aromatic_leaf,herbaceous|sweet,false,false,false,aroma,processed,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-dried_pandan,seasoning,aromatic_leaf,herbaceous,false,false,false,aroma,dried,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-smoked_paprika,spice,spice,smoky|sweet,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-sweet_paprika,spice,spice,sweet|aromatic,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-carrot_slices,vegetable,root,sweet|earthy,false,false,false,side,fresh,sliced,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-carrot_puree,vegetable,root,sweet|earthy,false,false,false,side,cooked,puree,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-dried_citrus_peel,seasoning,citrus,bitter|citrusy,false,false,false,aroma,dried,peel,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-candied_citrus_peel,seasoning,citrus,sweet|citrusy,false,false,false,decoration,processed,peel,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-black_pepper,spice,spice,pungent|spicy,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-white_pepper,spice,spice,mild_spicy,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-paprika_powder,spice,spice,sweet|aromatic,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-smoked_paprika_sweet,spice,spice,sweet|smoky,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-red_bell_pepper,vegetable,solanaceae,sweet|fresh,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-yellow_bell_pepper,vegetable,solanaceae,sweet|mild,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-snap_peas,vegetable,legume,fresh|green,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-peas_puree,vegetable,legume,sweet|green,false,false,false,side,cooked,puree,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-pineapple_slices,fruit,tropical_fruit,sweet|acidic,false,false,false,side,fresh,sliced,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-pineapple_chunks,fruit,tropical_fruit,sweet|tropical,false,false,false,side,fresh,chunks,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-chicken_breast,protein_animal,meat_poultry,umami|lean,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly
-chicken_thigh,protein_animal,meat_poultry,umami|fatty,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly
-golden_raisins,fruit,dried_fruit,sweet|fruity,false,false,false,side,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-sultanas,fruit,dried_fruit,sweet|mild,false,false,false,side,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-rosemary_powder,spice,aromatic_herb,herbaceous|resinous,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-fresh_rosemary,spice,aromatic_herb,herbaceous|piney,false,false,false,seasoning,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-fine_salt,seasoning,salt,salty,false,false,false,seasoning,raw,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-coarse_salt,seasoning,salt,salty,false,,false,seasoning,raw,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-salami_slices,protein_animal,meat_cured,salty|umami,false,false,true,side,cured,cold_cut,none,omnivore
-spicy_salami,protein_animal,meat_cured,spicy|umami,false,false,true,main,cured,sausage,none,omnivore
-thick_oyster_sauce,sauce,seafood,umami|sweet_salty,false,false,false,sauce,processed,liquid,crustaceans|molluscs,omnivore
-premium_oyster_sauce,sauce,seafood,umami|rich,false,false,false,sauce,processed,liquid,crustaceans|molluscs,omnivore
-light_soy_sauce,sauce,fermented,salty|umami,false,false,false,sauce,fermented,liquid,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-dark_soy_sauce,sauce,fermented,umami|caramel,false,false,false,sauce,fermented,liquid,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-worcestershire_concentrate,sauce,fermented,umami|acidic|sweet_salty,false,false,false,sauce,processed,liquid,fish|sulfites,omnivore
-vegan_worcestershire,sauce,fermented,umami|acidic,false,false,false,sauce,processed,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-salmon_steak,protein_animal,fish_oily,umami|fatty,false,false,true,main,fresh,steak,fish,omnivore|halal_friendly|kosher_friendly
-smoked_salmon,protein_animal,fish_oily,umami|smoky|fatty,false,false,true,side,smoked,fillet,fish,omnivore|halal_friendly|kosher_friendly
-toasted_sesame,nuts,seed,toasted|nutty,false,false,false,side,roasted,seed,sesame,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-black_sesame,nuts,seed,fatty|earthy,false,false,false,side,raw,seed,sesame,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-soybeans,plant_vegetal,legume,earthy|umami,false,false,false,main|base,fresh,whole,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-cooked_soy,plant_vegetal,legume,soft|umami,false,false,false,side,cooked,chunks,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-caster_sugar,sweetener,sweetener,sweet,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-coarse_sugar,sweetener,sweetener,sweet,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-white_granulated_sugar,sweetener,sweetener,very_sweet,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-superfine_sugar,sweetener,sweetener,very_sweet,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-palm_sugar_paste,sweetener,sweetener,caramelized|sweet,false,false,false,structure,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-palm_sugar_granules,sweetener,sweetener,caramelized,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-icing_mix,sweetener,sweetener,very_sweet,false,false,false,decoration,processed,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-confectioners_sugar,sweetener,sweetener,very_sweet,false,false,false,decoration,processed,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-muscovado_sugar,sweetener,sweetener,caramelized|deep,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-demerara_sugar,sweetener,sweetener,caramelized|crunchy,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-suya_marinade,sauce,african_sauce,spicy|umami,false,false,false,sauce,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-dry_suya_mix,spice,african_spice,spicy|aromatic,false,false,false,seasoning,dried,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-tamarind_paste,seasoning,tropical_fruit,acidic|fruity,false,false,false,side,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-tamarind_concentrate,seasoning,tropical_fruit,acidic|intense,false,false,false,seasoning,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-silken_tofu,plant_vegetal,soy_derivative,mild|creamy,false,false,false,main|substitute,processed,soft_block,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-smoked_tofu,plant_vegetal,soy_derivative,umami|smoky,false,false,false,main|substitute,smoked,block,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-tomato_slices,vegetable,solanaceae,acidic|fresh,false,false,false,side,fresh,sliced,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-tomato_puree,vegetable,solanaceae,sweet|acidic,false,false,false,base,processed,puree,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-tuna_steak,protein_animal,fish_oily,umami|fatty,false,false,true,main,fresh,steak,fish,omnivore|halal_friendly|kosher_friendly
-tuna_sashimi,protein_animal,fish_oily,umami|mild,fresh,false,true,main,fresh,sliced,fish,omnivore|halal_friendly|kosher_friendly
-tuna_flakes_canned,protein_animal,fish_oily,umami|mild_fatty,false,false,true,main,canned,flakes,fish,omnivore|halal_friendly|kosher_friendly
-tuna_in_oil,protein_animal,fish_oily,umami|fatty,false,false,true,main,canned,fillet,fish,omnivore|halal_friendly|kosher_friendly
-umeboshi_paste,seasoning,japanese_fermented,very_acidic|salty,false,false,false,seasoning,fermented,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-umeboshi_plum,seasoning,japanese_fermented,acidic|salty,false,false,false,side,fermented,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-vanilla_pod,seasoning,aromatic_seed,floral|sweet,false,false,false,aroma,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-vanilla_powder,seasoning,aromatic_seed,floral|sweet,false,false,false,aroma,dried,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-apple_cider_vinegar,seasoning,acetic,acidic|fruity,false,false,false,seasoning,fermented,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-white_vinegar,seasoning,acetic,acidic|sharp,false,false,false,seasoning,fermented,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-brown_rice_vinegar,seasoning,asian_acetic,mild_acidic|earthy,false,false,false,seasoning,fermented,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-black_rice_vinegar,seasoning,asian_acetic,acidic|deep,false,false,false,seasoning,fermented,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-wakame_flakes,plant_vegetal,algae,umami|marine,false,false,false,seasoning,dried,flakes,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-salted_wakame,plant_vegetal,algae,umami|salty,false,false,false,side,processed,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-red_chili,spice,strong_spice,spicy|fruity,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-green_chili,spice,strong_spice,spicy|fresh,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-dark_chocolate,sweetener,cacao,bitter|sweet,false,false,false,side,processed,block,none,omnivore|vegetarian|vegan
-chocolate_chips,sweetener,cacao,sweet|mild_bitter,false,false,false,decoration,processed,chips,none,omnivore|vegetarian|vegan
-zucchini_slices,vegetable,cucurbit,mild|fresh,false,false,false,side,fresh,sliced,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-grilled_zucchini,vegetable,cucurbit,smoky|mild,false,false,false,side,cooked,slices,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly
-clams_shucked,protein_animal,mollusc,umami|salty,false,false,true,main,fresh,meat,molluscs,omnivore
-steamed_clams,protein_animal,mollusc,umami|briny,false,false,true,side,cooked,whole,molluscs,omnivore
-firm_tofu,plant_vegetal,soy,neutral|mild_umami,false,false,false,main,processed,block,soy,omnivore|vegetarian|vegan
-tofu_cubes,plant_vegetal,soy,neutral,false,false,false,side,processed,cubes,soy,omnivore|vegetarian|vegan
-seitan_strips,plant_vegetal,wheat,savory|umami,true,false,false,main,processed,strips,gluten,omnivore|vegetarian|vegan
-smoked_seitan,plant_vegetal,wheat,smoky|savory,true,false,false,main,processed,block,gluten,omnivore|vegetarian|vegan
-tempeh_cubes,plant_vegetal,soy,earthy|nutty,false,false,false,main,fermented,cubes,soy,omnivore|vegetarian|vegan
-smoked_tempeh,plant_vegetal,soy,earthy|smoky,false,false,false,side,smoked,block,soy,omnivore|vegetarian|vegan
-cooked_chickpeas,plant_vegetal,legume,nutty|soft,false,false,false,main,cooked,whole,none,omnivore|vegetarian|vegan
-chickpea_puree,plant_vegetal,legume,nutty|creamy,false,false,false,base,processed,puree,none,omnivore|vegetarian|vegan
-cooked_lentils,plant_vegetal,legume,earthy|soft,false,false,false,main,cooked,whole,none,omnivore|vegetarian|vegan
-lentil_puree,plant_vegetal,legume,earthy|creamy,false,false,false,base,cooked,puree,none,omnivore|vegetarian|vegan
+nom_ingredient,categoria_macro,familia,sabors_base,te_gluten,te_lactosa,es_animal,rol_tipic,processament,format,alergens,dietes_permeses,nom_catala
+arugula,plant_vegetal,green_leaf,herbaceous|slightly_bitter|green,false,False,False,base,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,ruca
+beef,protein_animal,meat_cured,rich|umami|fatty,false,False,True,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly,bou/vedella
+beetroot,vegetable,root,earthy|sweet,false,False,False,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,remolatxa
+berries,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,baies
+blackberries,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,móres
+béchamel,sauce,emulsion,creamy|mild|savory,true,True,False,sauce,cooked,cream,gluten|milk,omnivore|vegetarian,beixamel
+caesar sauce,sauce,emulsion,creamy|savory|salty,false,True,False,sauce,processed,emulsion,egg|fish|milk,omnivore,salsa cèsar
+croutons,grain,processed_cereal,crusty|toasted|slightly_salty,true,False,False,side,baked,cubes,gluten,omnivore|vegetarian|vegan,crostons
+eggs,protein_animal,egg,rich|mild,false,False,True,main,fresh,raw,egg,omnivore,ous
+flour,grain,processed_cereal,neutral|grainy,true,False,False,base,ground,flour,gluten,omnivore|vegetarian|vegan,farina
+garlic,vegetable,allium,pungent|aromatic|sharp,false,False,False,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,all
+gelatin,other,animal_gelatin,neutral,False,False,True,structure,processed,powder,animal_gelatin,omnivore|halal_friendly,gelatina
+goat cheese,dairy,dairy_cheese,creamy|lactic|salty,false,True,False,side,ripened,block,milk,omnivore|vegetarian,formatge de cabra
+green tea matcha,plant_vegetal,aromatic_leaf,bitter|earthy|slightly_bitter,false,False,False,base,ground,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,te verd matxa
+hake,protein_animal,fish_white,lean|mild|umami,false,False,True,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly,lluç
+ham,protein_animal,meat_cured,salty|cured|savory,false,False,True,side,cured,cold_cut,none,omnivore,pernil
+honey,sweet,confectionery,sweet|floral,false,False,False,seasoning,raw,liquid,none,omnivore|vegetarian|halal_friendly|kosher_friendly,mel
+lettuce,plant_vegetal,green_leaf,fresh|watery|crisp,false,False,False,base,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,enciam
+minced_meat,protein_animal,meat_poultry|meat_cured,umami|fatty,false,False,True,main,cooked,minced,none,omnivore,carn picada
+parmesan,dairy,dairy_cheese,salty|umami|nutty,false,True,False,side,ripened,grated,milk,omnivore|vegetarian,parmesà
+pasta,grain,processed_cereal,neutral|grainy,true,False,False,base,cooked,noodle,gluten,omnivore|vegetarian|vegan,pasta
+potato,vegetable,root,earthy|starchy|neutral,false,False,False,base,raw,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,patata
+potatoes,vegetable,root,earthy|starchy|neutral,false,False,False,base,raw,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,patates
+prawn,protein_animal,crustacean,umami|briny|sweet,false,False,True,main,cooked,whole,crustaceans,omnivore|halal_friendly,gamba
+pumpkin,vegetable,root,sweet|earthy,false,False,False,base,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,carabassa
+quinoa,grain,rice,nutty|earthy,false,False,False,base,cooked,grain,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,quinoa
+rice_flour,grain,rice,neutral|grainy,true,False,False,base,ground,flour,gluten,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,farina d'arròs
+sea_bream,protein_animal,fish_white,lean|mild|umami,false,False,True,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly,orada
+soy_sauce,sauce,asian_acetic,salty|umami|fermented,false,False,False,seasoning,fermented,liquid,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,salsa de soja
+spring_onion,vegetable,allium,fresh|aromatic|slightly_pungent,false,False,False,seasoning,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,ceba tendra
+strawberries,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,maduixes
+strawberry,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,maduixa
+teriyaki_sauce,sauce,asian_acetic,sweet|salty|umami,false,False,False,sauce,processed,liquid,soy,omnivore|vegetarian|vegan,salsa teriyaki
+vegetables,vegetable,root|green_leaf|cucurbit,neutral|fresh,false,False,False,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,verdures
+water,other,emulsion,neutral,false,False,False,base,raw,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,aigua
+white_fish,protein_animal,fish_white,lean|mild|umami,false,False,True,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly,peix blanc
+white_wine,other,acetic,acidic|fruity|aromatic,false,False,False,seasoning,fermented,liquid,sulfites,omnivore|vegetarian|vegan,vi blanc
+yogurt,dairy,dairy_yogurt,creamy|lactic,false,True,False,base,fermented,cream,milk,omnivore|vegetarian,iogurt
+seaweed,plant_vegetal,algae,umami|salty|marine,false,false,false,side,dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,alga
+basil,spice,aromatic_herb,fresh|herbaceous,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,alfàbrega
+eggplant,vegetable,solanaceae,mild_bitter|earthy,false,false,false,main|side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,albergínia
+almonds,fat,almond_nut,sweet|fatty|slightly_bitter,false,false,false,side,raw,whole,nuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,ametlles
+anchovies,protein_animal,fish_oily,umami|salty,false,false,true,side,cured,fillet,fish,omnivore|halal_friendly|kosher_friendly,anxoves
+rice,grain,rice,neutral,false,false,false,base,dried,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,arròs
+black_glutinous_rice,grain,rice,neutral|slightly_nutty,false,false,false,base,dried,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,arròs glutinós negre
+hazelnuts,fat,hazelnut_nut,sweet|fatty|roasted,false,false,false,side,roasted,whole,nuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,avellanes
+cod,protein_animal,fish_white,umami|salty,false,false,true,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly,bacallà
+bacon,protein_animal,meat_cured,salty|umami|smoky|fatty,false,false,true,side,cured,cold_cut,none,omnivore,bacó
+balsamic,sauce,wine_reduction,acidic|sweet,false,false,false,sauce,fermented,liquid,sulfites,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,balsàmic
+corn,vegetable,sweet_corn,sweet,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,blat de moro
+mushrooms,vegetable,fungus,earthy|umami,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,bolets
+broth,sauce,cooking_stock,umami|salty,false,false,false,sauce,cooked,broth,depends,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,brou
+peanut,fat,peanut_nut,fatty|slightly_sweet,false,false,false,side,raw,whole,peanuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,cacauet
+cinnamon,spice,sweet_spice,sweet|spicy|woody,false,false,false,seasoning,ground,spice,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,canyella
+zucchini,vegetable,cucurbit,mild|slightly_sweet,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,carbassó
+onion,vegetable,allium,sweet|umami|pungent,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,ceba
+spring_onion,vegetable,allium,fresh|mild_pungent,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,ceba tendra
+puffed_cereals,grain,processed_cereal,sweet|toasted,true,false,false,side,processed,puffed,gluten,omnivore|vegetarian,cereals inflats
+chili,spice,strong_spice,spicy,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,xili
+egg_whites,protein_animal,egg,umami|mild,false,false,true,structure,fresh,raw,egg,omnivore|halal_friendly|kosher_friendly,clares d'ou
+clove,spice,strong_spice,spiced|intense,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,clau d'espècia
+coconut,fruit,tropical_fruit,sweet|fatty|tropical,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,coco
+grated_coconut,fruit,tropical_fruit,sweet|fatty|tropical,false,false,false,side,dried,grated,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,coco ratllat
+cucumber,vegetable,cucurbit,fresh|watery,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,cogombre
+cabbage,vegetable,cruciferous,fresh|slightly_bitter,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,col
+coulis,sauce,sweet_sauce,sweet|fruity,false,false,false,sauce,processed,liquid,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,coulis
+crab,protein_animal,crustacean,umami|sweet_salty,false,false,true,main,fresh,whole,crustaceans,omnivore,cranc
+cream,dairy,dairy_cream,fatty|mild_lactic,false,true,true,sauce|structure,fresh,liquid,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,nata
+cheddar_cream,dairy,dairy_cheese,umami|salty|fatty,false,true,true,sauce,processed,cream, milk,omnivore|vegetarian|kosher_friendly|halal_friendly,crema de cheddar
+curry,spice,spice_blend,spiced|spicy|aromatic,false,false,false,seasoning,ground,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,curri
+daikon,vegetable,root,crunchy|slightly_spicy,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,daikon
+dashi,sauce,fermented_base,umami|marine,true,false,false,sauce,fermented,liquid,soy|gluten,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,dashi
+endives,vegetable,bitter_leaf,bitter|fresh,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,endívies
+spices,spice,spice_mix,spiced,false,false,false,seasoning,ground,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,espècies
+filling,other,variable,variable,false,false,false,side,processed,variable,depends,omnivore|vegetarian|vegan,farcit
+feta,dairy,dairy_cheese,salty|acidic|umami,false,true,true,side,cured,block,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,feta
+noodles,grain,wheat,neutral,true,false,false,base,processed,noodle,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly,fideus
+crispy_noodles,grain,wheat,neutral|toasted,true,false,false,side,processed,fried_noodle,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly,fideus cruixents
+cheese,dairy,dairy_cheese,umami|salty|fatty,false,true,true,side,cured,block,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,formatge
+fresh_cheese,dairy,soft_dairy_cheese,mild|mild_acidic,false,true,true,side,fresh,soft_cheese,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,formatge fresc
+soft_cheese,dairy,soft_dairy_cheese,mild|umami,true,true,true,side,fresh,soft_cheese,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,formatge tendre
+fruit,fruit,general_fruit,sweet|acidic,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,fruita
+ginger,spice,root,spicy|citrusy|fresh,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,gingebre
+fat,fat,general_fat,fatty,false,false,false,base,processed,fat,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,greix
+herbs,seasoning,aromatic_herb,herbaceous,false,false,false,seasoning,fresh,mix,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,herbes
+turkey,protein_animal,meat_poultry,umami|mild_fatty,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly,gall dindi
+duck,protein_animal,meat_poultry,umami|fatty|gamey,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly,ànec
+quail,protein_animal,meat_poultry,umami|mild_gamey,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly,guatlla
+icing_sugar,sweetener,sugar,very_sweet,false,false,false,side,processed,powder,none,omnivore|vegetarian|vegan,sucre de llustre
+greek_yogurt,dairy,dairy_yogurt,acidic|creamy,false,true,true,side,fermented,creamy,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,iogurt grec
+jackfruit,fruit,tropical_fruit,sweet|tropical,false,false,false,main|side,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,jaca
+parsley,seasoning,aromatic_herb,fresh|herbaceous,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,julivert
+milk,dairy,basic_dairy,lactic|mild_sweet,false,true,true,base,fresh,liquid,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,llet
+coconut_milk,other,dairy_substitute,fatty|tropical|sweet,false,false,false,side,processed,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,llet de coco
+lemon,seasoning,citrus,acidic|citrusy,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,llimona
+lime,seasoning,citrus,acidic|citrusy,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,llima
+macaroni,grain,wheat,neutral,true,false,false,base,processed,pasta,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly,macarrons
+mayonnaise,sauce,emulsion,fatty|mild_acidic,false,false,false,sauce,processed,emulsion,egg,omnivore|vegetarian|halal_friendly|kosher_friendly,maionesa
+butter,fat,dairy_butter,fatty|slightly_sweet,false,true,true,fat,fresh,block,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,mantega
+peanut_butter,fat,peanut_nut,fatty|sweet,false,false,false,side,processed,paste,peanuts,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,mantega de cacauet
+marshmallows,sweet,confectionery,very_sweet,false,false,false,side,processed,confection,animal_gelatin,omnivore,núvols (marshmallows)
+mint,spice,aromatic_herb,fresh|herbaceous,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,menta
+meringue,sweet,confectionery,very_sweet,false,false,true,structure,processed,foam,egg,omnivore|halal_friendly|kosher_friendly,merenga
+mirin,sauce,fermented,sweet|slightly_acidic,false,false,false,sauce,fermented,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,mirin
+miso,plant_vegetal,fermented,umami|salty|fermented,false,false,false,sauce|base,fermented,paste,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,miso
+mozzarella,dairy,soft_dairy_cheese,mild|slightly_salty,false,true,true,side,fresh,soft_cheese,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,mozzarella
+mustard,seasoning,seed,spicy|acidic,false,false,false,seasoning,ground,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,mostassa
+cream,dairy,dairy_cream,fatty|mild_sweet,false,true,true,side,fresh,liquid,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,crema de llet
+sour_cream,dairy,dairy_cream,acidic|fatty,false,true,true,side,fermented,creamy,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,crema agra
+nutmeg,spice,spice,spiced|mild_sweet,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,nou moscada
+walnuts,nuts,walnut_nut,fatty|earthy|slightly_bitter,false,false,false,side,roasted,whole,nuts,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,nous
+nori,plant_vegetal,algae,umami|marine,false,false,false,side,dried,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,nori
+nyora,spice,dried_pepper,sweet|fruity|slightly_smoky,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,nyora
+oil,fat,general_fat,fatty|neutral,false,false,false,fat,processed,oil,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,oli
+sesame_oil,fat,semi_toasted_oils,fatty|toasted,false,false,false,fat,processed,oil,sesame,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,oli de sèsam
+olive_oil,fat,mediterranean_oils,fatty|fruity,false,false,false,fat,processed,oil,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,oli d'oliva
+worcestershire_sauce,sauce,fermented,umami|acidic|sweet_salty,false,false,false,sauce,processed,liquid,fish|sulfites,omnivore,salsa Worcestershire
+salmon,protein_animal,fish_oily,umami|fatty,false,false,true,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly,salmó
+sesame,nuts,seed,fatty|toasted,false,false,false,side,roasted,seed,sesame,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sèsam
+soy,plant_vegetal,legume,umami|mild,false,false,false,main|base,fresh,whole,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,soja
+sugar,sweetener,sweetener,sweet,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sucre
+white_sugar,sweetener,sweetener,very_sweet,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sucre blanc
+palm_sugar,sweetener,sweetener,sweet|caramelized,false,false,false,structure,processed,block,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sucre de palma
+icing_sugar,sweetener,sweetener,very_sweet,false,false,false,decoration,processed,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sucre de llustre
+brown_sugar,sweetener,sweetener,sweet|caramelized,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sucre bru
+suya,sauce,african_sauce,spiced|spicy|umami,false,false,false,sauce,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,suya
+tamarind,seasoning,tropical_fruit,acidic|fruity,false,false,false,side,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,tamariu
+paprika_sweet,spice,spice,sweet|smoky,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pebre vermell dolç
+bell_pepper,vegetable,solanaceae,sweet|slightly_herbaceous,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pimentó
+peas,vegetable,legume,sweet|fresh,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pèsols
+fresh_pineapple,fruit,tropical_fruit,sweet|acidic|tropical,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pinya fresca
+chicken,protein_animal,meat_poultry,umami|mild_fatty,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly,pollastre
+raisins,fruit,dried_fruit,sweet|caramelized,false,false,false,side,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,raïm pansa
+rosemary,spice,aromatic_herb,herbaceous|resinous,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,romaní
+salt,seasoning,salt,salty,false,false,false,seasoning,raw,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sal
+salami,protein_animal,meat_cured,umami|salty|cured,false,false,true,main,cured,sausage,none,omnivore,salami
+oyster_sauce,sauce,seafood,umami|sweet_salty,false,false,false,sauce,processed,liquid,crustaceans|molluscs,omnivore,salsa d'ostres
+soy_sauce,sauce,fermented,umami|salty,false,false,false,sauce,fermented,liquid,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,salsa de soja
+olives,fruit,stone_fruit,bitter|salty|fatty,false,false,false,side,brined,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,olives
+oregano,spice,aromatic_herb,herbaceous|mediterranean,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,orenga
+oysters,protein_animal,mollusc,umami|salty,false,false,true,main,fresh,whole,crustaceans|molluscs,omnivore,ostres
+egg,protein_animal,egg,umami|mild_fatty,false,false,true,structure,fresh,whole,egg,omnivore|halal_friendly|kosher_friendly,ou
+bread,grain,wheat,neutral|toasted,true,false,false,base,baked,loaf,gluten,omnivore|vegetarian|halal_friendly|kosher_friendly,pa
+breadcrumbs,grain,wheat,neutral|toasted,true,false,false,structure,processed,crumbs,gluten,omnivore|vegetarian|halal_friendly|kosher_friendly,pa ratllat
+pandan,seasoning,aromatic_leaf,herbaceous|mild_sweet,false,false,false,aroma,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pandan
+paprika,spice,spice,smoky|mild_sweet,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pebre vermell
+carrot,vegetable,root,sweet|earthy,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pastanaga
+citrus_peel,seasoning,citrus,acidic|citrusy|mild_bitter,false,false,false,aroma,dried,peel,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pell de cítric
+pepper,spice,spice,mild_spicy,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pebre
+tofu,plant_vegetal,soy_derivative,mild_umami,false,false,false,main|substitute,processed,block,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,tofu
+tomato,vegetable,solanaceae,acidic|sweet,false,false,false,base|side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,tomàquet
+tuna,protein_animal,fish_oily,umami|mild_fatty,false,false,true,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly,taronja
+tuna_canned,protein_animal,fish_oily,umami|mild_fatty,false,false,true,main,canned,flakes,fish,omnivore|halal_friendly|kosher_friendly,tonyina en llauna
+umeboshi,seasoning,japanese_fermented,very_acidic|salty,false,false,false,seasoning,fermented,pickled,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,umeboshi
+vanilla,seasoning,aromatic_seed,sweet|floral,false,false,false,aroma,dried,extract,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,vainilla
+vinegar,seasoning,acetic,acidic,false,false,false,seasoning,fermented,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,vinagre
+balsamic_vinegar,seasoning,acetic,acidic|sweet,false,false,false,seasoning,fermented,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,vinagre balsàmic
+rice_vinegar,seasoning,asian_acetic,mild_acidic,false,false,false,seasoning,fermented,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,vinagre d'arròs
+wakame,plant_vegetal,algae,umami|marine,false,false,false,side,dried,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,wakame
+chili,spice,strong_spice,spicy,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,xili
+chocolate,sweetener,cacao,sweet|mild_bitter,false,false,false,side,processed,block,none,omnivore|vegetarian|vegan,xocolata
+zucchini,vegetable,cucurbit,mild|watery,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,carbassó
+clams,protein_animal,mollusc,umami|salty,false,false,true,main,fresh,whole,molluscs,omnivore,cloïsses
+tofu,plant_vegetal,soy,neutral,false,false,false,main,processed,block,soy,omnivore|vegetarian|vegan,tofu
+seitan,plant_vegetal,wheat,savory,true,false,false,main,processed,block,gluten,omnivore|vegetarian|vegan,seitan
+tempeh,plant_vegetal,soy,earthy,false,false,false,main,fermented,block,soy,omnivore|vegetarian|vegan,tempeh
+chickpeas,plant_vegetal,legume,nutty,false,false,false,main,cooked,whole,none,omnivore|vegetarian|vegan,garbanzos
+lentils,plant_vegetal,legume,earthy,false,false,false,main,cooked,whole,none,omnivore|vegetarian|vegan,llenties
+nori,plant_vegetal,algae,umami|marine,false,false,false,side,dried,leaf,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,nori
+wakame,plant_vegetal,algae,umami|marine,false,false,false,side,dried,leaf,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,wakame
+thai_basil,spice,aromatic_herb,fresh|aniseed,false,false,false,seasoning,fresh,leaf,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,alfàbrega tailandesa
+lemongrass,spice,aromatic_herb,citrusy|fresh,false,false,false,seasoning,fresh,stem,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,citronel·la
+zucchini,vegetable,cucurbit,mild|watery,false,false,false,main|side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,carbassó
+bell_pepper,vegetable,solanaceae,sweet|slightly_herbaceous,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,pimentó
+hazelnuts,nuts,hazelnut_nut,sweet|fatty|roasted,false,false,false,side,roasted,whole,nuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,avellanes
+walnuts,nuts,walnut_nut,fatty|earthy|slightly_bitter,false,false,false,side,roasted,whole,nuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,nous
+sardines,protein_animal,fish_oily,umami|salty|fatty,false,false,true,side,canned,whole,fish,omnivore|halal_friendly|kosher_friendly,sardines
+mackerel,protein_animal,fish_oily,umami|fatty,false,false,true,main,smoked,fillet,fish,omnivore|halal_friendly|kosher_friendly,verat
+basmati_rice,grain,rice,neutral|aromatic,false,false,false,base,dried,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,arròs basmati
+jasmine_rice,grain,rice,neutral|floral,false,false,false,base,dried,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,arròs gessamí
+forbidden_rice,grain,rice,nutty|earthy,false,false,false,base,dried,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,arròs negre (prohibit)
+red_rice,grain,rice,earthy|slightly_nutty,false,false,false,base,dried,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,arròs vermell
+almonds,fat,almond_nut,sweet|fatty|slightly_bitter,false,false,false,side,raw,whole,nuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,ametlles
+pecans,nuts,pecan_nut,sweet|buttery,false,false,false,side,roasted,whole,nuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,nous pecanyes
+haddock,protein_animal,fish_white,umami|mild,false,false,true,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly,eglefin
+pollock,protein_animal,fish_white,umami|mild,false,false,true,main,fresh,fillet,fish,omnivore|halal_friendly|kosher_friendly,abadejo
+prosciutto,protein_animal,meat_cured,salty|umami,false,false,true,side,cured,cold_cut,none,omnivore,pernil salat (prosciutto)
+speck,protein_animal,meat_cured,smoky|salty|umami,false,false,true,side,smoked,cold_cut,none,omnivore,speck
+sherry_vinegar,sauce,wine_reduction,acidic|nutty,false,false,false,sauce,fermented,liquid,sulfites,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,vinagre de xerès
+baby_corn,vegetable,sweet_corn,sweet|crunchy,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,blat de moro nan
+corn_kernels,vegetable,sweet_corn,sweet,false,false,false,side,cooked,kernel,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,grans de blat de moro
+shiitake,vegetable,fungus,earthy|umami|smoky,false,false,false,side,dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,shiitake
+oyster_mushroom,vegetable,fungus,earthy|mild,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,bolet de pollancre (gírgola)
+vegetable_stock,sauce,cooking_stock,umami|savory,false,false,false,sauce,cooked,liquid,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,caldo de verdures
+chicken_stock,sauce,cooking_stock,umami|salty,false,false,true,sauce,cooked,liquid,none,omnivore|halal_friendly,caldo de pollastre
+roasted_peanut,nuts,peanut_nut,fatty|toasted,false,false,false,side,roasted,whole,peanuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,cacauet torrat
+peanut_halves,nuts,peanut_nut,fatty|slightly_sweet,false,false,false,side,raw,halves,peanuts,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,cacauets a trossos
+cassia,spice,sweet_spice,spicy|woody,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,càssia
+cinnamon_powder,spice,sweet_spice,sweet|spicy,false,false,false,seasoning,ground,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,canyella en pols
+yellow_squash,vegetable,cucurbit,mild|slightly_sweet,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,carbassó groc
+pattypan_squash,vegetable,cucurbit,mild|fresh,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,carbassa de bonet
+red_onion,vegetable,allium,sweet|pungent,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,ceba vermella
+shallot,vegetable,allium,mild|sweet,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,escalunya
+green_onion,vegetable,allium,fresh|mild_pungent,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,ceba tendra (part verda)
+leek,vegetable,allium,mild|sweet,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,porro
+rice_puffs,grain,processed_cereal,neutral|toasted,false,false,false,side,processed,puffed,none,omnivore|vegetarian|vegan,arròs inflat
+corn_puffs,grain,processed_cereal,sweet|toasted,false,false,false,side,processed,puffed,none,omnivore|vegetarian|vegan,cereals de blat de moro inflats
+red_chili,spice,strong_spice,spicy,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,xili vermell
+dried_chili,spice,strong_spice,spicy|smoky,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,xili sec
+egg_yolk,protein_animal,egg,fatty|umami,false,false,true,structure,fresh,raw,egg,omnivore|halal_friendly|kosher_friendly,rovell d'ou
+whole_egg,protein_animal,egg,umami|mild_fatty,false,false,true,structure,fresh,whole,egg,omnivore|halal_friendly|kosher_friendly,ou sencer
+cassia_bark,spice,strong_spice,woody|spiced,false,false,false,seasoning,dried,stick,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,escorça de càssia
+clove_powder,spice,strong_spice,spiced|intense,false,false,false,seasoning,ground,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,clau en pols
+coconut_meat,fruit,tropical_fruit,sweet|fatty,false,false,false,side,fresh,shredded,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,polpa de coco
+young_coconut,fruit,tropical_fruit,mild_sweet|tropical,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,coco jove
+desiccated_coconut,fruit,tropical_fruit,sweet|fatty,false,false,false,side,dried,shredded,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,coco deshidratat
+toasted_coconut,fruit,tropical_fruit,sweet|fatty|toasted,false,false,false,side,roasted,shredded,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,coco torrat
+persian_cucumber,vegetable,cucurbit,fresh|crisp,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,cogombre persa
+english_cucumber,vegetable,cucurbit,fresh|mild,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,cogombre anglès
+savoy_cabbage,vegetable,cruciferous,fresh|mild,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,col de Milà
+red_cabbage,vegetable,cruciferous,earthy|slightly_bitter,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,col llombarda
+fruit_purée,sauce,sweet_sauce,fruity|sweet,false,false,false,sauce,processed,liquid,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,puré de fruites
+berry_coulis,sauce,sweet_sauce,sweet|tart,false,false,false,sauce,processed,liquid,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,coulis de fruits vermells
+king_crab,protein_animal,crustacean,umami|sweet,false,false,true,main,fresh,whole,crustaceans,omnivore,cranc reial
+crab_meat,protein_animal,crustacean,umami|sweet,false,false,true,main,cooked,flakes,crustaceans,omnivore,carn de cranc
+heavy_cream,dairy,dairy_cream,fatty|mild_lactic,false,true,true,sauce|structure,fresh,liquid,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,nata per cuinar (espessa)
+whipping_cream,dairy,dairy_cream,fatty|mild_sweet,false,true,true,structure,fresh,liquid,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,nata per muntar
+cheddar_sauce,dairy,dairy_cheese,umami|salty|fatty,false,true,true,sauce,processed,liquid,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,salsa de formatge cheddar
+cheese_spread,dairy,dairy_cheese,umami|salty|fatty,false,true,true,side,processed,cream,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,formatge per untar
+madras_curry,spice,spice_blend,spicy|aromatic,false,false,false,seasoning,ground,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,curri Madras
+garam_masala,spice,spice_blend,warm|aromatic,false,false,false,seasoning,ground,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,garam masala
+korean_radish,vegetable,root,crunchy|mild,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,rave coreà
+pickled_daikon,vegetable,root,sour|crunchy,false,false,false,side,pickled,slices,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,daikon envinagrat
+kombu_broth,sauce,fermented_base,umami|marine,false,false,false,sauce,cooked,liquid,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,caldo de kombu
+fish_dashi,sauce,fermented_base,umami|marine,false,false,true,sauce,cooked,liquid,fish,omnivore|halal_friendly|kosher_friendly,dashi de peix
+belgian_endive,vegetable,bitter_leaf,bitter|fresh,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,endívia belga
+curly_endive,vegetable,bitter_leaf,slightly_bitter|fresh,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,escarola
+five_spice,spice,spice_mix,warm|aromatic,false,false,false,seasoning,ground,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,cinc espècies xineses
+baharat,spice,spice_mix,spicy|warm,false,false,false,seasoning,ground,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,baharat
+baby_spinach,vegetable,green_leaf,green|mild,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,espinacs baby
+chard,vegetable,green_leaf,earthy|mild,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,bleda
+lemon_thyme,spice,aromatic_herb,citrusy|herbaceous,false,false,false,seasoning, dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,farigola llimonera
+oregano,spice,aromatic_herb,herbaceous|mediterranean,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,orenga
+whole_wheat_flour,grain,wheat,nutty|slightly_sweet,true,false,false,structure,ground,powder,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly,farina de blat integral
+bread_flour,grain,wheat,neutral|mild,true,false,false,structure,ground,powder,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly,farina de força (per a pa)
+rice_flour,grain,rice,neutral,false,false,false,structure,ground,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,farina d'arròs
+sticky_rice_flour,grain,rice,neutral|slightly_sweet,false,false,false,structure,ground,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,farina d'arròs glutinós
+masa_harina,grain,corn,earthy|mild_sweet,false,false,false,structure,processed,flour,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,farina de blat de moro nixtamalitzada
+cornmeal,grain,corn,neutral|grainy,false,false,false,structure,ground,grain,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,farina de blat de moro (gruixuda)
+tapioca_flour,grain,tuber,neutral,false,false,false,structure,ground,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,farina de tapioca
+cassava_starch,grain,tuber,neutral,false,false,false,structure,processed,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,amidó de iuca
+stuffing_mix,other,variable,variable,false,false,false,side,processed,mix,depends,omnivore|vegetarian|vegan,mescla per a farcit
+dumpling_filling,other,variable,umami|savory,false,false,false,side,processed,minced,depends,omnivore|vegetarian|vegan,farcit per a crestes (dumplings)
+feta_block,dairy,dairy_cheese,salty|acidic,false,true,true,side,cured,block,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,formatge feta en bloc
+feta_crumbled,dairy,dairy_cheese,salty|acidic,false,true,true,side,cured,crumbled,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,formatge feta esmicolat
+udon_noodles,grain,wheat,neutral,true,false,false,base,processed,noodle,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly,fideus udon
+ramen_noodles,grain,wheat,neutral|slightly_salty,true,false,false,base,processed,noodle,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly,fideus ramen
+fried_noodle_crisps,grain,wheat,toasted|savory,true,false,false,side,fried,puffed_noodle,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly,fideus fregits cruixents
+wonton_strips,grain,wheat,neutral|crisp,true,false,false,side,fried,strip,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly,tires de wonton fregides
+cheddar,dairy,dairy_cheese,salty|umami|fatty,false,true,true,side,cured,block,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,formatge cheddar
+gouda,dairy,dairy_cheese,umami|mild_sweet|fatty,false,true,true,side,cured,block,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,formatge gouda
+ricotta,dairy,soft_dairy_cheese,mild|creamy,false,true,true,side,fresh,soft_cheese,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,formatge ricotta (o mató)
+cream_cheese,dairy,soft_dairy_cheese,mild|slightly_acidic,false,true,true,side,fresh,soft_cheese,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,formatge crema
+brie,dairy,soft_dairy_cheese,mild|buttery|umami,true,true,true,side,ripened,soft_cheese,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,formatge brie
+camembert,dairy,soft_dairy_cheese,mild|earthy|creamy,true,true,true,side,ripened,soft_cheese,milk,omnivore|vegetarian|kosher_friendly|halal_friendly,formatge camembert
+apple,fruit,general_fruit,sweet|fresh,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,poma
+mango,fruit,tropical_fruit,sweet|tropical,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,mango
+galangal,spice,root,spicy|citrusy|earthy,false,false,false,seasoning,fresh,raw,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,galanga
+ginger_powder,spice,root,spicy|warm,false,false,false,seasoning,dried,powder,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,gingebre en pols
+lard,fat,general_fat,fatty,false,false,true,fat,processed,fat,none,omnivore|halal_friendly|kosher_friendly,llard de porc
+clarified_butter,fat,general_fat,fatty|buttery,false,true,true,fat,processed,oil,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,mantega aclarida (ghee)
+mixed_herbs,seasoning,aromatic_herb,herbaceous|fresh,false,false,false,seasoning,dried,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,herbes barrejades
+italian_herbs,seasoning,aromatic_herb,herbaceous|mediterranean,false,false,false,seasoning,dried,blend,none,omnivore|vegetarian|vegan|kosher_friendly|halal_friendly,herbes italianes
+turkey_breast,protein_animal,meat_poultry,umami|mild,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly,pit de gall dindi
+ground_turkey,protein_animal,meat_poultry,umami|mild_fatty,false,false,true,main,processed,minced,none,omnivore|halal_friendly|kosher_friendly,gall dindi picat
+duck_breast,protein_animal,meat_poultry,umami|fatty|gamey,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly,pit d'ànec (magret)
+confit_duck,protein_animal,meat_poultry,umami|fatty|rich,false,false,true,main,processed,meat_piece,none,omnivore|halal_friendly|kosher_friendly,confit d'ànec
+quail_legs,protein_animal,meat_poultry,umami|mild_gamey,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly,cuixes de guatlla
+quail_breast,protein_animal,meat_poultry,umami|delicate,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly,pit de guatlla
+icing_mix,sweetener,sugar,very_sweet,false,false,false,decoration,processed,powder,none,omnivore|vegetarian|vegan,preparat per a glacejat
+powdered_sugar,sweetener,sugar,very_sweet,false,false,false,structure,processed,powder,none,omnivore|vegetarian|vegan,sucre de llustre
+strained_yogurt,dairy,dairy_yogurt,creamy|acidic,false,true,true,side,fermented,creamy,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,iogurt colat (estil grec)
+yogurt_spread,dairy,dairy_yogurt,creamy|mild_sweet,false,true,true,side,fermented,soft,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,crema de iogurt per untar
+young_jackfruit,fruit,tropical_fruit,mild|neutral,false,false,false,main,fresh,chunks,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,jaca jove (verda)
+jackfruit_chunks,fruit,tropical_fruit,sweet|tropical,false,false,false,side,fresh,chunks,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,trossos de jaca
+curly_parsley,seasoning,aromatic_herb,fresh|herbaceous,false,false,false,seasoning,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,julivert arrissat
+flat_parsley,seasoning,aromatic_herb,herbaceous|fresh,false,false,false,seasoning,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,julivert llis
+whole_milk,dairy,basic_dairy,creamy|mild_sweet,false,true,true,base,fresh,liquid,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,llet sencera
+skim_milk,dairy,basic_dairy,mild_sweet,false,true,true,base,fresh,liquid,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,llet desnatada
+coconut_cream,other,dairy_substitute,fatty|tropical,false,false,false,side,processed,cream,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,crema de coco
+light_coconut_milk,other,dairy_substitute,mild_fatty|tropical,false,false,false,side,processed,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,llet de coco lleugera
+meyer_lemon,seasoning,citrus,acidic|fruity,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,llimona Meyer
+lemon_zest,seasoning,citrus,citrusy|aromatic,false,false,false,aroma,fresh,grated,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,ratlladura de llimona
+key_lime,seasoning,citrus,acidic|aromatic,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,llima Key
+lime_zest,seasoning,citrus,citrusy|aromatic,false,false,false,aroma,fresh,grated,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,ratlladura de llima
+elbow_macaroni,grain,wheat,neutral,true,false,false,base,processed,pasta,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly,galets (o macarrons colze)
+rigatoni,grain,wheat,neutral,true,false,false,base,processed,pasta,gluten,omnivore|vegetarian|kosher_friendly|halal_friendly,rigatoni
+aioli,sauce,emulsion,garlic|fatty,false,false,false,sauce,processed,emulsion,egg,omnivore|vegetarian|halal_friendly|kosher_friendly,allioli
+kewpie_mayo,sauce,emulsion,fatty|umami,false,false,false,sauce,processed,emulsion,egg,omnivore|vegetarian|halal_friendly|kosher_friendly,maionesa Kewpie
+clarified_butter,fat,dairy_butter,buttery|fatty,false,true,true,fat,processed,oil,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,mantega aclarida
+ghee,fat,dairy_butter,buttery|nutty,false,true,true,fat,processed,oil,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,ghee
+chunky_peanut_butter,fat,peanut_nut,fatty|sweet,false,false,false,side,processed,paste,peanuts,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,mantega de cacauet amb trossos
+honey_peanut_butter,fat,peanut_nut,fatty|sweet|caramel,false,false,false,side,processed,paste,peanuts,omnivore|vegetarian|halal_friendly|kosher_friendly,mantega de cacauet amb mel
+vegan_marshmallows,sweet,confectionery,very_sweet,false,false,false,side,processed,confection,none,omnivore|vegetarian|vegan,núvols (marshmallows) vegans
+marshmallow_fluff,sweet,confectionery,very_sweet,false,false,false,side,processed,foam,none,omnivore|vegetarian,crema de núvol (marshmallow fluff)
+spearmint,spice,aromatic_herb,fresh|minty,false,false,false,seasoning,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,herba-sana
+mint_powder,spice,aromatic_herb,herbaceous|fresh,false,false,false,seasoning,dried,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,menta en pols
+italian_meringue,sweet,confectionery,very_sweet,false,false,true,structure,processed,foam,egg,omnivore|halal_friendly|kosher_friendly,merenga italiana
+swiss_meringue,sweet,confectionery,very_sweet,false,false,true,structure,processed,foam,egg,omnivore|halal_friendly|kosher_friendly,merenga suïssa
+sweet_mirin,sauce,fermented,sweet|mild_acidic,false,false,false,sauce,fermented,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,mirin dolç
+mirin_reduction,sauce,fermented,sweet|caramelized,false,false,false,sauce,cooked,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,reducció de mirin
+white_miso,plant_vegetal,fermented,mild_umami|slightly_sweet,false,false,false,sauce|base,fermented,paste,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,miso blanc (shiro miso)
+red_miso,plant_vegetal,fermented,umami|salty|intense,false,false,false,sauce|base,fermented,paste,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,miso vermell (aka miso)
+buffalo_mozzarella,dairy,soft_dairy_cheese,mild|milky,false,true,true,side,fresh,soft_cheese,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,mozzarella de búfala
+low_moisture_mozzarella,dairy,soft_dairy_cheese,mild|slightly_salty,false,true,true,side,processed,block,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,mozzarella de baixa humitat
+wholegrain_mustard,seasoning,seed,spicy|tangy,false,false,false,seasoning,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,mostassa a l'antiga (en gra)
+mustard_powder,seasoning,seed,spicy|sharp,false,false,false,seasoning,dried,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,mostassa en pols
+heavy_cream,dairy,dairy_cream,fatty|mild_sweet,false,true,true,side,fresh,liquid,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,nata espessa (per muntar)
+light_cream,dairy,dairy_cream,mild_sweet|fatty,false,true,true,side,fresh,liquid,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,nata líquida (per cuinar)
+creme_fraiche,dairy,dairy_cream,acidic|creamy,false,true,true,side,fermented,creamy,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,crema fresca (crème fraîche)
+cultured_cream,dairy,dairy_cream,acidic|fatty,false,true,true,side,fermented,creamy,milk,omnivore|vegetarian|halal_friendly|kosher_friendly,crema agra fermentada
+whole_nutmeg,spice,spice,spiced|warm,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,nou moscada sencera
+nutmeg_powder,spice,spice,spiced|mild_sweet,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,nou moscada en pols
+walnut_halves,nuts,walnut_nut,earthy|fatty,false,false,false,side,raw,whole,nuts,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,nous a meitats
+walnut_pieces,nuts,walnut_nut,fatty|earthy,false,false,false,side,raw,chopped,nuts,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,nous a trossos
+nori_sheets,plant_vegetal,algae,umami|marine,false,false,false,side,dried,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,fulles d'alga nori
+nori_flakes,plant_vegetal,algae,umami|salty,false,false,false,seasoning,dried,flakes,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,fulletons de nori (flakes)
+nyora_powder,spice,dried_pepper,smoky|sweet,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,nyora en pols
+dried_peppers,spice,dried_pepper,smoky|fruity,false,false,false,seasoning,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pebrots secs
+neutral_oil,fat,general_fat,neutral|fatty,false,false,false,fat,processed,oil,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,oli neutre
+vegetable_oil,fat,general_fat,neutral|fatty,false,false,false,fat,processed,oil,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,oli vegetal
+dark_sesame_oil,fat,semi_toasted_oils,toasted|nutty,false,false,false,fat,processed,oil,sesame,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,oli de sèsam torrat
+light_sesame_oil,fat,semi_toasted_oils,fatty|mild_toasted,false,false,false,fat,processed,oil,sesame,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,oli de sèsam clar
+extra_virgin_olive_oil,fat,mediterranean_oils,fruity|grassy,false,false,false,fat,processed,oil,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,oli d'oliva verge extra
+light_olive_oil,fat,mediterranean_oils,fatty|neutral,false,false,false,fat,processed,oil,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,oli d'oliva suau
+olive_slices,fruit,stone_fruit,salty|fatty,false,false,false,side,brined,sliced,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,olives a rodanxes
+olive_paste,fruit,stone_fruit,salty|fatty,false,false,false,side,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pasta d'olives (tapenada)
+oregano_powder,spice,aromatic_herb,herbaceous,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,orenga en pols
+mediterranean_oregano,spice,aromatic_herb,herbaceous|aromatic,false,false,false,seasoning,dried,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,orenga mediterrània
+shucked_oysters,protein_animal,mollusc,umami|salty,false,false,true,main,fresh,meat,crustaceans|molluscs,omnivore,ostres sense closca
+smoked_oysters,protein_animal,mollusc,umami|salty|smoky,false,false,true,side,smoked,whole,crustaceans|molluscs,omnivore,ostres fumades
+egg_yolk,protein_animal,egg,rich|umami,false,false,true,structure,fresh,raw,egg,omnivore|halal_friendly|kosher_friendly,rovell d'ou
+egg_whole,protein_animal,egg,umami|mild_fatty,false,false,true,structure,fresh,whole,egg,omnivore|halal_friendly|kosher_friendly,ou sencer
+baguette,grain,wheat,neutral|crusty,true,false,false,base,baked,loaf,gluten,omnivore|vegetarian|halal_friendly|kosher_friendly,baguet
+bread_rolls,grain,wheat,neutral|soft,true,false,false,side,baked,rolls,gluten,omnivore|vegetarian|halal_friendly|kosher_friendly,panets
+panko,grain,wheat,neutral|toasted,true,false,false,structure,processed,crumbs,gluten,omnivore|vegetarian|halal_friendly|kosher_friendly,panko
+fine_breadcrumbs,grain,wheat,neutral|toasted,true,false,false,structure,processed,crumbs,gluten,omnivore|vegetarian|halal_friendly|kosher_friendly,pa ratllat fi
+pandan_extract,seasoning,aromatic_leaf,herbaceous|sweet,false,false,false,aroma,processed,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,extracte de pandan
+dried_pandan,seasoning,aromatic_leaf,herbaceous,false,false,false,aroma,dried,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pandan sec
+smoked_paprika,spice,spice,smoky|sweet,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pebre vermell fumat
+sweet_paprika,spice,spice,sweet|aromatic,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pebre vermell dolç
+carrot_slices,vegetable,root,sweet|earthy,false,false,false,side,fresh,sliced,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pastanaga a rodanxes
+carrot_puree,vegetable,root,sweet|earthy,false,false,false,side,cooked,puree,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,puré de pastanaga
+dried_citrus_peel,seasoning,citrus,bitter|citrusy,false,false,false,aroma,dried,peel,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pell de cítric seca
+candied_citrus_peel,seasoning,citrus,sweet|citrusy,false,false,false,decoration,processed,peel,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pell de cítric confitada
+black_pepper,spice,spice,pungent|spicy,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pebre negre
+white_pepper,spice,spice,mild_spicy,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pebre blanc
+paprika_powder,spice,spice,sweet|aromatic,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pebre vermell en pols
+smoked_paprika_sweet,spice,spice,sweet|smoky,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pebre vermell dolç fumat
+red_bell_pepper,vegetable,solanaceae,sweet|fresh,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pimentó vermell
+yellow_bell_pepper,vegetable,solanaceae,sweet|mild,false,false,false,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pimentó groc
+snap_peas,vegetable,legume,fresh|green,false,false,false,side,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,tirabecs (o pèsols fins)
+peas_puree,vegetable,legume,sweet|green,false,false,false,side,cooked,puree,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,puré de pèsols
+pineapple_slices,fruit,tropical_fruit,sweet|acidic,false,false,false,side,fresh,sliced,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pinya a rodanxes
+pineapple_chunks,fruit,tropical_fruit,sweet|tropical,false,false,false,side,fresh,chunks,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pinya a trossos
+chicken_breast,protein_animal,meat_poultry,umami|lean,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly,pit de pollastre
+chicken_thigh,protein_animal,meat_poultry,umami|fatty,false,false,true,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly,cuixa de pollastre
+golden_raisins,fruit,dried_fruit,sweet|fruity,false,false,false,side,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,panses rosses
+sultanas,fruit,dried_fruit,sweet|mild,false,false,false,side,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,panses sultanes
+rosemary_powder,spice,aromatic_herb,herbaceous|resinous,false,false,false,seasoning,dried,ground,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,romaní en pols
+fresh_rosemary,spice,aromatic_herb,herbaceous|piney,false,false,false,seasoning,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,romaní fresc
+fine_salt,seasoning,salt,salty,false,false,false,seasoning,raw,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sal fina
+coarse_salt,seasoning,salt,salty,false,false,false,seasoning,raw,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sal gruixuda
+salami_slices,protein_animal,meat_cured,salty|umami,false,false,true,side,cured,cold_cut,none,omnivore,salami a tallades
+spicy_salami,protein_animal,meat_cured,spicy|umami,false,false,true,main,cured,sausage,none,omnivore,salami picant
+thick_oyster_sauce,sauce,seafood,umami|sweet_salty,false,false,false,sauce,processed,liquid,crustaceans|molluscs,omnivore,salsa d'ostres espessa
+premium_oyster_sauce,sauce,seafood,umami|rich,false,false,false,sauce,processed,liquid,crustaceans|molluscs,omnivore,salsa d'ostres premium
+light_soy_sauce,sauce,fermented,salty|umami,false,false,false,sauce,fermented,liquid,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,salsa de soja clara
+dark_soy_sauce,sauce,fermented,umami|caramel,false,false,false,sauce,fermented,liquid,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,salsa de soja fosca
+worcestershire_concentrate,sauce,fermented,umami|acidic|sweet_salty,false,false,false,sauce,processed,liquid,fish|sulfites,omnivore,concentrat de salsa Worcestershire
+vegan_worcestershire,sauce,fermented,umami|acidic,false,false,false,sauce,processed,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,salsa Worcestershire vegana
+salmon_steak,protein_animal,fish_oily,umami|fatty,false,false,true,main,fresh,steak,fish,omnivore|halal_friendly|kosher_friendly,tall de salmó
+smoked_salmon,protein_animal,fish_oily,umami|smoky|fatty,false,false,true,side,smoked,fillet,fish,omnivore|halal_friendly|kosher_friendly,salmó fumat
+toasted_sesame,nuts,seed,toasted|nutty,false,false,false,side,roasted,seed,sesame,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sèsam torrat
+black_sesame,nuts,seed,fatty|earthy,false,false,false,side,raw,seed,sesame,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sèsam negre
+soybeans,plant_vegetal,legume,earthy|umami,false,false,false,main|base,fresh,whole,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,llavors de soja
+cooked_soy,plant_vegetal,legume,soft|umami,false,false,false,side,cooked,chunks,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,soja cuita
+caster_sugar,sweetener,sweetener,sweet,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sucre de gra fi
+coarse_sugar,sweetener,sweetener,sweet,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sucre de gra gruixut
+white_granulated_sugar,sweetener,sweetener,very_sweet,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sucre blanc granulat
+superfine_sugar,sweetener,sweetener,very_sweet,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sucre extrafi
+palm_sugar_paste,sweetener,sweetener,caramelized|sweet,false,false,false,structure,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pasta de sucre de palma
+palm_sugar_granules,sweetener,sweetener,caramelized,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sucre de palma granulat
+icing_mix,sweetener,sweetener,very_sweet,false,false,false,decoration,processed,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,preparat de sucre de llustre
+confectioners_sugar,sweetener,sweetener,very_sweet,false,false,false,decoration,processed,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sucre de pastisseria (llustre)
+muscovado_sugar,sweetener,sweetener,caramelized|deep,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sucre muscovado
+demerara_sugar,sweetener,sweetener,caramelized|crunchy,false,false,false,structure,processed,crystal,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,sucre demerara
+suya_marinade,sauce,african_sauce,spicy|umami,false,false,false,sauce,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,marinat de suya
+dry_suya_mix,spice,african_spice,spicy|aromatic,false,false,false,seasoning,dried,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,mescla d'espècies suya
+tamarind_paste,seasoning,tropical_fruit,acidic|fruity,false,false,false,side,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pasta de tamarinde
+tamarind_concentrate,seasoning,tropical_fruit,acidic|intense,false,false,false,seasoning,processed,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,concentrat de tamarinde
+silken_tofu,plant_vegetal,soy_derivative,mild|creamy,false,false,false,main|substitute,processed,soft_block,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,tofu sedós
+smoked_tofu,plant_vegetal,soy_derivative,umami|smoky,false,false,false,main|substitute,smoked,block,soy,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,tofu fumat
+tomato_slices,vegetable,solanaceae,acidic|fresh,false,false,false,side,fresh,sliced,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,tomàquet a rodanxes
+tomato_puree,vegetable,solanaceae,sweet|acidic,false,false,false,base,processed,puree,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,puré de tomàquet
+tuna_steak,protein_animal,fish_oily,umami|fatty,false,false,true,main,fresh,steak,fish,omnivore|halal_friendly|kosher_friendly,tall de tonyina
+tuna_sashimi,protein_animal,fish_oily,umami|mild,fresh,false,true,main,fresh,sliced,fish,omnivore|halal_friendly|kosher_friendly,sashimi de tonyina
+tuna_flakes_canned,protein_animal,fish_oily,umami|mild_fatty,false,false,true,main,canned,flakes,fish,omnivore|halal_friendly|kosher_friendly,tonyina en llauna (esmicolada)
+tuna_in_oil,protein_animal,fish_oily,umami|fatty,false,false,true,main,canned,fillet,fish,omnivore|halal_friendly|kosher_friendly,tonyina en oli
+umeboshi_paste,seasoning,japanese_fermented,very_acidic|salty,false,false,false,seasoning,fermented,paste,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,pasta d'umeboshi
+umeboshi_plum,seasoning,japanese_fermented,acidic|salty,false,false,false,side,fermented,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,umeboshi (pruna fermentada)
+vanilla_pod,seasoning,aromatic_seed,floral|sweet,false,false,false,aroma,dried,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,baina de vainilla
+vanilla_powder,seasoning,aromatic_seed,floral|sweet,false,false,false,aroma,dried,powder,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,vainilla en pols
+apple_cider_vinegar,seasoning,acetic,acidic|fruity,false,false,false,seasoning,fermented,liquid,sulfites,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,vinagre de sidra de poma
+white_vinegar,seasoning,acetic,acidic|sharp,false,false,false,seasoning,fermented,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,vinagre blanc
+brown_rice_vinegar,seasoning,asian_acetic,mild_acidic|earthy,false,false,false,seasoning,fermented,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,vinagre d'arròs integral
+black_rice_vinegar,seasoning,asian_acetic,acidic|deep,false,false,false,seasoning,fermented,liquid,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,vinagre d'arròs negre
+wakame_flakes,plant_vegetal,algae,umami|marine,false,false,false,seasoning,dried,flakes,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,wakame en fulletons (flakes)
+salted_wakame,plant_vegetal,algae,umami|salty,false,false,false,side,processed,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,wakame salat
+red_chili,spice,strong_spice,spicy|fruity,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,xili vermell
+green_chili,spice,strong_spice,spicy|fresh,false,false,false,seasoning,fresh,whole,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,xili verd
+dark_chocolate,sweetener,cacao,bitter|sweet,false,false,false,side,processed,block,none,omnivore|vegetarian|vegan,xocolata negra
+chocolate_chips,sweetener,cacao,sweet|mild_bitter,false,false,false,decoration,processed,chips,none,omnivore|vegetarian|vegan,xips de xocolata
+zucchini_slices,vegetable,cucurbit,mild|fresh,false,false,false,side,fresh,sliced,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,carbassó a rodanxes
+grilled_zucchini,vegetable,cucurbit,smoky|mild,false,false,false,side,cooked,slices,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,carbassó a la brasa
+clams_shucked,protein_animal,mollusc,umami|salty,false,false,true,main,fresh,meat,molluscs,omnivore,cloïsses sense closca
+steamed_clams,protein_animal,mollusc,umami|briny,false,false,true,side,cooked,whole,molluscs,omnivore,cloïsses al vapor
+firm_tofu,plant_vegetal,soy,neutral|mild_umami,false,false,false,main,processed,block,soy,omnivore|vegetarian|vegan,tofu ferm
+tofu_cubes,plant_vegetal,soy,neutral,false,false,false,side,processed,cubes,soy,omnivore|vegetarian|vegan,tofu a daus
+seitan_strips,plant_vegetal,wheat,savory|umami,true,false,false,main,processed,strips,gluten,omnivore|vegetarian|vegan,tires de seitan
+smoked_seitan,plant_vegetal,wheat,smoky|savory,true,false,false,main,processed,block,gluten,omnivore|vegetarian|vegan,seitan fumat
+tempeh_cubes,plant_vegetal,soy,earthy|nutty,false,false,false,main,fermented,cubes,soy,omnivore|vegetarian|vegan,tempeh a daus
+smoked_tempeh,plant_vegetal,soy,earthy|smoky,false,false,false,side,smoked,block,soy,omnivore|vegetarian|vegan,tempeh fumat
+cooked_chickpeas,plant_vegetal,legume,nutty|soft,false,false,false,main,cooked,whole,none,omnivore|vegetarian|vegan,cigrons cuits
+chickpea_puree,plant_vegetal,legume,nutty|creamy,false,false,false,base,processed,puree,none,omnivore|vegetarian|vegan,puré de cigrons (hummus)
+cooked_lentils,plant_vegetal,legume,earthy|soft,false,false,false,main,cooked,whole,none,omnivore|vegetarian|vegan,llenties cuites
+lentil_puree,plant_vegetal,legume,earthy|creamy,false,false,false,base,cooked,puree,none,omnivore|vegetarian|vegan,puré de llenties
