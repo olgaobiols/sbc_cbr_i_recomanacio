@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 from typing import List, Set, Dict, Any, Optional, Tuple
@@ -821,17 +822,84 @@ def main():
         _save_user_profiles(PATH_USER_PROFILES, user_profiles)
         print("Perfecte, actualització guardada.")
 
-    usar_alergies_guardades = bool(stored_alergies)
-    if stored_alergies:
-        usar_alergies_guardades = (
-            input_default("Vols tenir en compte aquests al·lèrgens avui? (s/n)", "s")
-            .strip()
-            .lower()
-            == "s"
-        )
-
     # 1) Inicialitzem el Retriever
     retriever = Retriever(os.path.join("data", "base_de_casos.json"))
+
+    def _perfil_from_restriccions(restriccions_set: Set[str]) -> Optional[Dict[str, Any]]:
+        if not restriccions_set:
+            return None
+        allergens_keys = {k for k, _ in EU_ALLERGENS}
+        alergies = sorted({r for r in restriccions_set if r in allergens_keys})
+        dieta = None
+        if "vegan" in restriccions_set:
+            dieta = "vegan"
+        elif "vegetarian" in restriccions_set:
+            dieta = "vegetarian"
+        perfil = {}
+        if alergies:
+            perfil["alergies"] = alergies
+        if dieta:
+            perfil["dieta"] = dieta
+        return perfil or None
+
+    def _prohibits_per_plat(
+        ingredients: List[str],
+        restriccions_set: Set[str],
+        perfil: Optional[Dict[str, Any]],
+    ) -> Set[str]:
+        prohibits = set()
+        if perfil:
+            prohibits.update(ingredients_incompatibles(ingredients, kb, perfil))
+        if restriccions_set:
+            norm_map = {_normalize_item(i): i for i in ingredients if i}
+            for r in restriccions_set:
+                r_norm = _normalize_item(r)
+                if r_norm in norm_map:
+                    prohibits.add(norm_map[r_norm])
+        return prohibits
+
+    def _aplica_restriccions_plat(
+        plat: Dict[str, Any],
+        restriccions_set: Set[str],
+        perfil: Optional[Dict[str, Any]],
+    ) -> None:
+        ingredients = list(plat.get("ingredients", []) or [])
+        prohibits = _prohibits_per_plat(ingredients, restriccions_set, perfil)
+        if not prohibits:
+            return
+        prohibits_total = set(prohibits) | set(restriccions_set)
+        adaptat = substituir_ingredients_prohibits(
+            plat,
+            prohibits_total,
+            kb,
+            perfil_usuari=perfil,
+        )
+        if isinstance(adaptat, dict):
+            plat.clear()
+            plat.update(adaptat)
+
+    def _get_plat(plats: List[dict], curs: str) -> dict:
+        curs_norm = str(curs).lower()
+        for p in plats:
+            if str(p.get("curs", "")).lower() == curs_norm:
+                return p
+        return {"curs": curs_norm, "nom": "—", "ingredients": []}
+
+    def _diff_ingredients(base: List[str], variant: List[str]) -> List[str]:
+        canvis = []
+        max_len = max(len(base), len(variant))
+        for i in range(max_len):
+            ing_base = base[i] if i < len(base) else None
+            ing_var = variant[i] if i < len(variant) else None
+            if ing_base == ing_var:
+                continue
+            if ing_base and ing_var:
+                canvis.append(f"{ing_base} -> {ing_var}")
+            elif ing_base and not ing_var:
+                canvis.append(f"{ing_base} -> (eliminat)")
+            elif ing_var and not ing_base:
+                canvis.append(f"(afegit) {ing_var}")
+        return canvis
 
     while True:
         _print_section("Comencem una nova petició")
@@ -861,49 +929,58 @@ def main():
         preu_pers = input_float_default("Quin pressupost per persona tenim (€)?", 50.0)
         print("Genial.")
         
-        # [NOU] Restriccions
-        restr_default = ", ".join(stored_restr) if stored_restr else ""
-        restr_input = input_default(
-            "Hi ha alguna restricció dietètica a tenir en compte? (ex: celiac, vegan)",
-            restr_default,
-        )
-        restriccions = parse_list_input(restr_input)
-        if restriccions:
-            print("Perfecte, ho tindré en compte.")
-        else:
-            print("Cap restricció dietètica, perfecte.")
-        if restriccions != set(stored_restr):
-            perfil_guardat = _get_user_profile(user_profiles, user_id)
-            perfil_guardat["restriccions"] = sorted(restriccions)
-            _save_user_profiles(PATH_USER_PROFILES, user_profiles)
-            stored_restr = sorted(restriccions)
-        if usar_alergies_guardades:
-            alergies = list(stored_alergies)
-            if alergies:
-                print("Mantinc els al·lèrgens guardats.")
-        else:
-            print("Revisem els al·lèrgens per seguretat.")
-            alergies = seleccionar_alergens()
+        # 2.1) Fase d'inputs de restriccions (globals i subgrups)
+        print("\nALLERGENS UE (14)")
+        for i, (key, label) in enumerate(EU_ALLERGENS, start=1):
+            print(f"  {i:>2}. {label} [{key}]")
 
-        if alergies != stored_alergies:
-            _store_user_alergies(user_profiles, user_id, alergies)
-            _save_user_profiles(PATH_USER_PROFILES, user_profiles)
-            stored_alergies = list(alergies)
-            if alergies:
-                usar_alergies_guardades = True
-        dieta = None
-        if "vegan" in restriccions:
-            dieta = "vegan"
-        elif "vegetarian" in restriccions:
-            dieta = "vegetarian"
+        restr_txt = input("Restriccions GLOBALS (per a tothom)? [Enter si cap]: ").strip()
+        restriccions = parse_list_input(restr_txt)
 
-        perfil_usuari = {}
-        if alergies:
-            perfil_usuari["alergies"] = alergies
-        if dieta:
-            perfil_usuari["dieta"] = dieta
-        if not perfil_usuari:
-            perfil_usuari = None
+        txt = input("Quants subgrups amb necessitats especials hi ha? (0 si cap): ").strip()
+        try:
+            n_subgrups = int(txt) if txt else 0
+        except ValueError:
+            print("  Valor no vàlid. Assumim 0 subgrups.")
+            n_subgrups = 0
+        if n_subgrups < 0:
+            n_subgrups = 0
+
+        subgroups = []
+        for i in range(n_subgrups):
+            nom_grup = input("Nom del grup: ").strip()
+            if not nom_grup:
+                nom_grup = f"Grup {i + 1}"
+            restr_grup_txt = input("Restriccions: ").strip()
+            restr_grup = sorted(parse_list_input(restr_grup_txt))
+            subgroups.append(
+                {"name": nom_grup, "restrictions": restr_grup, "is_vip": False}
+            )
+
+        if n_comensals > 1 and (stored_rejected_ing or stored_alergies):
+            vol_vip = input_default(
+                f"Vols un menú especial per a tu (VIP - {display_name}) amb les teves preferències?",
+                "n",
+            ).strip().lower()
+            if vol_vip == "s":
+                vip_restr = []
+                vip_restr.extend(stored_alergies)
+                vip_restr.extend(stored_restr)
+                if stored_dieta and stored_dieta not in vip_restr:
+                    vip_restr.append(stored_dieta)
+                vip_restr.extend(stored_rejected_ing)
+                vip_restr = _dedup_preserve_order(
+                    [_normalize_item(x) for x in vip_restr if _normalize_item(x)]
+                )
+                subgroups.append(
+                    {
+                        "name": f"VIP {display_name}",
+                        "restrictions": vip_restr,
+                        "is_vip": True,
+                    }
+                )
+
+        perfil_usuari = _perfil_from_restriccions(restriccions)
         
         alcohol = input_choice("Vols que proposem begudes amb alcohol?", ["si", "no"], "si")
         print("Perfecte.")
@@ -927,20 +1004,60 @@ def main():
         enfoc = ", ".join(restriccions) if restriccions else "estructura general"
         print(f"He trobat coincidències tenint en compte: {enfoc}.")
         resultats = retriever.recuperar_casos_similars(problema, k=5)
-        imprimir_casos(resultats, top_k=3)
 
         if not resultats:
             if input_default("Vols provar amb una altra combinació? (s/n)", "s").lower() != 's':
                 break
             continue
 
+        opcions_preparades = []
+        top_resultats = resultats[:3]
+
+        for i, res in enumerate(top_resultats, start=1):
+            cas = res.get("cas", {})
+            score = res.get("score_final", 0.0)
+            sol = cas.get("solucio", {}) or {}
+            plats_originals = sol.get("plats", []) or []
+
+            menu_general = copy.deepcopy(plats_originals)
+            for plat in menu_general:
+                _aplica_restriccions_plat(plat, restriccions, perfil_usuari)
+
+            opcions_preparades.append(
+                {
+                    "cas": cas,
+                    "score": score,
+                    "menu_general": menu_general,
+                }
+            )
+
+            pr = cas.get("problema", {}) or {}
+            nom_base = pr.get("tipus_esdeveniment") or f"Cas {cas.get('id_cas', '?')}"
+            estil = (pr.get("estil_culinari") or pr.get("estil") or "estàndard").strip()
+            etiqueta_cas = f"{nom_base} / {estil}" if estil else nom_base
+
+            print("\n" + "=" * 50)
+            print(f"OPCIÓ {i}: {etiqueta_cas} (Afinitat: {score * 100:.1f}%)")
+            print("=" * 50)
+
+            p1 = _get_plat(menu_general, "primer")
+            p2 = _get_plat(menu_general, "segon")
+            p3 = _get_plat(menu_general, "postres")
+
+            print("1. 🥘 MENÚ GENERAL (Omnívor / Estàndard)")
+            print(f"   - Primer: {p1.get('nom','—')}")
+            print(f"   - Segon: {p2.get('nom','—')}")
+            print(f"   - Postres: {p3.get('nom','—')}")
+
         # 5) Selecció del Cas
-        idx = input_int_default("\nQuina proposta vols que prenguem com a base? (1-3)", 1)
+        idx = input_int_default("Quina opció tries? (1-3)", 1)
+        if idx < 1 or idx > len(opcions_preparades):
+            idx = 1
         print("Molt bé, treballarem amb aquesta proposta.")
-        cas_seleccionat = resultats[idx-1]["cas"]
+        cas_seleccionat = opcions_preparades[idx - 1]["cas"]
         sol = cas_seleccionat["solucio"]
 
-        plats = sol.get("plats", []) or []
+        plats = copy.deepcopy(opcions_preparades[idx - 1]["menu_general"])
         vetats_ingredients, parelles_vetades = _collect_vetats(perfil_guardat, learned_rules)
 
         def _agafa_plat(curs: str) -> dict:
@@ -1325,6 +1442,68 @@ def main():
                 plat2, transf_2, info_llm_2, beguda2, score2,
                 postres, transf_post, info_llm_post, beguda_postres, score_postres
             )
+
+        if subgroups:
+            _print_section("CALCUL DE VARIANTS FINALS")
+            print("=== ADAPTACIONS PER A SUBGRUPS ===")
+            plats_base = [plat1, plat2, postres]
+            curs_labels = ["Primer", "Segon", "Postres"]
+
+            for grup in subgroups:
+                total_restr = set(restriccions) | set(grup.get("restrictions", []))
+                perfil_variant = _perfil_from_restriccions(total_restr)
+                plats_variant = [copy.deepcopy(p) for p in plats_base]
+                canvis = []
+
+                for idx_plat, (plat_base, plat_variant) in enumerate(
+                    zip(plats_base, plats_variant)
+                ):
+                    ingredients = list(plat_variant.get("ingredients", []) or [])
+                    prohibits = _prohibits_per_plat(ingredients, total_restr, perfil_variant)
+                    if prohibits:
+                        adaptat = substituir_ingredients_prohibits(
+                            plat_variant,
+                            set(prohibits) | set(total_restr),
+                            kb,
+                            perfil_usuari=perfil_variant,
+                        )
+                        if isinstance(adaptat, dict):
+                            plat_variant = adaptat
+
+                    if (
+                        plat_base.get("ingredients", []) != plat_variant.get("ingredients", [])
+                        or plat_base.get("nom") != plat_variant.get("nom")
+                    ):
+                        diffs = _diff_ingredients(
+                            list(plat_base.get("ingredients", []) or []),
+                            list(plat_variant.get("ingredients", []) or []),
+                        )
+                        motiu = ", ".join(sorted(prohibits)) if prohibits else ""
+                        canvis.append(
+                            {
+                                "curs": curs_labels[idx_plat],
+                                "base": plat_base,
+                                "variant": plat_variant,
+                                "diffs": diffs,
+                                "motiu": motiu,
+                            }
+                        )
+
+                nom_grup = grup.get("name", "Grup")
+                if not canvis:
+                    print(f"{nom_grup}: ✅ Compatible nativament")
+                else:
+                    print(f"{nom_grup}: ⚠️ Adaptat")
+                    for canvi in canvis:
+                        plat_base = canvi["base"]
+                        plat_variant = canvi["variant"]
+                        if plat_base.get("nom") != plat_variant.get("nom") and plat_variant.get("nom"):
+                            canvi_txt = f"{plat_base.get('nom','—')} -> {plat_variant.get('nom','—')}"
+                        else:
+                            diffs = canvi["diffs"]
+                            canvi_txt = ", ".join(diffs) if diffs else "canvis d'ingredients"
+                        motiu = f" (Motiu: {canvi['motiu']})" if canvi["motiu"] else ""
+                        print(f"  - {canvi['curs']}: {canvi_txt}{motiu}")
 
         # 9.1) Imatge del menú (opcional)
         if input_default("Vols generar una imatge detallada del menú? (s/n)", "n").lower() == 's':
