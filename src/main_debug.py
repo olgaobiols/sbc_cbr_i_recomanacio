@@ -936,6 +936,62 @@ def imprimir_menu_final(
     print(_line("="))
 
 
+def imprimir_justificacio_begudes(plat1, beguda1, detail1,
+                                  plat2, beguda2, detail2,
+                                  postres, beguda_postres, detail_postres):
+    
+    def text_beguda(plat, beguda, detail):
+        txt = f"\nPer al plat: {plat.get('nom')}, s'ha escollit la beguda: {beguda['nom']}."
+        frases = []
+
+        # Funció interna per construir la frase d'un ingredient
+        def frase_ingredient(ingredient, principal=False):
+            parts = []
+            if ingredient.get('categoria_macro'):
+                parts.append(f"amb categories com {ingredient['categoria_macro']}")
+            if ingredient.get('familia'):
+                parts.append(f"amb la família {ingredient['familia']}")
+            if ingredient.get('sabors_match'):
+                parts.append(f"amb sabors com {', '.join(ingredient['sabors_match'])}")
+            if ingredient.get('sabors_conflicte'):
+                parts.append(f"tot i que no combina amb sabors com {', '.join(ingredient['sabors_conflicte'])}")
+            if parts:
+                text = "; ".join(parts)
+                if principal:
+                    if not(ingredient.get('sabors_match') or ingredient.get('sabors_conflicte')):
+                        text += f" pròpies de l'ingredient principal {ingredient.get('nom')}, que té més pes que la resta."
+                    else:
+                        text += f" pròpis de l'ingredient principal {ingredient.get('nom')}, que té més pes que la resta."
+                else:
+                    text = f"{ingredient.get('nom')}: " + text
+                return text
+            else:
+                return ingredient.get('nom', '')
+
+        # Ingredient principal
+        ing_principal = detail.get('ingredient_principal', {})
+        if ing_principal:
+            frases.append("\nJa que aquesta marida " + frase_ingredient(ing_principal, principal=True))
+
+        # Ingredients secundaris
+        if detail.get('ingredients_secundaris'):
+            secundaris_texts = [frase_ingredient(ing) for ing in detail['ingredients_secundaris']]
+            if secundaris_texts:
+                if len(secundaris_texts) == 1:
+                    frases.append("\nTambé es té en compte l'ingredient secundari " + ", ".join(secundaris_texts))
+                else:
+                    frases.append("\nTambé es tenen en compte els ingredients secundaris " + "; ".join(secundaris_texts))
+        
+        return txt + " " + " ".join(frases) + "."
+    
+    # Imprimeix text per cada plat
+    print(text_beguda(plat1, beguda1, detail1))
+    print("\n" + "-"*80 + "\n")
+    print(text_beguda(plat2, beguda2, detail2))
+    print("\n" + "-"*80 + "\n")
+    print(text_beguda(postres, beguda_postres, detail_postres))
+
+
 def debug_kb_match(plat, kb, etiqueta=""):
     print(f"\n[KB CHECK] {etiqueta} — {plat.get('nom','—')}")
     for ing in plat.get("ingredients", []):
@@ -1688,6 +1744,9 @@ def main():
                 postres, transf_post, info_llm_post, beguda_postres, score_postres,
                 mostrar_logs=False,
             )
+        
+        if input_default("Vols una justificació per l'elecció de les begudes? (s/n)", "n").lower() == 's':
+            imprimir_justificacio_begudes(plat1, beguda1, detail1, plat2, beguda2, detail2, postres, beguda_postres, detail_postres)
 
         if subgroups:
             _print_section_line("VARIANTS PER A GRUPS")
