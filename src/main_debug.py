@@ -1265,27 +1265,28 @@ def main():
         )
         restriccions = parse_restriccions_input(restr_txt)
 
-        txt = input_default(_prompt_inline("Subgrups especials (número):"), "0")
-        try:
-            n_subgrups = int(txt) if txt else 0
-        except ValueError:
-            print("  Valor no vàlid. Assumim 0 subgrups.")
-            n_subgrups = 0
-        if n_subgrups < 0:
-            n_subgrups = 0
-
         subgroups = []
-        for i in range(n_subgrups):
-            nom_grup = input("  Nom del grup: ").strip()
-            if not nom_grup:
-                nom_grup = f"Grup {i + 1}"
-            restr_grup_txt = input("  Restriccions: ").strip()
-            restr_grup = parse_list_input_list(restr_grup_txt)
-            subgroups.append(
-                {"name": nom_grup, "restrictions": restr_grup, "is_vip": False}
-            )
-            restr_disp = ", ".join(restr_grup) if restr_grup else "—"
-            print(f"  Confirmat: Grup {i + 1} '{nom_grup}' | Restriccions: {restr_disp}")
+        if n_comensals > 1:
+            txt = input_default(_prompt_inline("Subgrups especials (número):"), "0")
+            try:
+                n_subgrups = int(txt) if txt else 0
+            except ValueError:
+                print("  Valor no vàlid. Assumim 0 subgrups.")
+                n_subgrups = 0
+            if n_subgrups < 0:
+                n_subgrups = 0
+
+            for i in range(n_subgrups):
+                nom_grup = input("  Nom del grup: ").strip()
+                if not nom_grup:
+                    nom_grup = f"Grup {i + 1}"
+                restr_grup_txt = input("  Restriccions: ").strip()
+                restr_grup = parse_list_input_list(restr_grup_txt)
+                subgroups.append(
+                    {"name": nom_grup, "restrictions": restr_grup, "is_vip": False}
+                )
+                restr_disp = ", ".join(restr_grup) if restr_grup else "—"
+                print(f"  Confirmat: Grup {i + 1} '{nom_grup}' | Restriccions: {restr_disp}")
 
         if n_comensals > 1 and (stored_rejected_ing or stored_alergies or stored_restr or stored_dieta):
             vol_vip = input_default(
@@ -1310,8 +1311,57 @@ def main():
                     }
                 )
 
-        perfil_usuari = _perfil_from_restriccions(restriccions)
         aplica_preferencies = False
+        if n_comensals == 1 and (stored_rejected_ing or stored_alergies or stored_restr or stored_dieta or stored_pref):
+            vol_pref = input_default(
+                _prompt_inline(
+                    f"Vols que el menú tingui en compte les preferències de {display_name.title()}? (s/n):"
+                ),
+                "n",
+            ).strip().lower()
+            if vol_pref == "s":
+                aplica_preferencies = True
+            else:
+                if not restriccions:
+                    print("   El menú general serà omnivor, sense preferències.")
+                else:
+                    print("   El menú general només aplicarà les restriccions globals.")
+                vol_variant = input_default(
+                    _prompt_inline(
+                        "Vols també una variant amb preferències de l'amfitrió? (s/n):"
+                    ),
+                    "n",
+                ).strip().lower()
+                if vol_variant == "s":
+                    vip_restr = []
+                    vip_restr.extend(stored_alergies)
+                    vip_restr.extend(stored_restr)
+                    if stored_dieta and stored_dieta not in vip_restr:
+                        vip_restr.append(stored_dieta)
+                    vip_restr.extend(stored_rejected_ing)
+                    vip_restr = _dedup_preserve_order(
+                        [_normalize_item(x) for x in vip_restr if _normalize_item(x)]
+                    )
+                    subgroups.append(
+                        {
+                            "name": f"VIP {display_name}",
+                            "restrictions": vip_restr,
+                            "is_vip": True,
+                        }
+                    )
+
+        restriccions_general = set(restriccions)
+        if aplica_preferencies:
+            restriccions_general.update(
+                _normalize_item(x)
+                for x in (
+                    stored_alergies
+                    + stored_restr
+                    + ([stored_dieta] if stored_dieta else [])
+                )
+                if _normalize_item(x)
+            )
+        perfil_usuari = _perfil_from_restriccions(restriccions_general)
         
         alcohol = input_choice(
             _prompt_inline("Begudes amb alcohol? (si/no/indiferent):"),
@@ -1329,7 +1379,7 @@ def main():
             n_comensals=n_comensals,
             preu_pers_objectiu=preu_pers, # Compte amb el nom del camp a la dataclass
             servei=servei,
-            restriccions=restriccions,
+            restriccions=restriccions_general,
             alcohol=alcohol,
             estil_culinari=estil_culinari
         )
@@ -1357,7 +1407,7 @@ def main():
 
             menu_general = copy.deepcopy(plats_originals)
             for plat in menu_general:
-                _aplica_restriccions_plat(plat, restriccions, perfil_usuari)
+                _aplica_restriccions_plat(plat, restriccions_general, perfil_usuari)
 
             sig = tuple(
                 _get_plat(menu_general, curs).get("nom", "").strip().lower()
@@ -1400,7 +1450,9 @@ def main():
         sol = cas_seleccionat["solucio"]
 
         plats = copy.deepcopy(opcions_preparades[idx - 1]["menu_general"])
-        if restriccions:
+        if aplica_preferencies:
+            vetats_ingredients, parelles_vetades = _collect_vetats(perfil_guardat, learned_rules)
+        elif restriccions_general:
             vetats_ingredients, parelles_vetades = _collect_vetats({}, learned_rules)
         else:
             vetats_ingredients, parelles_vetades = set(), set()
@@ -1741,7 +1793,7 @@ def main():
 
         # 8) Afegir begudes
         # --- restriccions només globals per al menú general ---
-        restriccions_beguda_set = {_normalize_item(r) for r in restriccions if r}
+        restriccions_beguda_set = {_normalize_item(r) for r in restriccions_general if r}
         restriccions_beguda = list(restriccions_beguda_set)
         prohibited_allergens = list(_collect_allergen_restrictions(restriccions_beguda))
         _print_section("Maridatge de begudes")
