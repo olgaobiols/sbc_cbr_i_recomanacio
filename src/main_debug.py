@@ -2163,14 +2163,6 @@ def main():
                     return nom if nom else "—"
                 return "—"
 
-            imprimir_menu_final(
-                kb,
-                plat1, transf_1, info_llm_1, beguda1, score1,
-                plat2, transf_2, info_llm_2, beguda2, score2,
-                postres, transf_post, info_llm_post, beguda_postres, score_postres,
-                mostrar_logs=False,
-            )
-
             print("\nResum final del menú:")
             print(
                 f" - Primer: {_nom_plat_final(plat1, info_llm_1)} | Beguda: {_nom_beguda_final(beguda1)}"

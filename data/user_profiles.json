@@ -1,2 +1,8 @@
 {
+    "anna": {
+        "ingredients_preferits": [
+            "nuts"
+        ],
+        "display_name": "Anna"
+    }
 }

@@ -1203,5 +1203,184 @@
             "ingredients_rebutjats": [],
             "utilitat": 2.24
         }
+    },
+    {
+        "id_cas": 17,
+        "problema": {
+            "tipus_esdeveniment": "cocktail",
+            "estil_culinari": "mediterrani",
+            "temporada": "estiu",
+            "n_comensals": 20,
+            "preu_pers_objectiu": 35.0,
+            "servei": "finger_food",
+            "formalitat": "informal",
+            "restriccions": []
+        },
+        "solucio": {
+            "plats": [
+                {
+                    "curs": "primer",
+                    "nom": "Bruschetta de tomàquet i alfàbrega",
+                    "ingredients": [
+                        "bread",
+                        "tomato",
+                        "basil",
+                        "garlic",
+                        "olive oil"
+                    ],
+                    "rols_principals": [
+                        "cereal",
+                        "vegetable"
+                    ],
+                    "estil_tags": [
+                        "italia",
+                        "fresc",
+                        "classic"
+                    ],
+                    "preu": 6.0
+                },
+                {
+                    "curs": "segon",
+                    "nom": "Xarrup de Gaspatxo Andalús",
+                    "ingredients": [
+                        "tomato",
+                        "pepper",
+                        "cucumber",
+                        "onion",
+                        "vinegar",
+                        "olive oil"
+                    ],
+                    "rols_principals": [
+                        "vegetable"
+                    ],
+                    "estil_tags": [
+                        "mediterrani",
+                        "fresc"
+                    ],
+                    "preu": 5.0
+                },
+                {
+                    "curs": "postres",
+                    "nom": "Broqueta de Fruita de Temporada",
+                    "ingredients": [
+                        "watermelon",
+                        "melon",
+                        "grape",
+                        "mint"
+                    ],
+                    "rols_principals": [
+                        "fruit"
+                    ],
+                    "estil_tags": [
+                        "fresc",
+                        "lleuger"
+                    ],
+                    "preu": 4.0
+                }
+            ],
+            "begudes": [
+                "Cervesa artesana",
+                "Vi blanc"
+            ],
+            "preu_total_real": 15.0,
+            "logs_transformacio": []
+        },
+        "avaluacio": {
+            "puntuacio_global": 4,
+            "validat": true,
+            "cost_adaptacio": 0,
+            "ingredients_rebutjats": [],
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 18,
+        "problema": {
+            "tipus_esdeveniment": "aniversari",
+            "estil_culinari": "",
+            "temporada": "estiu",
+            "n_comensals": 12,
+            "preu_pers_objectiu": 80.0,
+            "servei": "assegut",
+            "formalitat": "indiferent",
+            "restriccions": []
+        },
+        "solucio": {
+            "plats": [
+                {
+                    "curs": "primer",
+                    "nom": "Crema de carbassó amb patata fondant al wok",
+                    "ingredients": [
+                        "zucchini",
+                        "potato",
+                        "onion",
+                        "oil",
+                        "salt",
+                        "fresh pineapple"
+                    ],
+                    "rols_principals": [],
+                    "estil_tags": [
+                        "tradicional"
+                    ],
+                    "preu": 27.0
+                },
+                {
+                    "curs": "segon",
+                    "nom": "Pollastre brasejat al curry amb mango",
+                    "ingredients": [
+                        "chicken",
+                        "rosemary",
+                        "oil",
+                        "salt",
+                        "mango"
+                    ],
+                    "rols_principals": [],
+                    "estil_tags": [
+                        "tradicional"
+                    ],
+                    "preu": 33.0
+                },
+                {
+                    "curs": "postres",
+                    "nom": "Pastís de poma i ous fondant al vapor",
+                    "ingredients": [
+                        "apple",
+                        "palm sugar",
+                        "eggs",
+                        "sugar",
+                        "butter",
+                        "lime zest"
+                    ],
+                    "rols_principals": [],
+                    "estil_tags": [
+                        "dolç",
+                        "casolà"
+                    ],
+                    "preu": 7.0
+                }
+            ],
+            "begudes": [],
+            "preu_total_real": 67.0,
+            "logs_transformacio": [
+                "Estil tropical: Afegit fresh pineapple com a toc final.",
+                "Estil tropical: Afegit mango com a toc final.",
+                "Estil tropical: Substituït flour per palm sugar",
+                "Estil tropical: Afegit lime zest com a toc final.",
+                "Tècnica: saltejat_wok_rapid",
+                "Tècnica: brasejat_fondant",
+                "Tècnica: curry_estofat",
+                "Tècnica: brasejat_fondant",
+                "Maridatge: Generat nou maridatge per primer (Vi blanc jove sec)",
+                "Maridatge: Generat nou maridatge per segon (Vi negre jove)",
+                "Maridatge: Generat nou maridatge per postres (Vi dolç Pedro Ximénez)"
+            ]
+        },
+        "avaluacio": {
+            "puntuacio_global": 5,
+            "validat": true,
+            "cost_adaptacio": 27,
+            "ingredients_rebutjats": [],
+            "utilitat": 2.67
+        }
     }
 ]
