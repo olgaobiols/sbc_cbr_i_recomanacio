@@ -2,8 +2,20 @@ import os
 import re
 import unicodedata
 from typing import Dict, Optional, Set, Tuple
-
 import pandas as pd
+
+"""
+OPERADOR DE MARIDATGE DE BEGUDES (FASE REUSE)
+
+Selecciona la beguda òptima per a cada plat del menú, combinant seguretat i afinitat gastronòmica.
+El procés aplica filtres estrictes (ordre del curs, alcohol, al·lèrgens i dietes) i, un cop
+garantida la compatibilitat, puntua les begudes segons la seva coherència amb els ingredients
+del plat (família, categoria macro i sabors).
+
+L’ingredient principal té pes doble en el càlcul per reflectir la seva importància.
+El mòdul retorna tant la beguda recomanada com una justificació detallada del maridatge.
+"""
+
 
 _ALLERGEN_COLUMN_CANDIDATES = ("alergen", "alergens", "allergen", "allergens")
 _BEGUDES_ALLERGENS_CACHE: Dict[str, Optional[object]] = {
