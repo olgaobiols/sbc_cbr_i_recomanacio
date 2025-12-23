@@ -3,6 +3,7 @@ import json
 import os
 from typing import List, Set, Dict, Any, Optional, Tuple
 import numpy as np
+import sys
 
 from estructura_cas import DescripcioProblema
 from Retriever import Retriever
@@ -11,12 +12,12 @@ from gestor_feedback import GestorRevise
 from operadors_transformacio_realista import (
     substituir_ingredient,
     triar_tecniques_2_operadors_per_menu,
-    genera_fitxes_menu_llm_1call,   # <-- NOU
+    genera_fitxes_menu_llm_1call, 
     construir_prompt_imatge_menu,
-    genera_imatge_menu_hf,
-    llista_tecniques_applicables_per_ingredient,
+    genera_imatge_menu_hf_o_prompt,
     ingredients_ca_llista,
     ingredient_ca,
+    _resum_ambient_esdeveniment,
     model_gemini
 )
 
@@ -563,6 +564,19 @@ def _similitud_plat_estil(ingredients: List[str], estils_latents: Dict, nom_esti
         return 0.0
     return float(np.dot(vec_plat, vec_estil) / (norm_a * norm_b))
 
+def _safe_ascii_prompt(text: str) -> str:
+    if not text:
+        return text
+    return (
+        text
+        .replace("“", '"')
+        .replace("”", '"')
+        .replace("’", "'")
+        .replace("–", "-")
+        .replace("—", "-")
+        .replace("°", " degrees")
+    )
+
 def imprimir_resum_adaptacio(
     etiqueta_plat: str,
     plat: dict,
@@ -708,6 +722,26 @@ def imprimir_menu_final_net(
     imprimir_resum_plat_net("POSTRES", postres, transf_post, estil_cultural, estil_alta)
 
 
+def _build_plats_info_for_image(plat1, plat2, postres, info_llm_1, info_llm_2, info_llm_post, beguda1, beguda2, beguda_postres):
+    plats_info = []
+    for plat, info, beguda in [
+        (plat1, info_llm_1, beguda1),
+        (plat2, info_llm_2, beguda2),
+        (postres, info_llm_post, beguda_postres),
+    ]:
+        plats_info.append({
+            "curs": plat.get("curs", "") or "",
+            "nom": (info or {}).get("nom_nou") or plat.get("nom", "—"),
+            "ingredients": plat.get("ingredients", []) or [],
+            # IMPORTANT: si tens el teu nou construir_prompt sense LLM, pots prescindir de descripcio/presentacio
+            "descripcio": (info or {}).get("descripcio_carta", "") or "",
+            "presentacio": (info or {}).get("presentacio", "") or "",
+            # clau: usa la frase ja feta del 1call (si existeix)
+            "image_sentence_en": (info or {}).get("image_sentence_en", "") or "",
+            # per begudes (si ho vols al prompt)
+            "beguda_nom": (beguda or {}).get("nom", "") or "",
+        })
+    return plats_info
 
 
 def imprimir_casos(candidats, top_k=5):
@@ -915,6 +949,12 @@ def debug_kb_match(plat, kb, etiqueta=""):
 # =========================
 
 def main():
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
     _print_banner("SISTEMA DE RECOMANACIÓ DE MENÚS RICO RICO 2.0")
 
     COST_INGREDIENT_EXTRA = 3
@@ -1713,32 +1753,7 @@ def main():
                         print(f"   - {canvi['curs']}: {canvi_txt}")
                 print("")
 
-        # 9.1) Imatge del menú (opcional)
-        if input_default(_prompt_inline("Generar imatge del menú? (s/n):"), "n").lower() == 's':
-            plats_info = []
-            for plat, info in [
-                (plat1, info_llm_1),
-                (plat2, info_llm_2),
-                (postres, info_llm_post),
-            ]:
-                plats_info.append({
-                    "curs": plat.get("curs", ""),
-                    "nom": info.get("nom_nou", plat.get("nom", "—")) if info else plat.get("nom", "—"),
-                    "ingredients": plat.get("ingredients", []) or [],
-                    "descripcio": info.get("descripcio_carta", "") if info else "",
-                    "presentacio": info.get("presentacio", "") if info else "",
-                })
-
-            prompt_imatge = construir_prompt_imatge_menu(
-                tipus_esdeveniment=tipus_esdeveniment,
-                temporada=temporada,
-                espai="interior",
-                formalitat=problema.formalitat,
-                plats_info=plats_info,
-            )
-            genera_imatge_menu_hf(prompt_imatge, output_path="menu_event.png")
-
-        # 9.2) CONTROL PRESSUPOSTARI
+        # 9.1) CONTROL PRESSUPOSTARI
         print("\n=== CONTROL PRESSUPOSTARI ===")
 
         target_budget = float(preu_pers or 0.0)
@@ -1947,7 +1962,34 @@ def main():
                 f" - Postres: {_nom_plat_final(postres, info_llm_post)} | Beguda: {_nom_beguda_final(beguda_postres)}"
             )
             print(f"Total final: {current_total:.2f}€")
-        
+        # 9.2) IMATGE DEL MENÚ (DESPRÉS de pressupost i variants)
+        vol_imatge = input_default(_prompt_inline("Generar imatge del menú final? (s/n):"), "n").strip().lower()
+        if vol_imatge == "s":
+            # 1) construeix ambient
+            ambient = _resum_ambient_esdeveniment(
+                tipus_esdeveniment=tipus_esdeveniment,
+                temporada=temporada,
+                espai="interior",
+                formalitat = "formal" if servei == "assegut" else "informal",
+            )
+
+            # 2) IMPORTANT: aquí has de passar la llista de fitxes (no plats_info)
+            # Si ja tens info_llm_1/info_llm_2/info_llm_post en format fitxa, fes això:
+            fitxes_menu = [info_llm_1, info_llm_2, info_llm_post]
+
+            prompt_imatge = construir_prompt_imatge_menu(
+                ambient=ambient,
+                fitxes_menu=fitxes_menu,
+                servei = servei,
+                allow_dessert_glass=True,
+                incloure_decoracio=True,
+                incloure_begudes=False,
+            )
+            prompt_imatge = _safe_ascii_prompt(prompt_imatge)
+
+            genera_imatge_menu_hf_o_prompt(prompt_imatge, output_path="menu_event.png")
+
+
         # 10) FASE REVISE (Dual Memory)
         gestor_revise = GestorRevise()
         cas_proposat = {

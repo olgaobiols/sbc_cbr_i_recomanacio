@@ -7,6 +7,8 @@ from collections import defaultdict
 import re
 
 
+
+
 # Importem la lògica latent ja adaptada a KB
 from operador_ingredients import adaptar_plat_a_estil_latent
 
@@ -1141,6 +1143,9 @@ IMPORTANT (RESTRICCIONS)
 - NO pots afegir ingredients nous ni sinònims d'ingredients fora de la llista.
 - Si no hi ha tècniques, no n'inventis.
 - Estil català natural, professional i sobri. No poesia.
+- A image_sentence_en NO diguis "top-down view", "photography", "table", "scene".
+- A image_cues_en posa només efectes visuals de tècniques: thin slices, laminations, char marks, clean cuts, gel texture, glossy glaze, etc.
+
 
 SERVEI
 - {guia_servei}
@@ -1170,8 +1175,9 @@ Retorna NOMÉS un JSON vàlid amb aquest esquema:
       "presentacio_ca": "... (mínim 300 caràcters, molt visual i concreta)",
       "beguda_recomanada_ca": "... (si beguda_recomanada_en és null -> 'Sense recomanació de beguda')",
       "notes_tecnniques_ca": "... (si hi ha tècniques: frase breu. si no: 'Sense tècniques especials.')",
-      "image_sentence_en": "... (EXACTAMENT 1 frase en anglès, max 30 paraules, només visible on-plate; no emocions)"
-    }}
+      "image_sentence_en": "... (EXACTAMENT 1 frase en anglès, max 30 paraules, només el menjar, sense dir 'top-down view')",
+      "image_cues_en": "... (EXACTAMENT 1 frase en anglès, max 18 paraules: technique cues only, no plate/bowl words)"
+          }}
   ]
 }}
 
@@ -1227,59 +1233,8 @@ CONDICIÓ TÈCNIQUES (molt important)
 
 
 
-def _resum_plat_en_angles_per_imatge(plat: dict) -> str:
-    """
-    Fa una crida curta a Gemini per obtenir UNA frase en anglès
-    que descrigui el plat només a nivell visual (formes, colors i ingredients).
-
-    La frase és pensada per alimentar un model d'imatge (FLUX),
-    així que ha de ser molt concreta i sense emocions.
-    """
-    nom = plat.get("nom", "") or ""
-    curs = plat.get("curs", "") or ""
-    ingredients = plat.get("ingredients", []) or []
-    descripcio = plat.get("descripcio", "") or ""
-    presentacio = plat.get("presentacio", "") or ""
-
-    if isinstance(ingredients, (list, tuple)):
-        ingredients_txt = ", ".join(str(x) for x in ingredients)
-    else:
-        ingredients_txt = str(ingredients)
-
-    prompt = f"""
-You help to build text prompts for an image generation model.
-
-DISH INFORMATION
-- Course: {curs}
-- Dish name: {nom}
-- Ingredients (Catalan words are fine): {ingredients_txt}
-- Menu description in Catalan: {descripcio}
-- Plating description in Catalan: {presentacio}
-
-TASK
-Write EXACTLY ONE sentence in simple English (max 30 words)
-describing ONLY what is visible on the plate:
-
-- mention shapes, colours, approximate number of elements and positions on the plate,
-- mention ONLY ingredients from the list, do NOT add new ingredients,
-- do NOT talk about emotions, taste, smell, guests, table, background, cutlery or decorations.
-
-Return ONLY the English sentence, without quotes or any extra text.
-"""
-
-    try:
-        resp = model_gemini.generate_content(prompt)
-        text = (resp.text or "").strip()
-        # Per seguretat, ens quedem amb la primera línia només
-        return text.splitlines()[0].strip()
-    except Exception as e:
-        print(f"[IMATGE] Error resumint plat per a la imatge: {e}")
-        # Fallback molt simple
-        return f"A single white round plate with {ingredients_txt} arranged in a neat, modern composition."
-
-
 # ---------------------------------------------------------------------
-#  OPERADOR: GENERACIÓ D'IMATGE DEL MENÚ AMB HUGGING FACE (FLUX.1)
+#  OPERADOR: GENERACIÓ D'IMATGE DEL MENÚ AMB HUGGING FACE 
 # ---------------------------------------------------------------------
 
 def _resum_ambient_esdeveniment(
@@ -1289,57 +1244,62 @@ def _resum_ambient_esdeveniment(
     formalitat: str,
 ) -> dict:
     """
-    Resumeix l'ambient en termes d'esdeveniment, decoració i llum.
-    Retorna un dict amb:
-      - event_desc: frase breu de context
-      - decor_desc: decoració específica de la taula
-    (tot en anglès, perquè el model d'imatges s'hi entén millor)
+    Descriptors d'ambient per al prompt (EN).
+    IMPORTANT: decoració pensada per NO semblar un plat/bol (evitem formes circulars).
+    A més, afegim 'photo_style' per donar vibe real i coherent amb l'event.
     """
     tipus = (tipus_esdeveniment or "").lower()
     temporada = (temporada or "").lower()
     espai = (espai or "").lower()
     formalitat = (formalitat or "").lower()
 
-    # --- Tipus d'esdeveniment ---
+    # Tipus d'esdeveniment (frase + decor + estil fotogràfic)
     if "casament" in tipus:
-        event_desc = "an intimate wedding dinner for a small group"
-        decor_desc = "one small glass vase with soft pastel flowers and a couple of tiny candles near the top edge of the table"
+        event_desc = "an intimate wedding dinner"
+        decor_desc = "a slim folded white linen napkin with a small name card near the top edge"
+        photo_style = "natural candid wedding editorial styling, elegant but realistic, subtle imperfections"
     elif "aniversari" in tipus:
         event_desc = "a cosy birthday dinner"
-        decor_desc = "a tiny birthday candle decoration and a few small colorful confetti dots near the top corners of the table"
+        decor_desc = "a tiny ribbon and a small paper party hat near the top edge"
+        photo_style = "warm friendly dinner photo, relaxed and natural, not staged"
     elif "comunio" in tipus or "baptisme" in tipus or "bateig" in tipus:
         event_desc = "a refined family celebration dinner"
-        decor_desc = "a small vase with white flowers and a single small candle near the top edge of the table"
+        decor_desc = "a folded linen napkin with a simple ribbon near the top edge"
+        photo_style = "refined family event styling, soft and clean, realistic table setting"
     elif "empresa" in tipus or "congres" in tipus:
         event_desc = "a neat corporate dinner"
-        decor_desc = "one slim water glass and a closed dark notebook placed near the top of the table"
+        decor_desc = "a closed dark notebook with a pen near the top edge"
+        photo_style = "corporate hospitality photo, minimal, tidy, professional and realistic"
     else:
         event_desc = "a stylish small banquet dinner"
-        decor_desc = "one simple vase with green leaves or a single candle near the top edge of the table"
+        decor_desc = "a folded linen napkin with a minimal ribbon near the top edge"
+        photo_style = "restaurant editorial photo, natural and realistic, minimal styling"
 
-    # --- Temporada: ajustem la llum i el to ---
+    # Temporada (llum i to)
     if temporada == "primavera":
-        season_txt = "soft daylight and a fresh, slightly pastel color mood"
+        season_txt = "soft daylight, fresh slightly pastel mood"
     elif temporada == "estiu":
-        season_txt = "warm daylight and a bright summery color mood"
+        season_txt = "warm daylight, bright summery mood"
     elif temporada == "tardor":
-        season_txt = "warm amber light with a slightly autumnal color mood"
+        season_txt = "warm amber daylight, autumn mood"
     elif temporada == "hivern":
-        season_txt = "soft cool light with a subtle winter mood"
+        season_txt = "soft cool daylight, subtle winter mood"
     else:
-        season_txt = "neutral soft light"
+        season_txt = "neutral soft daylight"
 
-    # --- Interior / exterior ---
+    # Interior / exterior
     if espai == "exterior":
         place_txt = "on a single outdoor dining table"
     else:
-        place_txt = "on a single indoor dining table next to a soft background"
+        place_txt = "on a single indoor dining table"
 
-    # --- Formalitat → tipus de superfície ---
+    # Formalitat → superfície i estil
     if formalitat == "informal":
         table_surface = "a light wooden table without a tablecloth"
+        styling = "casual modern plating, slightly rustic, less symmetry"
     else:
-        table_surface = "a white tablecloth covering the table"
+        table_surface = "a clean white tablecloth"
+        styling = "fine dining plating, minimal and precise, clean negative space"
 
     return {
         "event_desc": event_desc,
@@ -1347,190 +1307,314 @@ def _resum_ambient_esdeveniment(
         "season_txt": season_txt,
         "place_txt": place_txt,
         "table_surface": table_surface,
+        "styling": styling,
+        "photo_style": photo_style,
     }
 
+
+def _clean_one_sentence(s: str, max_words: int = 42) -> str:
+    s = (s or "").strip().replace("\n", " ").replace("\r", " ")
+    s = re.sub(r"\s+", " ", s).strip().strip("-•* ")
+    if not s:
+        return ""
+    words = s.split()
+    if len(words) > max_words:
+        s = " ".join(words[:max_words]).rstrip(",.;:") + "."
+    if s[-1] not in ".!?":
+        s += "."
+    return s
+
+def _techniques_visual_cues(techniques: List[Dict[str, str]]) -> str:
+    """
+    techniques = [{"tecnica": "...", "objectiu_ingredient_ca": "..."}]
+    Retorna cues visuals EN curtes (sense ingredients nous).
+    """
+    if not techniques:
+        return ""
+
+    txt = " | ".join((t.get("tecnica","") or "").lower() for t in techniques)
+    cues = []
+
+    if "laminat" in txt:
+        cues.append("paper-thin laminations clearly visible")
+    if "microtall" in txt or "ultrafina" in txt:
+        cues.append("micro-thin slices arranged with precision")
+    if "yakimono" in txt:
+        cues.append("gentle roast marks / light char, glossy finish")
+    if "kiritsuke" in txt:
+        cues.append("clean knife work, precise cuts and sharp edges")
+    if "gelific" in txt:
+        cues.append("smooth gel texture, structured glossy elements")
+    if "tare" in txt:
+        cues.append("concentrated glaze accents, glossy dots or streaks")
+
+    if not cues:
+        return ""
+
+    return _clean_one_sentence("Technique cues: " + "; ".join(cues), max_words=22)
+
+
+
+def _drink_visual_from_ca(beguda_ca: str, default: str) -> str:
+    """
+    Converteix beguda (CA) a una descripció visual EN.
+    Manté’s simple perquè no inventi ampolles ni copes extra.
+    """
+    t = (beguda_ca or "").lower().strip()
+    if not t or "sense recoman" in t:
+        return default
+
+    # vi
+    if "vi blanc" in t or "blanc" in t or "white wine" in t:
+        return "a simple white wine glass, pale straw wine, no bottle"
+    if "vi negre" in t or "negre" in t or "red wine" in t:
+        return "a simple red wine glass, deep ruby wine, no bottle"
+
+    # cava / escumós
+    if "cava" in t or "escum" in t or "sparkling" in t:
+        return "a champagne flute with sparkling wine, no bottle"
+
+    # refresc / soda / llimona
+    if "refresc" in t or "soda" in t or "llimona" in t or "lemon" in t:
+        return "a tall clear glass of sparkling lemon soda with ice, no can"
+
+    # aigua
+    if "aigua" in t or "water" in t:
+        return "a tall clear water glass, no bottle"
+
+    return default
+
+
+def _presentation_to_visual_cues_ca(presentacio_ca: str) -> str:
+    t = (presentacio_ca or "").lower()
+    cues = []
+
+    if "yakimono" in t or "signes de la cocció" in t or "lleugerament caramel" in t:
+        cues.append("subtle roast marks and slight caramelization visible on the tomato slices")
+    if "laminat" in t or "làmin" in t:
+        cues.append("paper-thin miso laminations or shavings clearly visible")
+    if "microtall" in t or "ultrafina" in t or "translúcid" in t:
+        cues.append("a bed of micro-thin, translucent potato slices arranged like a light rosette")
+    if "gotetes" in t or "gotes" in t or "punts" in t or "traç" in t:
+        cues.append("fine oil droplets or controlled sauce dots, very minimal")
+    if "copa" in t or "cristall" in t or "vidre" in t:
+        cues.append("dessert served in a clear crystal dessert glass")
+    if "quenelle" in t or "cullerada" in t or "forma ovalada" in t:
+        cues.append("one neat oval scoop / quenelle shape")
+
+    if not cues:
+        return ""
+
+    # dedup order-preserving
+    cues = list(dict.fromkeys(cues))
+    return _clean_one_sentence("Visual cues: " + "; ".join(cues), max_words=34)
+
+
 def construir_prompt_imatge_menu(
-    tipus_esdeveniment: str,
-    temporada: str,
-    espai: str,
-    formalitat: str,
-    plats_info: list[dict],
+    ambient: Dict[str, str],
+    fitxes_menu: List[Dict[str, Any]],
+    servei: str = "assegut",   # <-- AFEGIT
+    incloure_decoracio: bool = True,
+    incloure_begudes: bool = True,
+    allow_dessert_glass: bool = True,
 ) -> str:
     """
-    Prompt perquè FLUX generi EXACTAMENT tres plats en vista zenital:
-
-      - 1 plat a la part superior (centre horitzontal),
-      - 2 plats a la part inferior (esquerra i dreta),
-      - cap altre plat ni bol.
+    Versió definitiva:
+    - EXACTAMENT 3 dish items (top, bottom-left, bottom-right)
+    - bottom-center MUST be empty
+    - optional 3 drinks, placed upper-right of each item
+    - blocks extra glassware/empty bowls/spoons
     """
-
-    ambient = _resum_ambient_esdeveniment(
-        tipus_esdeveniment, temporada, espai, formalitat
-    )
-
-    # Garantim que cada entrada tingui la info que ens cal
-    plats = []
-    for p in plats_info[:3]:
-        plats.append({
-            "curs": p.get("curs", "") or "",
-            "nom": p.get("nom", "") or "",
-            "ingredients": p.get("ingredients", []) or [],
-            "descripcio": p.get("descripcio", "") or "",
-            "presentacio": p.get("presentacio", "") or "",
-        })
-
+    plats = (fitxes_menu or [])[:3]
     while len(plats) < 3:
         plats.append({
-            "curs": "extra",
-            "nom": "Neutral dish",
-            "ingredients": ["neutral ingredient"],
-            "descripcio": "simple balanced dish",
-            "presentacio": "simple round portion in the centre of the plate",
+            "nom_plat_ca": "Neutral dish",
+            "image_sentence_en": "Clean minimal plating with the listed ingredients, centered and tidy.",
+            "presentacio_ca": "",
+            "beguda_recomanada_ca": "Sense recomanació de beguda",
         })
 
-    top_plate, bottom_left, bottom_right = plats
+    def _safe_name(p: Dict[str, Any]) -> str:
+        return (p.get("nom_plat_ca") or p.get("nom_original_en") or "Dish").strip()
 
-    # Resum curt en anglès per a cada plat
-    top_desc = _resum_plat_en_angles_per_imatge(top_plate)
-    bl_desc = _resum_plat_en_angles_per_imatge(bottom_left)
-    br_desc = _resum_plat_en_angles_per_imatge(bottom_right)
+    top, left, right = plats
+
+    def _dish_desc(p: Dict[str, Any]) -> str:
+        base = _clean_one_sentence(p.get("image_sentence_en", ""), max_words=28)
+        cues = _presentation_to_visual_cues_ca(p.get("presentacio_ca", "") or "")
+        merged = " ".join([x for x in [base, cues] if x])
+        return _clean_one_sentence(merged, max_words=48)
+
+    top_desc = _dish_desc(top)
+    left_desc = _dish_desc(left)
+    right_desc = _dish_desc(right)
+
+    # Postre: permès en copa
+    dessert_rule = (
+        "Bottom-right is the ONLY dessert. It may be served in a clear dessert glass (optionally on a small white plate)."
+        if allow_dessert_glass else
+        "Bottom-right is the ONLY dessert and must be on a white plate (no glass)."
+    )
+
+    # Decoració: wedding card però sense text
+    decor_line = ""
+    if incloure_decoracio:
+        decor_line = (
+            f"Decoration: {ambient['decor_desc']}. "
+            "If there is a name card, it must be blank with NO readable text."
+        )
+
+    # Begudes (1 per plat)
+    drinks_block = ""
+    if incloure_begudes:
+        d_top = _drink_visual_from_ca(top.get("beguda_recomanada_ca", ""), "a simple white wine glass, no bottle")
+        d_left = _drink_visual_from_ca(left.get("beguda_recomanada_ca", ""), "a simple red wine glass, no bottle")
+        d_right = _drink_visual_from_ca(right.get("beguda_recomanada_ca", ""), "a tall clear water glass, no bottle")
+
+        drinks_block = f"""
+DRINKS (STRICT):
+- EXACTLY THREE drinks total, one per dish item, no more and no less.
+- Place each drink slightly ABOVE-RIGHT of its corresponding dish.
+- Clear glassware only. NO mugs, NO cups with handles. NO bottles, NO cans, NO carafes.
+- Absolutely NO extra empty glass bowls or extra glasses anywhere.
+- Top drink: {d_top}.
+- Bottom-left drink: {d_left}.
+- Bottom-right drink: {d_right}.
+""".strip()
+
+    servei_norm = (servei or "assegut").strip().lower()
+
+    if servei_norm == "assegut":
+        ware_block = """
+    - The two savoury dishes (top and bottom-left) are LARGE white plates (shallow is ok).
+    - Minimal cutlery: at most one small fork or knife total, subtle.
+    """.strip()
+    elif servei_norm == "cocktail":
+        ware_block = """
+    - The three items are SMALL cocktail servings: a small plate, a small plate, and one dessert glass.
+    - No large dinner plates. No full-size cutlery.
+    - At most one small cocktail pick or one tiny fork total.
+    """.strip()
+    else:  # finger_food
+        ware_block = """
+    - The three items are FINGER FOOD servings: small portions on small white plates, plus one dessert glass.
+    - No large dinner plates. No cutlery at all.
+    """.strip()
 
     prompt = f"""
-Ultra realistic top-down food photography of a single dining table.
-Scene: {ambient['place_txt']} set for {ambient['event_desc']}, with {ambient['season_txt']}.
-The table surface is {ambient['table_surface']}.
+Ultra realistic top-down food photography, strict 90° overhead, no perspective.
+{ambient.get('photo_style','')}
 
-CAMERA AND VIEW:
-- Strict 90 degree overhead view (perfectly vertical), no perspective.
-- Orthographic feeling, no visible vanishing lines.
-- Everything in sharp focus, no blur.
+Scene: {ambient['place_txt']} styled for {ambient['event_desc']}.
+Lighting: {ambient['season_txt']}.
+Table: {ambient['table_surface']}.
+Plating: {ambient['styling']}.
 
-ABSOLUTE RULES ABOUT PLATES:
-- There must be EXACTLY THREE LARGE ROUND WHITE PLATES WITH FOOD on the table, no more and no less.
-- These are the ONLY dishes on the table. There are NO other plates, NO small side plates,
-  NO bowls, NO saucers and NO extra serving dishes, even if they are empty.
-- ONE of the three plates is placed in the UPPER HALF of the image, centred horizontally.
-- The space between the two lower plates must remain EMPTY tablecloth:
-  do NOT place any plate, bowl, dish or food in the central lower area.
-- The top left and top right corners of the image MUST NOT contain plates, bowls or any round dish shapes.
-- Do NOT add a fourth plate anywhere.
+COMPOSITION (VERY STRICT):
+- EXACTLY THREE dish items on the table (no more, no less).
+- Layout: one dish at TOP-CENTER, one at BOTTOM-LEFT, one at BOTTOM-RIGHT.
+- The BOTTOM-CENTER area must be EMPTY table surface (no plate, no bowl, no glassware).
+{ware_block}
+- {dessert_rule}
+- No duplicate servings, no side plates, no extra bowls.
 
 
-LAYOUT OF THE THREE PLATES:
+DISH DETAILS:
+- Top dish ({_safe_name(top)}): {top_desc}
+- Bottom-left dish ({_safe_name(left)}): {left_desc}
+- Bottom-right dessert ({_safe_name(right)}): {right_desc}
 
-TOP PLATE (first course: {top_plate['nom']}):
-- {top_desc}
+{drinks_block}
 
-BOTTOM LEFT PLATE (main course: {bottom_left['nom']}):
-- {bl_desc}
-
-BOTTOM RIGHT PLATE (dessert: {bottom_right['nom']}):
-- {br_desc}
-- This is the ONLY DESSERT plate: it must clearly look sweet (cake, cream or chocolate),
-  while the other two plates must look savoury and not like desserts.
-
-TABLE DECORATION AND EVENT DETAILS:
-- Add EXACTLY ONE small table decoration related to the event: {ambient['decor_desc']}.
-- Place this decoration near the TOP edge of the table, between the plates,
-  clearly smaller than the plates and NOT circular.
-- The decoration must NOT be confused with food or plates.
-
-OTHER OBJECTS:
-- You may add at most one small fork or knife near each plate,
-  but they must be subtle and must not draw attention away from the dishes.
-- No menus, no phones, no people or hands, no text.
+{decor_line}
 
 STRICT NEGATIVES:
-- Do NOT generate more than three plates.
-- Do NOT show a 2x2 grid of plates.
-- Do NOT add any extra plates, bowls, saucers or serving dishes, even if they look empty.
-- Do NOT show wine glasses, water glasses, coffee cups or any other drink containers.
-- Do NOT add bread baskets, butter plates or any side dishes not implied by the three plate descriptions.
-- Do NOT place decorations between the camera and the plates.
-- Do NOT use strong depth-of-field blur.
+- No extra glass bowls, no empty cups, no extra spoons.
+- No text anywhere (no readable labels).
+- No hands, no people, no menus.
 
-TECHNICAL:
-- Neutral natural lighting, realistic colours.
-- 16:9 aspect ratio, high resolution.
+Photorealistic, sharp focus, natural colors, high resolution, 16:9.
 """.strip()
 
     return prompt
 
 
-def genera_imatge_menu_hf(prompt_imatge: str, output_path: str = "menu_event.png") -> str | None:
-    """
-    Envia el prompt al model d'imatge de Hugging Face (FLUX.1-dev)
-    i desa la imatge generada a 'output_path'.
 
-    Requereix la variable d'entorn HF_TOKEN amb un token de lectura de Hugging Face.
+# ---------------------------------------------------------------------
+#  MODE HÍBRID: HF si es pot, sinó imprimeix prompt + link + copy
+# ---------------------------------------------------------------------
+
+def _try_copy_to_clipboard(text: str) -> bool:
+    """
+    Opcional: pip install pyperclip
+    """
+    try:
+        import pyperclip
+        pyperclip.copy(text)
+        return True
+    except Exception:
+        return False
+
+
+def genera_imatge_menu_hf_o_prompt(
+    prompt_imatge: str,
+    output_path: str = "menu_event.png",
+    model_id: str = "black-forest-labs/FLUX.1-dev",
+    guidance_scale: float = 3.5,
+    num_inference_steps: int = 28,
+) -> Optional[str]:
+    """
+    Intenta generar la imatge via HF Inference.
+    Si falla, imprimeix prompt i deixa “link” per enganxar manualment.
     """
     hf_token = os.environ.get("HF_TOKEN")
     if not hf_token:
-        print("[IMATGE] ERROR: falta la variable d'entorn HF_TOKEN.")
-        return None
-
-    model_id = "black-forest-labs/FLUX.1-dev"
-    api_url = f"https://router.huggingface.co/hf-inference/models/{model_id}"
-
-    headers = {
-        "Authorization": f"Bearer {hf_token}",
-        "Content-Type": "application/json",
-    }
-
-    payload = {
-        "inputs": prompt_imatge,
-        "parameters": {
-            "num_inference_steps": 28,
-            "guidance_scale": 3.5,
-        },
-        "options": {
-            "wait_for_model": True,
-        },
-    }
-
-    try:
-        resp = requests.post(api_url, headers=headers, json=payload, timeout=300)
-    except Exception as e:
-        print(f"[IMATGE] Error de connexió amb Hugging Face: {e}")
-        return None
-
-    if resp.status_code != 200:
-        print(f"[IMATGE] ERROR: resposta {resp.status_code}")
-        try:
-            print(resp.json())
-        except Exception:
-            print(resp.content[:200])
+        print("[IMATGE] No hi ha HF_TOKEN configurat.")
+        print("[IMATGE] Prompt per enganxar manualment:\n")
+        print(prompt_imatge)
+        if _try_copy_to_clipboard(prompt_imatge):
+            print("\n[IMATGE] Prompt COPIAT al porta-retalls ✅")
+        print("\n[IMATGE] Prova aquests Spaces (manual):")
+        print("  - https://huggingface.co/spaces/black-forest-labs/FLUX.1-schnell")
+        print("  - https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev")
         return None
 
     try:
-        with open(output_path, "wb") as f:
-            f.write(resp.content)
+        from huggingface_hub import InferenceClient
+    except Exception:
+        print("[IMATGE] Falta huggingface_hub. Instal·la: pip install huggingface_hub")
+        print("[IMATGE] Prompt:\n")
+        print(prompt_imatge)
+        return None
+
+    try:
+        client = InferenceClient(model=model_id, token=hf_token)
+
+        img = client.text_to_image(
+            prompt_imatge,
+            guidance_scale=guidance_scale,
+            num_inference_steps=num_inference_steps,
+        )
+
+        if hasattr(img, "save"):
+            img.save(output_path)
+        else:
+            with open(output_path, "wb") as f:
+                f.write(img)
+
         print(f"[IMATGE] Imatge del menú generada a: {output_path}")
         return output_path
+
     except Exception as e:
-        print(f"[IMATGE] No s'ha pogut desar la imatge: {e}")
+        msg = str(e).lower()
+        quota_like = any(k in msg for k in ["quota", "rate limit", "429", "402", "payment", "billing", "forbidden", "403", "401", "unauthorized"])
+        print(f"[IMATGE] No s'ha pogut generar automàticament ({e}).")
+        if quota_like:
+            print("[IMATGE] Sembla un problema de quota/permisos/token.")
+        print("\n[IMATGE] Prompt per enganxar manualment:\n")
+        print(prompt_imatge)
+        if _try_copy_to_clipboard(prompt_imatge):
+            print("\n[IMATGE] Prompt COPIAT al porta-retalls ✅")
+        print("\n[IMATGE] Prova aquests Spaces (manual):")
+        print("  - https://huggingface.co/spaces/black-forest-labs/FLUX.1-schnell")
         return None
-
-
-# ---------------------------------------------------------------------
-#  ESQUELETS D'ALTRES OPERADORS (per si més endavant els implementes)
-# ---------------------------------------------------------------------
-
-def transferir_estil(plat, nou_estil):
-    """ Transfereix un plat a un nou estil culinari. (pendent d'implementar) """
-    pass
-
-
-def comprova_equilibri(plat):
-    """ Comprova l'equilibri del plat (pendent d'implementar). """
-    pass
-
-
-def comprova_pairing(plat):
-    """ Assegura que els sabors principals del plat no xoquen. (pendent d'implementar) """
-    pass
-
-
-def ajustar_presentacio(plat, estil):
-    """ Ajusta la presentació del plat segons l'estil. (pendent d'implementar) """
-    pass
