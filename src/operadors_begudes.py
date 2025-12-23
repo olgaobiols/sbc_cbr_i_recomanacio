@@ -37,8 +37,14 @@ def get_ingredient_principal(plat, base_ingredients):
     # Fallback: si no hi ha ingredient principal, escollim el primer ingredient reconegut
     if ingredient_principal is None and llista_ingredients:
         ingredient_principal = llista_ingredients[0]
+        
+    # Treu l'ingredient principal de la llista d'altres ingredients
+    llista_ingredients_filtrada = [
+        ing for ing in llista_ingredients
+        if ing != ingredient_principal
+    ]
 
-    return ingredient_principal, llista_ingredients
+    return ingredient_principal, llista_ingredients_filtrada
 
 def passa_filtre_dur(plat, beguda_row, begudes_usades):
     curs = plat.get("curs", "")
@@ -80,6 +86,8 @@ def passa_restriccions(beguda_row, restriccions, alcohol):
     # 3. Dietes: si alguna restricció és tipus dieta, ha d’estar present a la beguda
     restriccions_dieta = {'vegan', 'vegetarian', 'kosher_friendly', 'halal_friendly'}
     for restriccio in restriccions:
+        if restriccio == 'halal': restriccio='halal_friendly'
+        if restriccio == 'kosher': restriccio='kosher_friendly'
         if restriccio.lower() in restriccions_dieta and restriccio.lower() not in dietes_beguda:
             return False
 
@@ -103,7 +111,7 @@ def score_beguda_per_plat(beguda_row, ingredient_principal, llista_ingredients):
 
         score = 0
         detalls = {
-            "nom": ingredient.get("nom_ingredient"),
+            "nom": ingredient.get("nom_catala"),
             "familia": None,
             "categoria_macro": None,
             "sabors_match": [],
