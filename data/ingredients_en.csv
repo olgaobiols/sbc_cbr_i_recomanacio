@@ -436,3 +436,7 @@ cooked_chickpeas,plant_vegetal,legume,nutty|soft,false,false,false,main,cooked,w
 chickpea_puree,plant_vegetal,legume,nutty|creamy,false,false,false,base,processed,puree,none,omnivore|vegetarian|vegan,puré de cigrons (hummus)
 cooked_lentils,plant_vegetal,legume,earthy|soft,false,false,false,main,cooked,whole,none,omnivore|vegetarian|vegan,llenties cuites
 lentil_puree,plant_vegetal,legume,earthy|creamy,false,false,false,base,cooked,puree,none,omnivore|vegetarian|vegan,puré de llenties
+caviar,protein_animal,fish_oily,briny|marine|salty|umami,false,False,True,decoration,cured,raw,fish,omnivore|halal_friendly|kosher_friendly,caviar
+red_caviar,protein_animal,fish_oily,briny|marine|salty|umami,false,False,True,decoration,cured,raw,fish,omnivore|halal_friendly|kosher_friendly,caviar vermell
+salmon_caviar,protein_animal,fish_oily,briny|marine|salty|umami,false,False,True,decoration,cured,raw,fish,omnivore|halal_friendly|kosher_friendly,caviar de salo
+sevruga_caviar,protein_animal,fish_oily,briny|marine|salty|umami,false,False,True,decoration,cured,raw,fish,omnivore|halal_friendly|kosher_friendly,caviar de sevruga

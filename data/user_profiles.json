@@ -3,6 +3,12 @@
         "rejected_ingredients": [
             "tomato"
         ],
-        "display_name": "Emily"
+        "display_name": "Emily",
+        "ingredients_preferits": [
+            "caviar"
+        ],
+        "rejected_pairs": [
+            "seabass|truffle"
+        ]
     }
 }

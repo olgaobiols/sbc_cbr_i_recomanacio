@@ -37,8 +37,11 @@ class MemoriaPersonal:
         self.data = _json_rw(PATH_USER)
 
     def _add(self, uid: str, list_key: str, val: str):
-        if uid not in self.data: 
-            self.data[uid] = {"rejected_ingredients": [], "rejected_pairs": []}
+        if uid not in self.data or not isinstance(self.data.get(uid), dict):
+            self.data[uid] = {}
+        self.data[uid].setdefault("rejected_ingredients", [])
+        self.data[uid].setdefault("rejected_pairs", [])
+        self.data[uid].setdefault(list_key, [])
         
         target_list = self.data[uid][list_key]
         if val not in target_list:
