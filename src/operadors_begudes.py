@@ -1,3 +1,84 @@
+import os
+import re
+import unicodedata
+from typing import Dict, Optional, Set, Tuple
+
+import pandas as pd
+
+_ALLERGEN_COLUMN_CANDIDATES = ("alergen", "alergens", "allergen", "allergens")
+_BEGUDES_ALLERGENS_CACHE: Dict[str, Optional[object]] = {
+    "path": None,
+    "column": None,
+    "by_id": None,
+}
+
+def _normalize_text(value: str) -> str:
+    if not value:
+        return ""
+    text = unicodedata.normalize("NFKD", str(value)).encode("ascii", "ignore").decode("ascii")
+    return " ".join(text.replace("-", " ").replace("_", " ").lower().split())
+
+def _parse_allergens(value: str) -> Set[str]:
+    if not value:
+        return set()
+    parts = re.split(r"[|,;/]+", str(value))
+    normalized = {_normalize_text(p) for p in parts if p and _normalize_text(p)}
+    return {p for p in normalized if p not in {"none", "cap", "no", "null", "nan"}}
+
+def _detect_allergen_column(columns) -> Optional[str]:
+    for col in columns:
+        norm = _normalize_text(col).replace(" ", "_")
+        if norm in _ALLERGEN_COLUMN_CANDIDATES:
+            return col
+    return None
+
+def _load_begudes_allergens(path: str = "data/begudes.csv") -> Tuple[Optional[str], Dict[str, Set[str]]]:
+    cached_path = _BEGUDES_ALLERGENS_CACHE.get("path")
+    cached_col = _BEGUDES_ALLERGENS_CACHE.get("column")
+    cached_map = _BEGUDES_ALLERGENS_CACHE.get("by_id")
+    if cached_path == path and cached_map is not None:
+        return cached_col, cached_map
+
+    if not os.path.exists(path):
+        _BEGUDES_ALLERGENS_CACHE.update({"path": path, "column": None, "by_id": {}})
+        return None, {}
+
+    df = pd.read_csv(path)
+    col = _detect_allergen_column(df.columns)
+    by_id: Dict[str, Set[str]] = {}
+    if col and "id" in df.columns:
+        for _, row in df.iterrows():
+            drink_id = row.get("id")
+            if pd.isna(drink_id):
+                continue
+            drink_id = str(drink_id).strip()
+            by_id[drink_id] = _parse_allergens(row.get(col))
+
+    _BEGUDES_ALLERGENS_CACHE.update({"path": path, "column": col, "by_id": by_id})
+    return col, by_id
+
+def _row_has_prohibited_allergens(
+    beguda_row: Dict,
+    prohibited_allergens: Set[str],
+    allergen_col: Optional[str],
+    allergens_by_id: Dict[str, Set[str]],
+) -> bool:
+    if not prohibited_allergens:
+        return False
+    drink_id = str(beguda_row.get("id") or "").strip()
+    allergens = set()
+    mapped = allergens_by_id.get(drink_id)
+    if mapped:
+        allergens.update(mapped)
+    if allergen_col and allergen_col in beguda_row:
+        allergens.update(_parse_allergens(beguda_row.get(allergen_col)))
+    else:
+        for key in _ALLERGEN_COLUMN_CANDIDATES:
+            if key in beguda_row:
+                allergens.update(_parse_allergens(beguda_row.get(key)))
+                break
+    return bool(allergens & prohibited_allergens)
+
 def _first_present(row, keys):
     for key in keys:
         value = row.get(key)
@@ -70,9 +151,17 @@ def passa_filtre_dur(plat, beguda_row, begudes_usades):
         return False
 
 def passa_restriccions(beguda_row, restriccions, alcohol):
-    alcohol_beguda = beguda_row.get("alcohol", "").strip()
-    alergens_beguda = set(beguda_row["alergen"].split("|"))
-    dietes_beguda = set(beguda_row["dietes"].split("|"))
+    alcohol_beguda = str(beguda_row.get("alcohol", "")).strip()
+    alergens_beguda = set()
+    for key in _ALLERGEN_COLUMN_CANDIDATES:
+        if key in beguda_row:
+            alergens_beguda = _parse_allergens(beguda_row.get(key))
+            break
+    dietes_beguda = {
+        p.strip().lower()
+        for p in str(beguda_row.get("dietes", "")).split("|")
+        if p and p.strip()
+    }
     
      # 1. Comprovació alcohol
     if alcohol.lower() == "no" and alcohol_beguda == "si":
@@ -80,7 +169,8 @@ def passa_restriccions(beguda_row, restriccions, alcohol):
 
     # 2. Al·lèrgens: cap restricció d’al·lèrgens ha d’estar present
     for restriccio in restriccions:
-        if restriccio.lower() in alergens_beguda:
+        restriccio_norm = _normalize_text(restriccio)
+        if restriccio_norm and restriccio_norm in alergens_beguda:
             return False
 
     # 3. Dietes: si alguna restricció és tipus dieta, ha d’estar present a la beguda
@@ -169,13 +259,25 @@ def score_beguda_per_plat(beguda_row, ingredient_principal, llista_ingredients):
 
     return total_score, breakdown
 
-def recomana_beguda_per_plat(plat, base_begudes, base_ingredients, restriccions, alcohol, begudes_usades):
+def recomana_beguda_per_plat(
+    plat,
+    base_begudes,
+    base_ingredients,
+    restriccions,
+    alcohol,
+    begudes_usades,
+    prohibited_allergens: Optional[Set[str]] = None,
+):
     candidates = []
     
     ing_main, llista_ing = get_ingredient_principal(plat, base_ingredients)
+    allergen_col, allergens_by_id = _load_begudes_allergens()
+    prohibited_norm = {_normalize_text(a) for a in (prohibited_allergens or []) if a}
 
     for row in base_begudes:
         if not passa_filtre_dur(plat, row, begudes_usades):
+            continue
+        if _row_has_prohibited_allergens(row, prohibited_norm, allergen_col, allergens_by_id):
             continue
         if not passa_restriccions(row, restriccions, alcohol):
             continue

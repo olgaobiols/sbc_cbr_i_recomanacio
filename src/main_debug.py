@@ -4,6 +4,7 @@ import os
 from typing import List, Set, Dict, Any, Optional, Tuple
 import numpy as np
 import sys
+import unicodedata
 
 from estructura_cas import DescripcioProblema
 from Retriever import Retriever
@@ -34,6 +35,8 @@ from operadors_begudes import (
     passa_filtre_dur,
     passa_restriccions,
     score_beguda_per_plat,
+    _load_begudes_allergens,
+    _row_has_prohibited_allergens,
 )
 
 # =========================
@@ -174,6 +177,17 @@ def parse_restriccions_input(txt: str) -> Set[str]:
         resultat.add(token)
     return resultat
 
+def _collect_allergen_restrictions(items: List[str]) -> Set[str]:
+    if not items:
+        return set()
+    allergens_keys = {k for k, _ in EU_ALLERGENS}
+    resultat = set()
+    for item in items:
+        norm = _normalize_item(item)
+        if norm in allergens_keys:
+            resultat.add(norm)
+    return resultat
+
 def _normalize_item(value: str) -> str:
     if not value:
         return ""
@@ -210,9 +224,12 @@ def _display_dieta_tag(value: str) -> str:
 def _normalize_dieta_tag(value: str) -> str:
     if not value:
         return ""
-    norm = _normalize_item(value)
-    if norm in {"vegan", "vegetarian"}:
-        return norm
+    text = unicodedata.normalize("NFKD", str(value)).encode("ascii", "ignore").decode("ascii")
+    norm = " ".join(text.replace("-", " ").replace("_", " ").lower().split())
+    if norm in {"vega", "vegan"}:
+        return "vegan"
+    if norm in {"vegetaria", "vegetarian"}:
+        return "vegetarian"
     if norm in {"halal", "halal friendly", "halal_friendly"}:
         return "halal_friendly"
     if norm in {"kosher", "kosher friendly", "kosher_friendly"}:
@@ -1126,6 +1143,27 @@ def main():
                     prohibits.add(norm_map[r_norm])
         return prohibits
 
+    def _violacions_restriccions(
+        ingredients: List[str],
+        restriccions_set: Set[str],
+        perfil: Optional[Dict[str, Any]],
+    ) -> List[str]:
+        violacions: List[str] = []
+        if perfil and perfil.get("dieta"):
+            dieta = perfil.get("dieta")
+            if ingredients_incompatibles(ingredients, kb, {"dieta": dieta}):
+                violacions.append(_display_dieta_tag(dieta))
+        if perfil and perfil.get("alergies"):
+            alergies = list(perfil.get("alergies") or [])
+            if ingredients_incompatibles(ingredients, kb, {"alergies": alergies}):
+                violacions.extend(alergies)
+        norm_map = {_normalize_item(i): i for i in ingredients if i}
+        for r in restriccions_set:
+            r_norm = _normalize_item(r)
+            if r_norm in norm_map:
+                violacions.append(norm_map[r_norm])
+        return _dedup_preserve_order([v for v in violacions if v])
+
     def _aplica_restriccions_plat(
         plat: Dict[str, Any],
         restriccions_set: Set[str],
@@ -1261,9 +1299,10 @@ def main():
                 )
 
         perfil_usuari = _perfil_from_restriccions(restriccions)
+        aplica_preferencies = False
         
         alcohol = input_choice(
-            _prompt_inline("Begudes amb alcohol? (s/n):"),
+            _prompt_inline("Begudes amb alcohol? (si/no/indiferent):"),
             ["si", "no"],
             "si",
             show_options_in_prompt=False,
@@ -1349,7 +1388,10 @@ def main():
         sol = cas_seleccionat["solucio"]
 
         plats = copy.deepcopy(opcions_preparades[idx - 1]["menu_general"])
-        vetats_ingredients, parelles_vetades = _collect_vetats(perfil_guardat, learned_rules)
+        if restriccions:
+            vetats_ingredients, parelles_vetades = _collect_vetats({}, learned_rules)
+        else:
+            vetats_ingredients, parelles_vetades = set(), set()
 
         def _agafa_plat(curs: str) -> dict:
             curs = str(curs).lower()
@@ -1413,7 +1455,11 @@ def main():
                 prohibits.update(vetats_per_curs.get(str(p.get("curs", "")).lower(), set()))
                 if not prohibits:
                     continue
-                plat_tmp = {"nom": p.get("nom", ""), "ingredients": ingredients}
+                plat_tmp = {
+                    "nom": p.get("nom", ""),
+                    "ingredients": ingredients,
+                    "curs": p.get("curs", ""),
+                }
                 adaptat = substituir_ingredients_prohibits(
                     plat_tmp,
                     prohibits,
@@ -1421,7 +1467,7 @@ def main():
                     perfil_usuari=perfil_usuari,
                     ingredients_usats=ingredients_usats,
                     parelles_prohibides=parelles_vetades,
-                    preferits=stored_pref,
+                    preferits=stored_pref if aplica_preferencies else None,
                 )
                 if isinstance(adaptat, dict):
                     p["ingredients"] = adaptat.get("ingredients", ingredients)
@@ -1529,13 +1575,14 @@ def main():
                     text = resum
                 print(f"   - {etiqueta.capitalize()}: {text}")
 
-        _try_add_preferred_touch(
-            [plat1, plat2, postres],
-            stored_pref,
-            perfil_usuari,
-            vetats_ingredients,
-            parelles_vetades,
-        )
+        if aplica_preferencies:
+            _try_add_preferred_touch(
+                [plat1, plat2, postres],
+                stored_pref,
+                perfil_usuari,
+                vetats_ingredients,
+                parelles_vetades,
+            )
 
         if vetats_ingredients:
             plats_post = [
@@ -1551,12 +1598,16 @@ def main():
                 if not prohibits:
                     continue
                 adaptat = substituir_ingredients_prohibits(
-                    {"nom": p.get("nom", ""), "ingredients": ingredients},
+                    {
+                        "nom": p.get("nom", ""),
+                        "ingredients": ingredients,
+                        "curs": p.get("curs", ""),
+                    },
                     prohibits,
                     kb,
                     perfil_usuari=perfil_usuari,
                     parelles_prohibides=parelles_vetades,
-                    preferits=stored_pref,
+                    preferits=stored_pref if aplica_preferencies else None,
                 )
                 if isinstance(adaptat, dict):
                     p["ingredients"] = adaptat.get("ingredients", ingredients)
@@ -1678,21 +1729,42 @@ def main():
 
         # 8) Afegir begudes
         # --- NOU: combinar restriccions + al·lèrgies guardades ---
-        restriccions_beguda = set()
-        if perfil_usuari and perfil_usuari.get("alergies"):
-            restriccions_beguda.update(perfil_usuari["alergies"])  
-        
-        if restriccions:
-            restriccions_beguda.update(r.lower() for r in restriccions)
-
+        restriccions_beguda = {
+            _normalize_item(r) for r in restriccions if r
+        }
         restriccions_beguda = list(restriccions_beguda)
+        prohibited_allergens = list(_collect_allergen_restrictions(restriccions))
         _print_section("Maridatge de begudes")
         
         begudes_usades = set()
         
-        beguda1, score1, detail1 = recomana_beguda_per_plat(plat1, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol, begudes_usades)
-        beguda2, score2, detail2 = recomana_beguda_per_plat(plat2, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol, begudes_usades)
-        beguda_postres, score_postres, detail_postres = recomana_beguda_per_plat(postres, list(kb.begudes.values()), base_ingredients_list, restriccions_beguda, alcohol, begudes_usades)
+        beguda1, score1, detail1 = recomana_beguda_per_plat(
+            plat1,
+            list(kb.begudes.values()),
+            base_ingredients_list,
+            restriccions_beguda,
+            alcohol,
+            begudes_usades,
+            prohibited_allergens=prohibited_allergens,
+        )
+        beguda2, score2, detail2 = recomana_beguda_per_plat(
+            plat2,
+            list(kb.begudes.values()),
+            base_ingredients_list,
+            restriccions_beguda,
+            alcohol,
+            begudes_usades,
+            prohibited_allergens=prohibited_allergens,
+        )
+        beguda_postres, score_postres, detail_postres = recomana_beguda_per_plat(
+            postres,
+            list(kb.begudes.values()),
+            base_ingredients_list,
+            restriccions_beguda,
+            alcohol,
+            begudes_usades,
+            prohibited_allergens=prohibited_allergens,
+        )
 
 
         # Generació de Text (Gemini) - DESPRÉS de begudes
@@ -1776,6 +1848,7 @@ def main():
                         )
                         if isinstance(adaptat, dict):
                             plat_variant = adaptat
+                    plats_variant[idx_plat] = plat_variant
 
                     if (
                         plat_base.get("ingredients", []) != plat_variant.get("ingredients", [])
@@ -1798,7 +1871,25 @@ def main():
 
                 nom_grup = grup.get("name", "Grup")
                 etiqueta_grup = "VIP" if grup.get("is_vip") else "GRUP"
+                violacions_pendents: List[str] = []
                 if not canvis:
+                    for plat_variant in plats_variant:
+                        ingredients = list(plat_variant.get("ingredients", []) or [])
+                        violacions_pendents.extend(
+                            _violacions_restriccions(
+                                ingredients, total_restr, perfil_variant
+                            )
+                        )
+                    violacions_pendents = _dedup_preserve_order(
+                        [v for v in violacions_pendents if v]
+                    )
+                if not canvis and violacions_pendents:
+                    print(f"[{etiqueta_grup}: {nom_grup}]")
+                    print(
+                        "   ⚠️ ALERTA: No s'ha trobat una substitució vàlida per a "
+                        + ", ".join(violacions_pendents)
+                    )
+                elif not canvis:
                     print(f"[{etiqueta_grup}: {nom_grup}]")
                     print("   Compatible sense necessitat d'adaptació.")
                 else:
@@ -1869,13 +1960,27 @@ def main():
             return items
 
         def _recomana_beguda_premium(
-            plat, base_begudes, base_ingredients, restriccions, alcohol, begudes_usades
+            plat,
+            base_begudes,
+            base_ingredients,
+            restriccions,
+            alcohol,
+            begudes_usades,
+            prohibited_allergens=None,
         ):
             candidates = []
             ing_main, llista_ing = get_ingredient_principal(plat, base_ingredients)
+            allergen_col, allergens_by_id = _load_begudes_allergens()
+            prohibited_norm = {
+                _normalize_item(a) for a in (prohibited_allergens or []) if a
+            }
 
             for row in base_begudes:
                 if not passa_filtre_dur(plat, row, begudes_usades):
+                    continue
+                if _row_has_prohibited_allergens(
+                    row, prohibited_norm, allergen_col, allergens_by_id
+                ):
                     continue
                 if not passa_restriccions(row, restriccions, alcohol):
                     continue
@@ -1956,6 +2061,7 @@ def main():
                     restriccions_beguda,
                     alcohol,
                     begudes_usades_premium,
+                    prohibited_allergens=prohibited_allergens,
                 )
                 b2, s2, _ = _recomana_beguda_premium(
                     plat2,
@@ -1964,6 +2070,7 @@ def main():
                     restriccions_beguda,
                     alcohol,
                     begudes_usades_premium,
+                    prohibited_allergens=prohibited_allergens,
                 )
                 b3, s3, _ = _recomana_beguda_premium(
                     postres,
@@ -1972,6 +2079,7 @@ def main():
                     restriccions_beguda,
                     alcohol,
                     begudes_usades_premium,
+                    prohibited_allergens=prohibited_allergens,
                 )
 
                 if b1 is not None:

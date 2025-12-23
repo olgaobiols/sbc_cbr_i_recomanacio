@@ -1,12 +1,8 @@
 {
     "olga": {
         "rejected_ingredients": [
-            "tomato",
-            "soy_sauce"
-        ],
-        "rejected_pairs": [
-            "lemon|water"
-        ],
+            "tomato"],
+        "rejected_pairs": [],
         "alergies": [
             "milk"
         ],
