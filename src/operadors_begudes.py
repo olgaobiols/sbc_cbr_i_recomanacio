@@ -175,11 +175,18 @@ def passa_restriccions(beguda_row, restriccions, alcohol):
 
     # 3. Dietes: si alguna restricció és tipus dieta, ha d’estar present a la beguda
     restriccions_dieta = {'vegan', 'vegetarian', 'kosher_friendly', 'halal_friendly'}
+    has_halal = False
     for restriccio in restriccions:
-        if restriccio == 'halal': restriccio='halal_friendly'
-        if restriccio == 'kosher': restriccio='kosher_friendly'
-        if restriccio.lower() in restriccions_dieta and restriccio.lower() not in dietes_beguda:
+        restriccio_norm = _normalize_text(restriccio)
+        if restriccio_norm in {'halal', 'halal friendly', 'halal_friendly'}:
+            has_halal = True
+            continue
+        if restriccio_norm in {'kosher', 'kosher friendly', 'kosher_friendly'}:
+            restriccio_norm = 'kosher_friendly'
+        if restriccio_norm in restriccions_dieta and restriccio_norm not in dietes_beguda:
             return False
+    if has_halal and alcohol_beguda == "si":
+        return False
 
     return True
     

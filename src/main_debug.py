@@ -1728,12 +1728,10 @@ def main():
             print(f"   - Postres: {_format_techniques(transf_post, kb)}")
 
         # 8) Afegir begudes
-        # --- NOU: combinar restriccions + al·lèrgies guardades ---
-        restriccions_beguda = {
-            _normalize_item(r) for r in restriccions if r
-        }
-        restriccions_beguda = list(restriccions_beguda)
-        prohibited_allergens = list(_collect_allergen_restrictions(restriccions))
+        # --- restriccions només globals per al menú general ---
+        restriccions_beguda_set = {_normalize_item(r) for r in restriccions if r}
+        restriccions_beguda = list(restriccions_beguda_set)
+        prohibited_allergens = list(_collect_allergen_restrictions(restriccions_beguda))
         _print_section("Maridatge de begudes")
         
         begudes_usades = set()
@@ -1827,12 +1825,14 @@ def main():
             _print_section_line("VARIANTS PER A GRUPS")
             plats_base = [plat1, plat2, postres]
             curs_labels = ["Primer", "Segon", "Postres"]
+            base_begudes = list(kb.begudes.values())
 
             for grup in subgroups:
                 total_restr = set(restriccions) | set(grup.get("restrictions", []))
                 perfil_variant = _perfil_from_restriccions(total_restr)
                 plats_variant = [copy.deepcopy(p) for p in plats_base]
                 canvis = []
+                ingredients_usats_grup = set()
 
                 for idx_plat, (plat_base, plat_variant) in enumerate(
                     zip(plats_base, plats_variant)
@@ -1845,6 +1845,8 @@ def main():
                             set(prohibits) | set(total_restr),
                             kb,
                             perfil_usuari=perfil_variant,
+                            ingredients_usats=ingredients_usats_grup,
+                            preferits=stored_pref if grup.get("is_vip") else None,
                         )
                         if isinstance(adaptat, dict):
                             plat_variant = adaptat
@@ -1904,6 +1906,42 @@ def main():
                             diffs = canvi["diffs"]
                             canvi_txt = ", ".join(diffs) if diffs else "canvis d'ingredients"
                         print(f"   - {canvi['curs']}: {canvi_txt}")
+
+                restr_grup_set = {_normalize_item(r) for r in total_restr if r}
+                restr_grup = list(restr_grup_set)
+                allergens_grup = list(_collect_allergen_restrictions(restr_grup))
+                begudes_usades_grup = set()
+                b1, _, _ = recomana_beguda_per_plat(
+                    plats_variant[0],
+                    base_begudes,
+                    base_ingredients_list,
+                    restr_grup,
+                    alcohol,
+                    begudes_usades_grup,
+                    prohibited_allergens=allergens_grup,
+                )
+                b2, _, _ = recomana_beguda_per_plat(
+                    plats_variant[1],
+                    base_begudes,
+                    base_ingredients_list,
+                    restr_grup,
+                    alcohol,
+                    begudes_usades_grup,
+                    prohibited_allergens=allergens_grup,
+                )
+                b3, _, _ = recomana_beguda_per_plat(
+                    plats_variant[2],
+                    base_begudes,
+                    base_ingredients_list,
+                    restr_grup,
+                    alcohol,
+                    begudes_usades_grup,
+                    prohibited_allergens=allergens_grup,
+                )
+                nom_b1 = (b1 or {}).get("nom") or "—"
+                nom_b2 = (b2 or {}).get("nom") or "—"
+                nom_b3 = (b3 or {}).get("nom") or "—"
+                print(f"   Begudes (grup): Primer {nom_b1} | Segon {nom_b2} | Postres {nom_b3}")
                 print("")
 
         # 9.1) CONTROL PRESSUPOSTARI

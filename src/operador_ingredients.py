@@ -112,6 +112,21 @@ def _is_halal_haram(info: Dict, ingredient_name: str = "") -> bool:
         return True
     return False
 
+def _is_cheese_like(info: Dict, ingredient_name: str = "") -> bool:
+    fam = _normalize_text(info.get("family") or info.get("familia"))
+    blob = _ingredient_name_blob(info, ingredient_name)
+    if "cheese" in fam:
+        return True
+    if "cheese" in blob or "mozzarella" in blob:
+        return True
+    return False
+
+def _is_allowed_dessert_cheese(info: Dict, ingredient_name: str = "") -> bool:
+    if not _is_cheese_like(info, ingredient_name):
+        return True
+    blob = _ingredient_name_blob(info, ingredient_name)
+    return any(token in blob for token in _DESSERT_CHEESE_ALLOWLIST)
+
 def _es_candidat_postres_segura(info: Dict, ingredient_name: str = "") -> bool:
     cat = _normalize_category(info.get("macro_category") or info.get("categoria_macro"))
     fam = _normalize_text(info.get("family") or info.get("familia"))
@@ -124,6 +139,8 @@ def _es_candidat_postres_segura(info: Dict, ingredient_name: str = "") -> bool:
     if _is_vegetable(info, ingredient_name):
         if not any(token in blob for token in _DESSERT_VEG_EXCEPTIONS):
             return False
+    if not _is_allowed_dessert_cheese(info, ingredient_name):
+        return False
 
     if cat in _DESSERT_SAFE_CATEGORIES:
         return True
@@ -446,6 +463,14 @@ _DESSERT_VEG_EXCEPTIONS = {
     "carrot",
     "carrot_puree",
     "carrot_slices",
+}
+_DESSERT_CHEESE_ALLOWLIST = {
+    "mascarpone",
+    "ricotta",
+    "cream_cheese",
+    "fresh_cheese",
+    "quark",
+    "cottage_cheese",
 }
 _HALAL_HARAM_MARKERS = {
     "pork",
@@ -806,7 +831,7 @@ _DESSERT_GOOD_FLAVORS = {
     "berry",
 }
 
-def _es_apte_postres(info: Dict, intensitat: float) -> bool:
+def _es_apte_postres(info: Dict, intensitat: float, ingredient_name: str = "") -> bool:
     """Filtre per evitar ingredients salats/umami en postres."""
     if not info:
         return False
@@ -821,8 +846,8 @@ def _es_apte_postres(info: Dict, intensitat: float) -> bool:
     if flavors & _DESSERT_SAVORY_FLAVORS:
         return False
 
-    # Evita formatges salats en postres, a no ser que siguin suaus/dolcos.
-    if "cheese" in fam and not (flavors & _DESSERT_SOFT_FLAVORS):
+    # Evita formatges no aptes per a postres (p.ex. mozzarella).
+    if not _is_allowed_dessert_cheese(info, ingredient_name):
         return False
 
     # Categories extra: exigeix senyals dolcos/fruit/citrus.
@@ -869,6 +894,7 @@ def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits
     prohibits_norm = {_normalize_text(i) for i in ingredients_prohibits}
     whitelist_norm = ({_normalize_text(i) for i in llista_blanca} if llista_blanca else None)
     preferits = list(preferits or [])
+    used_norms = set(ingredients_usats or [])
 
     for i, ing_nom in enumerate(nou_plat['ingredients']):
         ing_norm = _normalize_text(ing_nom)
@@ -887,6 +913,8 @@ def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits
             
             candidats_map = {}
             candidats_dup_map = {}
+            candidats_used_map = {}
+            candidats_used_dup_map = {}
             context_ingredients = [ing for k, ing in enumerate(nou_plat['ingredients']) if k != i]
             context_norm = {_normalize_text(ing) for ing in context_ingredients}
 
@@ -908,16 +936,27 @@ def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits
                         continue
                     if _check_compatibilitat(info_cand, perfil_context) and _es_candidat_coherent(info_orig, info_cand, _normalize_text(cat_macro)):
                         if c_norm in context_norm:
-                            candidats_dup_map[c_norm] = cand_nom
+                            if c_norm in used_norms:
+                                candidats_used_dup_map[c_norm] = cand_nom
+                            else:
+                                candidats_dup_map[c_norm] = cand_nom
                         else:
-                            candidats_map[c_norm] = cand_nom
+                            if c_norm in used_norms:
+                                candidats_used_map[c_norm] = cand_nom
+                            else:
+                                candidats_map[c_norm] = cand_nom
 
             if candidats_map:
                 candidats_finals = list(candidats_map.values())
-            else:
+            elif candidats_dup_map:
                 candidats_finals = list(candidats_dup_map.values())
+            elif candidats_used_map:
+                candidats_finals = list(candidats_used_map.values())
+            else:
+                candidats_finals = list(candidats_used_dup_map.values())
             if not candidats_finals:
                 candidats_relax = []
+                candidats_relax_used = []
                 for cat in cats_candidats:
                     for cand_nom in _get_candidats_per_categoria(cat, kb):
                         c_norm = _normalize_text(cand_nom)
@@ -935,12 +974,24 @@ def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits
                         if not _es_substitucio_semanticament_coherent(info_orig, info_cand, ing_nom, cand_nom):
                             continue
                         if _check_compatibilitat(info_cand, perfil_context):
-                            candidats_relax.append(cand_nom)
+                            if c_norm in used_norms:
+                                candidats_relax_used.append(cand_nom)
+                            else:
+                                candidats_relax.append(cand_nom)
 
                 if candidats_relax:
                     vistos = set()
                     candidats_finals = []
                     for cand in candidats_relax:
+                        c_norm = _normalize_text(cand)
+                        if c_norm in vistos:
+                            continue
+                        vistos.add(c_norm)
+                        candidats_finals.append(cand)
+                elif candidats_relax_used:
+                    vistos = set()
+                    candidats_finals = []
+                    for cand in candidats_relax_used:
                         c_norm = _normalize_text(cand)
                         if c_norm in vistos:
                             continue
@@ -959,7 +1010,7 @@ def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits
             # Preferències d'usuari (prioritat si encaixa)
             best_pref = None
             best_pref_score = -99.0
-            pref_threshold = 0.08 if use_vectors else 0.0
+            pref_threshold = 0.0
             pref_candidates = []
             pref_dup_candidates = []
             for pref in preferits:
@@ -969,6 +1020,8 @@ def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits
                 pref_name = info_pref.get("ingredient_name") or pref
                 pref_norm = _normalize_text(pref_name)
                 if pref_norm == ing_norm or pref_norm in prohibits_norm:
+                    continue
+                if pref_norm in used_norms:
                     continue
                 if whitelist_norm and pref_norm not in whitelist_norm:
                     continue
@@ -1031,7 +1084,9 @@ def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits
 
             nou_plat['ingredients'][i] = millor_substitut
             log_canvis.append(f"Substitució: {ing_nom} -> {millor_substitut} [{justificacio}]")
-            if ingredients_usats: ingredients_usats.add(_normalize_text(millor_substitut))
+            used_norms.add(_normalize_text(millor_substitut))
+            if ingredients_usats is not None:
+                ingredients_usats.add(_normalize_text(millor_substitut))
 
     nou_plat['log_transformacio'] = log_canvis
     return nou_plat
@@ -1103,7 +1158,7 @@ def _adaptar_latent_core(plat: Dict, nom_estil: str, kb: Any, base_estils_latent
             
             cat_cand = _normalize_category(info_cand.get("macro_category") or "unknown")
             if es_postres:
-                if not _es_apte_postres(info_cand, intensitat):
+                if not _es_apte_postres(info_cand, intensitat, cand):
                     continue
                 # Relaxacio per postres (permet canviar fruita per dolc si intensitat es alta)
                 if cat_orig == "fruit" and cat_cand not in {"fruit", "nuts"} and not (intensitat > 0.6 and cat_cand == "sweetener"):
@@ -1158,7 +1213,7 @@ def _adaptar_latent_core(plat: Dict, nom_estil: str, kb: Any, base_estils_latent
                 if parelles_prohibides and _check_parelles_prohibides(cand, nou_plat['ingredients'], parelles_prohibides): continue
                 if not _check_compatibilitat(info_cand, perfil_usuari): continue
                 
-                if es_postres and not _es_apte_postres(info_cand, intensitat):
+                if es_postres and not _es_apte_postres(info_cand, intensitat, cand):
                     continue
 
                 pairing = 0.0
@@ -1194,7 +1249,7 @@ def _adaptar_latent_core(plat: Dict, nom_estil: str, kb: Any, base_estils_latent
             if info := kb.get_info_ingredient(cand):
                 if not _check_compatibilitat(info, perfil_usuari): continue
                 cat = _normalize_category(info.get("macro_category") or "unknown")
-                if es_postres and not _es_apte_postres(info, intensitat):
+                if es_postres and not _es_apte_postres(info, intensitat, cand):
                     continue
                 
                 sim = 0.0
