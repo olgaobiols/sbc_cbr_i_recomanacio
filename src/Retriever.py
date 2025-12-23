@@ -29,7 +29,6 @@ class Retriever:
         try:
             with open(path_base_casos, "r", encoding="utf-8") as f:
                 self.base_casos = json.load(f)
-            print(f"[Retriever] Carregats {len(self.base_casos)} casos.")
         except FileNotFoundError:
             print(f"[Retriever]: No s'ha trobat {path_base_casos}")
             self.base_casos = []

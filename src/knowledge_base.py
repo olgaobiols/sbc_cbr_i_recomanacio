@@ -39,7 +39,6 @@ class KnowledgeBase:
         self._carregar_latents()
 
         self._inicialitzat = True
-        print(f"Ontologia carregada: {len(self.ingredients)} ingredients, {len(self.estils)} estils.")
 
     def _normalize(self, text: str) -> str:
         """Normalitza text (ASCII, minúscules) per a claus de diccionari robustes."""

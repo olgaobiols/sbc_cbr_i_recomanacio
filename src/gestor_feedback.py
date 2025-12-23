@@ -74,12 +74,12 @@ class MemoriaGlobal:
                 if category == "pairs":
                     pretty = key.replace("|", " + ")
                     print(
-                        "✅ [Memòria Global] Parella vetada promoguda a regla global: "
+                        "[Memòria Global] Parella vetada promoguda a regla global: "
                         f"{pretty} (evidència: {cnt[key]})"
                     )
                 else:
                     print(
-                        "✅ [Memòria Global] Ingredient vetat promogut a regla global: "
+                        "[Memòria Global] Ingredient vetat promogut a regla global: "
                         f"{key} (evidència: {cnt[key]})"
                     )
         

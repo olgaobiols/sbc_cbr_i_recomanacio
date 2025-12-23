@@ -2,7 +2,8 @@
     "olga": {
         "rejected_ingredients": [
             "tomato",
-            "soy_sauce"        ],
+            "soy_sauce"
+        ],
         "rejected_pairs": [
             "lemon|water"
         ],
@@ -17,10 +18,36 @@
         ]
     },
     "guest": {
-        "rejected_ingredients": [
-        ],
+        "rejected_ingredients": [],
         "rejected_pairs": [],
+        "alergies": []
+    },
+    "joan": {
         "alergies": [
-        ]
+            "sesame"
+        ],
+        "ingredients_preferits": [],
+        "restriccions": [
+            "halal"
+        ],
+        "dieta": null,
+        "rejected_ingredients": [
+            "mozzarela"
+        ],
+        "display_name": "joan"
+    },
+    "usuari_kosher": {
+        "display_name": "usuari_kosher",
+        "restriccions": [
+            "kosher"
+        ],
+        "dieta": "kosher_friendly"
+    },
+    "usuari_halal": {
+        "restriccions": [
+            "halal"
+        ],
+        "dieta": "halal_friendly",
+        "display_name": "usuari_halal"
     }
 }

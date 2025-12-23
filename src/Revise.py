@@ -9,9 +9,28 @@ class GestorRevise:
     def __init__(self, mem_personal: Any, mem_global: Any) -> None:
         self.mem_personal = mem_personal
         self.mem_global = mem_global
+        self._ui_width = 80
 
     def _format_stars(self, n: int) -> str:
         return "★" * n + "☆" * (5 - n)
+
+    def _line(self, ch: str = "=") -> str:
+        return ch * self._ui_width
+
+    def _section(self, title: str, ch: str = "=") -> None:
+        line = self._line(ch)
+        print("\n" + line)
+        print(title)
+        print(line)
+
+    def _block(self, title: str, ch: str = "-") -> None:
+        line = self._line(ch)
+        print("\n" + line)
+        print(title)
+        print(line)
+
+    def _prompt(self, label: str) -> str:
+        return f"> {label:<28}"
 
     def _print_star_scale(self) -> None:
         print("Escala de valoració:")
@@ -50,20 +69,20 @@ class GestorRevise:
         return "critical" if motiu == "c" else "soft"
 
     def collect_feedback(self, case: Dict, user_id: str) -> Dict[str, Any]:
-        print("\n🧐 Avaluació final")
+        self._section("AVALUACIÓ FINAL")
         self._print_star_scale()
-        n1 = self.input_nota("Quina nota global li posaries al menú? (1-5): ")
+        n1 = self.input_nota(self._prompt("\nNota global del menú (1-5):"))
 
-        print("Si pots, detalla una mica més:")
-        n2_taste = self.input_nota("  Sabor (1-5): ")
-        n2_originality = self.input_nota("  Originalitat (1-5): ")
+        print("\nSi us plau puntúa els següents detalls:")
+        n2_taste = self.input_nota(self._prompt("Sabor (1-5):"))
+        n2_originality = self.input_nota(self._prompt("Originalitat (1-5):"))
 
         rejected_ingredients: List[str] = []
         rejected_pairs: List[str] = []
         rejected_health: List[str] = []
         rejected_taste: List[str] = []
 
-        print("\nHi ha algun ingredient o combinació que vulguis evitar a partir d'ara?")
+        self._block("INGREDIENTS O COMBINACIONS A EVITAR")
         print("Escriu 'NO ingredient' (ex: 'NO api') o 'NO A+B' (ex: 'NO maduixa+all').")
         print("Escriu 'FI' per acabar.")
 
@@ -117,6 +136,12 @@ class GestorRevise:
             "rebuigs_suaus": rejected_taste,
         }
 
+    def _print_result_header(self) -> None:
+        line = self._line("-")
+        print("\n" + line)
+        print("RESULTAT DE L'AVALUACIÓ")
+        print(line)
+
     def evaluate_result(
         self,
         puntuacio_global: int,
@@ -127,6 +152,7 @@ class GestorRevise:
         rejected_health: List[str],
         rejected_taste: List[str],
     ) -> str:
+        self._print_result_header()
         if puntuacio_global <= 2:
             print("Resultat: puntuació global baixa.")
             return "CRITICAL_FAILURE"

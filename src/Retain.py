@@ -54,14 +54,14 @@ def retain_case(
     """
     # 1) Filtre de seguretat
     if evaluation_result == "fracas_critic":
-        print("❌ [DECISIÓ: DESCARTAT PER SEGURETAT]")
+        print("[DECISIÓ: DESCARTAT PER SEGURETAT]")
         print("El cas ha estat rebutjat degut a un Fracàs Crític (violació de restriccions dures o al·lèrgies).")
-        print("Segons la política de retenció, el sistema no pot interioritzar coneixement insegur.")
+        print("Segons la política de retenció, el sistema no pot interioritzar coneixement insegur.\n")
         return False
 
     # 2) Cost d'adaptació K_adapt
     k_adapt = _calcular_cost_adaptacio(transformation_log)
-    print(f"Cost d'adaptació calculat: K_adapt={k_adapt}")
+    print(f"Cost d'adaptació calculat: K_adapt={k_adapt}\n")
 
 
     # 3) Utilitat U
@@ -92,9 +92,9 @@ def retain_case(
 
     d_min = 1.0 - sim_max
     if d_min < GAMMA:
-        print("♻️ [DECISIÓ: DESCARTAT PER REDUNDÀNCIA]")
-        print("El cas no aporta prou novetat a la Base de Casos.")
-        print(f"Distància al veí més proper (d_min={d_min:.2f}) < radi d'exclusió (gamma={GAMMA}).")
+        print("[DECISIÓ: DESCARTAT PER REDUNDÀNCIA]")
+        print("    • El cas no aporta prou novetat a la Base de Casos.")
+        print(f"    • Distància al veí més proper (d_min={d_min:.2f}) < radi d'exclusió (gamma={GAMMA}).\n")
         return False
 
     # 5) Persistència segons utilitat i estructura final detallada
@@ -164,19 +164,18 @@ def retain_case(
                 json.dump(kb_instance.base_casos, f, indent=4, ensure_ascii=False)
                 f.flush()
                 os.fsync(f.fileno())
-            print("✅ [DECISIÓ: APRÈS I RETINGUT]")
-            print("El cas s'ha incorporat exitosament a la memòria a llarg termini.")
-            print("Justificació XCBR:")
-            print("  1. Seguretat validada.")
-            print(f"  2. Alta Utilitat (U={utilitat:.2f}): Esforç d'adaptació (K={k_adapt}) vs Satisfacció.")
-            print(f"  3. Novetat confirmada (d_min >= {GAMMA}).")
+            print("[DECISIÓ: APRÈS I RETINGUT]")
+            print("El cas s'ha incorporat exitosament a la memòria a llarg termini pels següents motius:")
+            print("    • Seguretat validada.")
+            print(f"    • Alta Utilitat calculada (U={utilitat:.2f}): Esforç d'adaptació (K={k_adapt}) vs Satisfacció.")
+            print(f"    • Novetat confirmada (d_min >= {GAMMA}).\n")
             return True
         except Exception as e:
             print(f"Error al guardar: {e}")
             return False
 
-    print("⚠️ [DECISIÓ: DESCARTAT PER BAIXA UTILITAT]")
-    print(f"Utilitat calculada (U={utilitat:.2f}) inferior al llindar ({LLINDAR_UTILITAT}).")
-    print(f"Motiu: El Cost d'Adaptació ha estat baix (K_adapt={k_adapt}).")
-    print("Teoria: Solució 'trivial'. El cost de manteniment supera el cost de regeneració futura.")
+    print("[DECISIÓ: DESCARTAT PER BAIXA UTILITAT]")
+    print(f" • Utilitat calculada (U={utilitat:.2f}) inferior al llindar ({LLINDAR_UTILITAT}).")
+    print(f" • Motiu: El Cost d'Adaptació ha estat baix (K_adapt={k_adapt}).")
+    print(" •  Etiquetat com a solució trivial. El cost de manteniment supera el cost de regeneració futura.\n")
     return False

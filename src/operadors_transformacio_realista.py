@@ -14,7 +14,7 @@ from operador_ingredients import adaptar_plat_a_estil_latent
 API_KEY = os.environ.get("GEMINI_API_KEY")
 if not API_KEY:
     # Per evitar que peti si no tens la clau posada mentre proves altres coses
-    print("[AVÍS] Falta GEMINI_API_KEY. Les funcions LLM no funcionaran.")
+    print("\n[AVÍS] Falta GEMINI_API_KEY. Les funcions LLM no funcionaran.\n")
 else:
     genai.configure(api_key=API_KEY)
 
