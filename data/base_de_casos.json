@@ -1016,71 +1016,192 @@
         }
     },
     {
-    "id_cas": 15,
-    "problema": {
-        "tipus_esdeveniment": "empresa",
-        "estil_culinari": "mediterrani",
-        "temporada": "estiu",
-        "n_comensals": 6,
-        "preu_pers_objectiu": 75.0,
-        "servei": "assegut",
-        "formalitat": "formal",
-        "restriccions": []
+        "id_cas": 15,
+        "problema": {
+            "tipus_esdeveniment": "empresa",
+            "estil_culinari": "mediterrani",
+            "temporada": "estiu",
+            "n_comensals": 6,
+            "preu_pers_objectiu": 75.0,
+            "servei": "assegut",
+            "formalitat": "formal",
+            "restriccions": []
+        },
+        "solucio": {
+            "plats": [
+                {
+                    "curs": "primer",
+                    "nom": "Amanida Caprese Clàssica",
+                    "ingredients": [
+                        "tomato",
+                        "mozzarella",
+                        "basil",
+                        "olive oil",
+                        "salt"
+                    ],
+                    "rols_principals": [
+                        "vegetable",
+                        "dairy"
+                    ],
+                    "estil_tags": [
+                        "italia",
+                        "fresc"
+                    ],
+                    "preu": 12.0
+                },
+                {
+                    "curs": "segon",
+                    "nom": "Lluç a la planxa amb verdures",
+                    "ingredients": [
+                        "hake",
+                        "zucchini",
+                        "carrot",
+                        "sunflower oil",
+                        "lemon"
+                    ],
+                    "rols_principals": [
+                        "fish",
+                        "side"
+                    ],
+                    "estil_tags": [
+                        "mediterrani",
+                        "lleuger"
+                    ],
+                    "preu": 22.0
+                },
+                {
+                    "curs": "postres",
+                    "nom": "Sorbet de Llimona",
+                    "ingredients": [
+                        "lemon",
+                        "sugar",
+                        "water",
+                        "mint"
+                    ],
+                    "rols_principals": [
+                        "fruit"
+                    ],
+                    "estil_tags": [
+                        "fresc",
+                        "citric"
+                    ],
+                    "preu": 8.0
+                }
+            ],
+            "begudes": [
+                "Aigua mineral"
+            ],
+            "preu_total_real": 42.0,
+            "logs_transformacio": []
+        },
+        "avaluacio": {
+            "puntuacio_global": 4,
+            "validat": true,
+            "cost_adaptacio": 0,
+            "ingredients_rebutjats": [],
+            "utilitat": 1.0
+        }
     },
-    "solucio": {
-        "plats": [
-            {
-                "curs": "primer",
-                "nom": "Amanida Caprese Clàssica",
-                "ingredients": [
-                    "tomato",
-                    "mozzarella",
-                    "basil",
-                    "olive oil",
-                    "salt"
-                ],
-                "rols_principals": ["vegetable", "dairy"],
-                "estil_tags": ["italia", "fresc"],
-                "preu": 12.0
-            },
-            {
-                "curs": "segon",
-                "nom": "Lluç a la planxa amb verdures",
-                "ingredients": [
-                    "hake",
-                    "zucchini",
-                    "carrot",
-                    "sunflower oil",
-                    "lemon"
-                ],
-                "rols_principals": ["fish", "side"],
-                "estil_tags": ["mediterrani", "lleuger"],
-                "preu": 22.0
-            },
-            {
-                "curs": "postres",
-                "nom": "Sorbet de Llimona",
-                "ingredients": [
-                    "lemon",
-                    "sugar",
-                    "water",
-                    "mint"
-                ],
-                "rols_principals": ["fruit"],
-                "estil_tags": ["fresc", "citric"],
-                "preu": 8.0
-            }
-        ],
-        "begudes": ["Aigua mineral"],
-        "preu_total_real": 42.0,
-        "logs_transformacio": []
-    },
-    "avaluacio": {
-        "puntuacio_global": 4,
-        "validat": true,
-        "cost_adaptacio": 0,
-        "ingredients_rebutjats": [],
-        "utilitat": 1.0
-    }
+    {
+        "id_cas": 16,
+        "problema": {
+            "tipus_esdeveniment": "empresa",
+            "estil_culinari": "",
+            "temporada": "estiu",
+            "n_comensals": 6,
+            "preu_pers_objectiu": 85.0,
+            "servei": "assegut",
+            "formalitat": "indiferent",
+            "restriccions": []
+        },
+        "solucio": {
+            "plats": [
+                {
+                    "curs": "primer",
+                    "nom": "Caprese de Búfala amb Plating Minimalista",
+                    "ingredients": [
+                        "pattypan squash",
+                        "mozzarella",
+                        "basil",
+                        "olive oil",
+                        "salt",
+                        "buffalo mozzarella"
+                    ],
+                    "rols_principals": [
+                        "vegetable",
+                        "dairy"
+                    ],
+                    "estil_tags": [
+                        "italia",
+                        "fresc"
+                    ],
+                    "preu": 35.0
+                },
+                {
+                    "curs": "segon",
+                    "nom": "Lluç amb Carbassó Rostit i Cruixent de Pastanaga",
+                    "ingredients": [
+                        "hake",
+                        "zucchini",
+                        "carrot",
+                        "sunflower oil",
+                        "lemon",
+                        "ricotta"
+                    ],
+                    "rols_principals": [
+                        "fish",
+                        "side"
+                    ],
+                    "estil_tags": [
+                        "mediterrani",
+                        "lleuger"
+                    ],
+                    "preu": 45.0
+                },
+                {
+                    "curs": "postres",
+                    "nom": "Sorbet de Llimona amb Xocolata Negra i Menta",
+                    "ingredients": [
+                        "lemon",
+                        "sugar",
+                        "dark chocolate",
+                        "mint"
+                    ],
+                    "rols_principals": [
+                        "fruit"
+                    ],
+                    "estil_tags": [
+                        "fresc",
+                        "citric"
+                    ],
+                    "preu": 8.0
+                }
+            ],
+            "begudes": [],
+            "preu_total_real": 88.0,
+            "logs_transformacio": [
+                "Estil italia: Substituït tomato per pattypan squash",
+                "Estil italia: Afegit buffalo mozzarella com a toc final.",
+                "Condiment latent: light parmesan cream",
+                "Estil italia: Afegit ricotta (Fallback Simbòlic)",
+                "Condiment latent: herbed tomato sauce",
+                "Estil italia: Substituït water per dark chocolate",
+                "Condiment latent: mascarpone cream",
+                "Tècnica: emulsio_oli_formatge",
+                "Tècnica: plating_linia_minimal",
+                "Tècnica: rostit_lent",
+                "Tècnica: cruixent_fina",
+                "Maridatge: Generat nou maridatge per primer (Vi blanc criança amb bota)",
+                "Maridatge: Generat nou maridatge per segon (Vi blanc jove sec)",
+                "Maridatge: Generat nou maridatge per postres (Tònica premium)"
+            ]
+        },
+        "avaluacio": {
+            "puntuacio_global": 4,
+            "validat": true,
+            "cost_adaptacio": 36,
+            "ingredients_rebutjats": [],
+            "utilitat": 2.24
+        }
     }
 ]
