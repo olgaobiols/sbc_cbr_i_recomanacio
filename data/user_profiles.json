@@ -15,7 +15,8 @@
         ],
         "ingredients_preferits": [
             "apple"
-        ]
+        ],
+        "display_name": "olga"
     },
     "guest": {
         "rejected_ingredients": [],

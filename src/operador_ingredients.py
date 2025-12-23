@@ -409,10 +409,14 @@ def _condiment_random_mode(temperature: float, rng: random.Random) -> bool:
 
 def _get_candidats_per_categoria(categoria: str, kb: Any) -> List[str]:
     cat_norm = _normalize_category(categoria)
-    return [
-        info['ingredient_name'] for info in kb.ingredients.values()
-        if _normalize_category(info.get('macro_category') or info.get('categoria_macro')) == cat_norm
-    ]
+    candidats = []
+    for info in kb.ingredients.values():
+        if _normalize_category(info.get('macro_category') or info.get('categoria_macro')) != cat_norm:
+            continue
+        nom = info.get("ingredient_name") or info.get("nom_ingredient") or info.get("name")
+        if nom:
+            candidats.append(nom)
+    return candidats
 
 def _categoria_fallbacks(categoria_norm: str, perfil_usuari: Optional[Dict]) -> List[str]:
     """Defineix substitucions ontològiques segures quan la categoria original està prohibida."""

@@ -27,7 +27,13 @@ from operador_ingredients import (
     substituir_ingredients_prohibits,
 )
 
-from operadors_begudes import recomana_beguda_per_plat, get_ingredient_principal, passa_filtre_dur, score_beguda_per_plat
+from operadors_begudes import (
+    recomana_beguda_per_plat,
+    get_ingredient_principal,
+    passa_filtre_dur,
+    passa_restriccions,
+    score_beguda_per_plat,
+)
 
 # =========================
 #   INICIALITZACIÓ GLOBAL
@@ -1731,6 +1737,216 @@ def main():
                 plats_info=plats_info,
             )
             genera_imatge_menu_hf(prompt_imatge, output_path="menu_event.png")
+
+        # 9.2) CONTROL PRESSUPOSTARI
+        print("\n=== CONTROL PRESSUPOSTARI ===")
+
+        target_budget = float(preu_pers or 0.0)
+
+        def _tecnica_cost_unit():
+            if mode_ops in ("alta", "mixt"):
+                return float(COST_TECNICA_ALTA)
+            if mode_ops == "cultural":
+                return float(COST_TECNICA_CULTURAL)
+            return 0.0
+
+        def _calcula_totals_menu():
+            cost_unit = _tecnica_cost_unit()
+            tec_count = sum(len(t) for t in (transf_1, transf_2, transf_post) if t)
+            tec_total = tec_count * cost_unit
+            plats_total = sum(
+                float(p.get("preu", 0.0) or 0.0) for p in (plat1, plat2, postres)
+            )
+            begudes_total = sum(
+                float(b.get("preu_cost", 0.0) or 0.0)
+                for b in (beguda1, beguda2, beguda_postres)
+                if b
+            )
+            total_actual = (plats_total - tec_total) + begudes_total + tec_total
+            return total_actual, plats_total, begudes_total, tec_total
+
+        def _nom_tecnica_local(tecnica):
+            if isinstance(tecnica, dict):
+                nom = (tecnica.get("display") or tecnica.get("nom") or tecnica.get("name") or "").strip()
+                return nom if nom else "tècnica"
+            nom = str(tecnica).strip()
+            return nom if nom else "tècnica"
+
+        def _recollir_tecniques(cost_unit):
+            items = []
+            ordre = 0
+            for idx_plat, transf in enumerate((transf_1, transf_2, transf_post)):
+                if not transf:
+                    continue
+                for idx_t, t in enumerate(transf):
+                    items.append(
+                        {
+                            "plat_idx": idx_plat,
+                            "t_idx": idx_t,
+                            "nom": _nom_tecnica_local(t),
+                            "cost": cost_unit,
+                            "ordre": ordre,
+                        }
+                    )
+                    ordre += 1
+            return items
+
+        def _recomana_beguda_premium(
+            plat, base_begudes, base_ingredients, restriccions, alcohol, begudes_usades
+        ):
+            candidates = []
+            ing_main, llista_ing = get_ingredient_principal(plat, base_ingredients)
+
+            for row in base_begudes:
+                if not passa_filtre_dur(plat, row, begudes_usades):
+                    continue
+                if not passa_restriccions(row, restriccions, alcohol):
+                    continue
+                sc, breakdown = score_beguda_per_plat(row, ing_main, llista_ing)
+                candidates.append((row, sc, breakdown))
+
+            if not candidates:
+                return None, None, None
+
+            candidates.sort(key=lambda x: x[1], reverse=True)
+            top = candidates[:5]
+
+            def _preu_beguda(row):
+                try:
+                    return float(row.get("preu_cost", 0.0) or 0.0)
+                except (TypeError, ValueError):
+                    return 0.0
+
+            top.sort(key=lambda x: _preu_beguda(x[0]), reverse=True)
+            beguda, score, detail = top[0]
+            if beguda is not None:
+                begudes_usades.add(beguda.get("id"))
+            return beguda, score, detail
+
+        current_total, _, _, _ = _calcula_totals_menu()
+        print(f"Objectiu: {target_budget:.2f}€ | Actual: {current_total:.2f}€")
+
+        diff = current_total - target_budget
+        canvis_aplicats = False
+
+        if diff > 5:
+            resposta = input_default(
+                f"El preu supera el pressupost en {diff:.2f}€. Voleu que ajusti automàticament les tècniques per reduir costos mantenint l'estil del menú? (s/n)",
+                "n",
+            ).strip().lower()
+            if resposta == "s":
+                cost_unit = _tecnica_cost_unit()
+                eliminades = 0
+                while True:
+                    current_total, _, _, _ = _calcula_totals_menu()
+                    if current_total <= target_budget:
+                        break
+                    if cost_unit <= 0:
+                        break
+                    items = _recollir_tecniques(cost_unit)
+                    if not items:
+                        break
+                    item = max(items, key=lambda x: (x["cost"], x["ordre"]))
+                    transf_llista = [transf_1, transf_2, transf_post]
+                    plats_llista = [plat1, plat2, postres]
+                    transf_sel = transf_llista[item["plat_idx"]]
+                    if not transf_sel:
+                        break
+                    transf_sel.pop(item["t_idx"])
+                    plat_sel = plats_llista[item["plat_idx"]]
+                    preu_actual = float(plat_sel.get("preu", 0.0) or 0.0)
+                    plat_sel["preu"] = max(0.0, preu_actual - item["cost"])
+                    eliminades += 1
+                    current_total, _, _, _ = _calcula_totals_menu()
+                    print(
+                        f" > Eliminant tècnica '{item['nom']}' (-{item['cost']:.2f}€)... Nou total: {current_total:.2f}€"
+                    )
+                if eliminades > 0:
+                    canvis_aplicats = True
+        elif diff < -10:
+            resposta = input_default(
+                f"Tens un marge de {abs(diff):.2f}€. Vols millorar l'experiència amb un Maridatge Prèmium (Vins de gamma alta)? (s/n)",
+                "n",
+            ).strip().lower()
+            if resposta == "s":
+                print(" > Aplicant selecció de Sommelier Prèmium...")
+                begudes_usades_premium = set()
+                base_begudes = list(kb.begudes.values())
+                b1, s1, _ = _recomana_beguda_premium(
+                    plat1,
+                    base_begudes,
+                    base_ingredients_list,
+                    restriccions_beguda,
+                    alcohol,
+                    begudes_usades_premium,
+                )
+                b2, s2, _ = _recomana_beguda_premium(
+                    plat2,
+                    base_begudes,
+                    base_ingredients_list,
+                    restriccions_beguda,
+                    alcohol,
+                    begudes_usades_premium,
+                )
+                b3, s3, _ = _recomana_beguda_premium(
+                    postres,
+                    base_begudes,
+                    base_ingredients_list,
+                    restriccions_beguda,
+                    alcohol,
+                    begudes_usades_premium,
+                )
+
+                if b1 is not None:
+                    beguda1 = b1
+                    score1 = s1
+                    canvis_aplicats = True
+                if b2 is not None:
+                    beguda2 = b2
+                    score2 = s2
+                    canvis_aplicats = True
+                if b3 is not None:
+                    beguda_postres = b3
+                    score_postres = s3
+                    canvis_aplicats = True
+        elif abs(diff) <= 5:
+            print("El menú s'ajusta perfectament al pressupost objectiu.")
+        else:
+            print("El menú queda lleugerament per sota del pressupost, però dins d'un marge acceptable.")
+
+        if canvis_aplicats:
+            current_total, _, _, _ = _calcula_totals_menu()
+
+            def _nom_plat_final(plat, info_llm):
+                nom = (info_llm or {}).get("nom_nou") or plat.get("nom") or "—"
+                nom = str(nom).strip()
+                return nom if nom else "—"
+
+            def _nom_beguda_final(beguda):
+                if beguda:
+                    nom = (beguda.get("nom") or "—").strip()
+                    return nom if nom else "—"
+                return "—"
+
+            imprimir_menu_final(
+                kb,
+                plat1, transf_1, info_llm_1, beguda1, score1,
+                plat2, transf_2, info_llm_2, beguda2, score2,
+                postres, transf_post, info_llm_post, beguda_postres, score_postres,
+                mostrar_logs=False,
+            )
+
+            print("\nResum final del menú:")
+            print(
+                f" - Primer: {_nom_plat_final(plat1, info_llm_1)} | Beguda: {_nom_beguda_final(beguda1)}"
+            )
+            print(
+                f" - Segon: {_nom_plat_final(plat2, info_llm_2)} | Beguda: {_nom_beguda_final(beguda2)}"
+            )
+            print(
+                f" - Postres: {_nom_plat_final(postres, info_llm_post)} | Beguda: {_nom_beguda_final(beguda_postres)}"
+            )
+            print(f"Total final: {current_total:.2f}€")
         
         # 10) FASE REVISE (Dual Memory)
         gestor_revise = GestorRevise()
