@@ -827,6 +827,7 @@ def imprimir_casos(candidats, top_k=5):
         # Detall intern eliminat per simplicitat en l'experiència
 
 import re
+import textwrap
 
 def imprimir_menu_final(
     kb,
@@ -851,13 +852,24 @@ def imprimir_menu_final(
         txt = _cap(text)
         if not txt:
             return
-        lines = [line.strip() for line in txt.splitlines() if line.strip()]
-        if len(lines) == 1:
-            print(f"{indent}{titol}: {lines[0]}")
+        raw_lines = [line.strip() for line in txt.splitlines() if line.strip()]
+        sentences = []
+        for line in raw_lines:
+            parts = re.split(r"(?<=[.!?])\\s+", line)
+            sentences.extend([p.strip() for p in parts if p.strip()])
+        if not sentences:
             return
         print(f"{indent}{titol}:")
-        for line in lines:
-            print(f"{indent}  {line}")
+        bullet = f"{indent}- "
+        sub_indent = " " * len(bullet)
+        for sentence in sentences:
+            wrapped = textwrap.fill(
+                sentence,
+                width=UI_WIDTH,
+                initial_indent=bullet,
+                subsequent_indent=sub_indent,
+            )
+            print(wrapped)
 
     # --- NOU: neteja del log (treu fallback + ingredient en català quan toca) ---
     def _neteja_log(log: str) -> str:
