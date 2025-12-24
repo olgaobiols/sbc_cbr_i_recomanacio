@@ -11,7 +11,6 @@ Gestiona la càrrega de dades des de CSV/JSON i ofereix consultes normalitzades.
 Actua com a Single Source of Truth per a tot el sistema CBR.
 """
 
-
 class KnowledgeBase:
     _instance = None
 
