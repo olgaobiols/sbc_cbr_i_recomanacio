@@ -33,5 +33,17 @@
             "seabass|truffle"
         ],
         "display_name": "Blanca"
+    },
+    "gabriel": {
+        "ingredients_preferits": [
+            "vanilla"
+        ],
+        "display_name": "Gabriel"
+    },
+    "julien": {
+        "alergies": [
+            "gluten"
+        ],
+        "display_name": "Julien"
     }
 }

@@ -1,6 +1,6 @@
 nom_ingredient,categoria_macro,familia,sabors_base,te_gluten,te_lactosa,es_animal,rol_tipic,processament,format,alergens,dietes_permeses,nom_catala
 arugula,plant_vegetal,green_leaf,herbaceous|slightly_bitter|green,false,False,False,base,fresh,leaf,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,ruca
-beef,protein_animal,meat_cured,rich|umami|fatty,false,False,True,main,fresh,meat_piece,none,omnivore|halal_friendly|kosher_friendly,bou/vedella
+beef,protein_animal,meat_cured,rich|umami|fatty,false,False,True,main,fresh,meat_piece,none,omnivore|kosher_friendly,bou/vedella
 beetroot,vegetable,root,earthy|sweet,false,False,False,side,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,remolatxa
 berries,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,baies
 blackberries,fruit,general_fruit,fruity|sweet|tart,false,False,False,decoration,fresh,raw,none,omnivore|vegetarian|vegan|halal_friendly|kosher_friendly,móres

@@ -388,7 +388,161 @@ def _collect_vetats(perfil: Dict[str, Any], learned_rules: Dict[str, Any]) -> Tu
     user_pairs.discard("")
     glob_pairs.discard("")
 
-    return user_ings | glob_ings, user_pairs | glob_pairs
+    return _expand_ingredient_aliases(user_ings | glob_ings), user_pairs | glob_pairs
+
+
+_TOMATO_TOKENS = {"tomato", "tomatoes", "tomate", "cherry tomato", "cherry tomatoes"}
+_KETCHUP_TOKENS = {"ketchup", "catsup"}
+
+
+def _expand_ingredient_aliases(items: Set[str]) -> Set[str]:
+    """Amplia vetos amb sinònims/derivats coneguts."""
+    if not items:
+        return set()
+    out = set(items)
+    if out.intersection(_TOMATO_TOKENS):
+        out.update(_KETCHUP_TOKENS)
+    return out
+
+
+_KOSHER_DAIRY_CATEGORIES = {"dairy", "dairy_cheese", "dairy_cream", "lacti"}
+_KOSHER_DAIRY_FAMILY_MARKERS = {"dairy", "cheese", "milk", "butter", "cream", "yogurt", "yoghurt"}
+_KOSHER_DAIRY_TYPE_MARKERS = {"dairy"}
+_KOSHER_DAIRY_KEYWORDS = {
+    "milk",
+    "cheese",
+    "butter",
+    "cream",
+    "yogurt",
+    "yoghurt",
+    "kefir",
+    "ghee",
+}
+_KOSHER_MEAT_CATEGORIES = {"fish_white", "fish_oily", "fish", "seafood", "protein_animal", "proteina_animal"}
+_KOSHER_MEAT_FAMILY_MARKERS = {
+    "meat",
+    "poultry",
+    "beef",
+    "pork",
+    "fish",
+    "seafood",
+    "shellfish",
+    "crustacean",
+    "mollusc",
+}
+_KOSHER_MEAT_TYPE_MARKERS = {"animal_product", "meat", "fish", "seafood"}
+_KOSHER_MEAT_KEYWORDS = {
+    "chicken",
+    "beef",
+    "veal",
+    "pork",
+    "ham",
+    "bacon",
+    "fish",
+    "seafood",
+    "shellfish",
+    "crustacean",
+    "mollusc",
+    "shrimp",
+    "prawn",
+    "salmon",
+    "tuna",
+    "cod",
+    "sardine",
+}
+_KOSHER_NONKOSHER_KEYWORDS = {
+    "pork",
+    "ham",
+    "bacon",
+    "shellfish",
+    "crustacean",
+    "mollusc",
+    "shrimp",
+    "prawn",
+    "crab",
+    "lobster",
+}
+
+
+def _is_kosher_forbidden_meat(info: Optional[Dict[str, Any]], ingredient_name: str) -> bool:
+    blob = _ingredient_name_blob(info, ingredient_name)
+    fam = _normalize_item((info or {}).get("family") or (info or {}).get("familia") or "")
+    if any(token in fam for token in {"pork", "shellfish", "crustacean", "mollusc"}):
+        return True
+    if any(token in blob for token in _KOSHER_NONKOSHER_KEYWORDS):
+        return True
+    return False
+
+
+def _ingredient_name_blob(info: Optional[Dict[str, Any]], fallback: str = "") -> str:
+    if not info:
+        return _normalize_item(fallback)
+    parts = [
+        fallback,
+        info.get("ingredient_name"),
+        info.get("nom_ingredient"),
+        info.get("nom_catala"),
+        info.get("name"),
+    ]
+    return _normalize_item(" ".join(p for p in parts if p))
+
+
+def _is_kosher_dairy(info: Optional[Dict[str, Any]], ingredient_name: str) -> bool:
+    blob = _ingredient_name_blob(info, ingredient_name)
+    cat = _normalize_item((info or {}).get("macro_category") or (info or {}).get("categoria_macro") or "")
+    fam = _normalize_item((info or {}).get("family") or (info or {}).get("familia") or "")
+    tipus = _normalize_item((info or {}).get("type") or (info or {}).get("tipus") or "")
+    if cat in _KOSHER_DAIRY_CATEGORIES:
+        return True
+    if any(token in fam for token in _KOSHER_DAIRY_FAMILY_MARKERS):
+        return True
+    if any(token in tipus for token in _KOSHER_DAIRY_TYPE_MARKERS):
+        return True
+    if any(token in blob for token in _KOSHER_DAIRY_KEYWORDS):
+        return True
+    return False
+
+
+def _is_kosher_meat(info: Optional[Dict[str, Any]], ingredient_name: str) -> bool:
+    blob = _ingredient_name_blob(info, ingredient_name)
+    cat = _normalize_item((info or {}).get("macro_category") or (info or {}).get("categoria_macro") or "")
+    fam = _normalize_item((info or {}).get("family") or (info or {}).get("familia") or "")
+    tipus = _normalize_item((info or {}).get("type") or (info or {}).get("tipus") or "")
+    if cat in _KOSHER_MEAT_CATEGORIES:
+        return True
+    if any(token in fam for token in _KOSHER_MEAT_FAMILY_MARKERS):
+        return True
+    if any(token in tipus for token in _KOSHER_MEAT_TYPE_MARKERS):
+        return True
+    if any(token in blob for token in _KOSHER_MEAT_KEYWORDS):
+        return True
+    return False
+
+
+def _kosher_restriction_active(
+    restriccions_set: Set[str],
+    perfil: Optional[Dict[str, Any]],
+) -> bool:
+    if perfil and _normalize_dieta_tag(perfil.get("dieta")) == "kosher_friendly":
+        return True
+    for r in restriccions_set or []:
+        if _normalize_dieta_tag(r) == "kosher_friendly":
+            return True
+    return False
+
+
+def _kosher_milk_meat_conflict(ingredients: List[str]) -> Tuple[List[str], List[str]]:
+    dairy: List[str] = []
+    meat: List[str] = []
+    for ing in ingredients:
+        if not ing:
+            continue
+        info = kb.get_info_ingredient(ing)
+        if _is_kosher_dairy(info, ing):
+            dairy.append(ing)
+        if _is_kosher_meat(info, ing):
+            meat.append(ing)
+    return dairy, meat
 
 
 def _plat_te_ingredient_vetat(ingredients: List[str], vetats: Set[str]) -> bool:
@@ -1288,6 +1442,20 @@ def main():
                 r_norm = _normalize_item(r)
                 if r_norm in norm_map:
                     prohibits.add(norm_map[r_norm])
+            if _expand_ingredient_aliases(set(restriccions_set)) & _KETCHUP_TOKENS:
+                for ing in ingredients:
+                    if _normalize_item(ing) in _KETCHUP_TOKENS:
+                        prohibits.add(ing)
+        if _kosher_restriction_active(restriccions_set, perfil):
+            dairy, meat = _kosher_milk_meat_conflict(ingredients)
+            for ing in ingredients:
+                if not ing:
+                    continue
+                info = kb.get_info_ingredient(ing)
+                if _is_kosher_forbidden_meat(info, ing):
+                    prohibits.add(ing)
+            if dairy and meat:
+                prohibits.update(dairy)
         return prohibits
 
     def _violacions_restriccions(
@@ -1309,6 +1477,20 @@ def main():
             r_norm = _normalize_item(r)
             if r_norm in norm_map:
                 violacions.append(norm_map[r_norm])
+        if _expand_ingredient_aliases(set(restriccions_set)) & _KETCHUP_TOKENS:
+            for ing in ingredients:
+                if _normalize_item(ing) in _KETCHUP_TOKENS:
+                    violacions.append(ing)
+        if _kosher_restriction_active(restriccions_set, perfil):
+            dairy, meat = _kosher_milk_meat_conflict(ingredients)
+            for ing in ingredients:
+                if not ing:
+                    continue
+                info = kb.get_info_ingredient(ing)
+                if _is_kosher_forbidden_meat(info, ing):
+                    violacions.append(ing)
+            if dairy and meat:
+                violacions.append("kosher")
         return _dedup_preserve_order([v for v in violacions if v])
 
     def _aplica_restriccions_plat(

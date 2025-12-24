@@ -1616,5 +1616,411 @@
             "utilitat": 2.0,
             "data_aprenentatge": "1766538772.7542472"
         }
+    },
+    {
+        "id_cas": 22,
+        "problema": {
+            "tipus_esdeveniment": "congres",
+            "estil_culinari": "internacional",
+            "temporada": "estiu",
+            "n_comensals": 100,
+            "preu_pers_objectiu": 45.0,
+            "servei": "cocktail",
+            "formalitat": "formal",
+            "restriccions": []
+        },
+        "solucio": {
+            "plats": [
+                {
+                    "curs": "primer",
+                    "nom": "Canapè de Salmó, Crema i Tomàquet Cherry",
+                    "ingredients": [
+                        "bread",
+                        "salmon",
+                        "cream_cheese",
+                        "cherry_tomato",
+                        "dill"
+                    ],
+                    "rols_principals": [
+                        "fish",
+                        "cereal"
+                    ],
+                    "estil_tags": [
+                        "fred",
+                        "finger_food"
+                    ],
+                    "preu": 15.0
+                },
+                {
+                    "curs": "segon",
+                    "nom": "Mini Burger de Porc amb Formatge (Cheeseburger)",
+                    "ingredients": [
+                        "pork",
+                        "bread",
+                        "cheese",
+                        "onion",
+                        "ketchup",
+                        "mustard"
+                    ],
+                    "rols_principals": [
+                        "meat",
+                        "dairy"
+                    ],
+                    "estil_tags": [
+                        "calent",
+                        "finger_food"
+                    ],
+                    "preu": 18.0
+                },
+                {
+                    "curs": "postres",
+                    "nom": "Gotet de Tiramisú Clàssic",
+                    "ingredients": [
+                        "mascarpone",
+                        "coffee",
+                        "sugar",
+                        "cocoa",
+                        "biscuit"
+                    ],
+                    "rols_principals": [
+                        "sweet",
+                        "dairy"
+                    ],
+                    "estil_tags": [
+                        "dolç"
+                    ],
+                    "preu": 12.0
+                }
+            ],
+            "begudes": [
+                "Vi Negre",
+                "Cava Brut",
+                "Refrescos"
+            ],
+            "preu_total_real": 45.0,
+            "logs_transformacio": []
+        },
+        "avaluacio": {
+            "puntuacio_global": 4,
+            "validat": true,
+            "cost_adaptacio": 0,
+            "ingredients_rebutjats": [],
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 23,
+        "problema": {
+            "tipus_esdeveniment": "indiferent",
+            "estil_culinari": "italia",
+            "temporada": "tardor",
+            "n_comensals": 1,
+            "preu_pers_objectiu": 15.0,
+            "servei": "assegut",
+            "formalitat": "informal",
+            "restriccions": []
+        },
+        "solucio": {
+            "plats": [
+                {
+                    "curs": "primer",
+                    "nom": "Macarrons amb Tomàquet i Formatge",
+                    "ingredients": [
+                        "pasta",
+                        "tomato",
+                        "cheese",
+                        "oregano",
+                        "onion"
+                    ],
+                    "rols_principals": [
+                        "cereal",
+                        "vegetable"
+                    ],
+                    "estil_tags": [
+                        "classic",
+                        "italia"
+                    ],
+                    "preu": 8.0
+                },
+                {
+                    "curs": "segon",
+                    "nom": "Pit de Pollastre a la Planxa",
+                    "ingredients": [
+                        "chicken",
+                        "oil",
+                        "garlic",
+                        "parsley",
+                        "lemon"
+                    ],
+                    "rols_principals": [
+                        "meat"
+                    ],
+                    "estil_tags": [
+                        "senzill"
+                    ],
+                    "preu": 7.0
+                },
+                {
+                    "curs": "postres",
+                    "nom": "Iogurt Natural",
+                    "ingredients": [
+                        "yogurt",
+                        "sugar"
+                    ],
+                    "rols_principals": [
+                        "dairy"
+                    ],
+                    "estil_tags": [
+                        "basic"
+                    ],
+                    "preu": 2.0
+                }
+            ],
+            "begudes": [
+                "Aigua"
+            ],
+            "preu_total_real": 17.0,
+            "logs_transformacio": []
+        },
+        "avaluacio": {
+            "puntuacio_global": 3,
+            "validat": true,
+            "cost_adaptacio": 0,
+            "ingredients_rebutjats": [],
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 24,
+        "problema": {
+            "tipus_esdeveniment": "indiferent",
+            "estil_culinari": "",
+            "temporada": "tardor",
+            "n_comensals": 1,
+            "preu_pers_objectiu": 30.0,
+            "restriccions": []
+        },
+        "solucio": {
+            "plats": [
+                {
+                    "curs": "postres",
+                    "nom": "Iogurt amb Escuma de Crema Agra",
+                    "ingredients": [
+                        "yogurt",
+                        "sugar",
+                        "sour_cream"
+                    ],
+                    "rols": [],
+                    "tags": [
+                        "basic"
+                    ],
+                    "preu": 5.0
+                }
+            ],
+            "begudes": [],
+            "preu_total_real": 5.0,
+            "logs_transformacio": [
+                "Estil mexica: Afegit corn (Fallback Simbòlic)",
+                "Condiment latent: mild pico de gallo",
+                "Estil mexica: Substituït oil per lard",
+                "Condiment latent: mild mole sauce",
+                "Estil mexica: Afegit sour_cream (Fallback Simbòlic)",
+                "Condiment latent: vanilla-cinnamon cream",
+                "Maridatge: Generat nou maridatge per primer (Vi blanc jove afruitat)",
+                "Maridatge: Generat nou maridatge per segon (Vi blanc jove sec)",
+                "Maridatge: Generat nou maridatge per postres (Vi Blanc Dolç de Podridura Noble)"
+            ]
+        },
+        "avaluacio": {
+            "puntuacio_global": 4,
+            "cost_adaptacio": 21,
+            "utilitat": 2.04,
+            "data_aprenentatge": "1766544667.4887512"
+        }
+    },
+    {
+        "id_cas": 24,
+        "problema": {
+            "tipus_esdeveniment": "empresa",
+            "estil_culinari": "internacional",
+            "temporada": "estiu",
+            "n_comensals": 5,
+            "preu_pers_objectiu": 95.0,
+            "servei": "assegut",
+            "formalitat": "formal",
+            "restriccions": []
+        },
+        "solucio": {
+            "plats": [
+                {
+                    "curs": "primer",
+                    "nom": "Pernil Ibèric de Gla amb Pa amb Tomàquet",
+                    "ingredients": [
+                        "cured_ham",
+                        "bread",
+                        "tomato",
+                        "olive oil"
+                    ],
+                    "rols_principals": [
+                        "meat",
+                        "cereal"
+                    ],
+                    "estil_tags": [
+                        "classic",
+                        "luxe"
+                    ],
+                    "preu": 28.0
+                },
+                {
+                    "curs": "segon",
+                    "nom": "Garrí Confitat amb Salsa de Vi Negre",
+                    "ingredients": [
+                        "pork",
+                        "red_wine",
+                        "potato",
+                        "butter",
+                        "garlic"
+                    ],
+                    "rols_principals": [
+                        "meat",
+                        "sauce"
+                    ],
+                    "estil_tags": [
+                        "caloric",
+                        "luxe"
+                    ],
+                    "preu": 32.0
+                },
+                {
+                    "curs": "postres",
+                    "nom": "Babà al Rom amb Nata",
+                    "ingredients": [
+                        "flour",
+                        "rum",
+                        "sugar",
+                        "cream",
+                        "egg"
+                    ],
+                    "rols_principals": [
+                        "sweet",
+                        "cereal"
+                    ],
+                    "estil_tags": [
+                        "dolç",
+                        "alcohol"
+                    ],
+                    "preu": 12.0
+                }
+            ],
+            "begudes": [
+                "Vi Negre Gran Reserva",
+                "Cava Brut Nature"
+            ],
+            "preu_total_real": 72.0,
+            "logs_transformacio": []
+        },
+        "avaluacio": {
+            "puntuacio_global": 4,
+            "validat": true,
+            "cost_adaptacio": 0,
+            "ingredients_rebutjats": [],
+            "utilitat": 1.0
+        }
+    },
+    {
+        "id_cas": 25,
+        "problema": {
+            "tipus_esdeveniment": "empresa",
+            "estil_culinari": "",
+            "temporada": "tardor",
+            "n_comensals": 10,
+            "preu_pers_objectiu": 120.0,
+            "restriccions": []
+        },
+        "solucio": {
+            "plats": [
+                {
+                    "curs": "postres",
+                    "nom": "Babà al Rum amb Ou Mushimono",
+                    "ingredients": [
+                        "flour",
+                        "rum",
+                        "sugar",
+                        "cream",
+                        "egg"
+                    ],
+                    "rols": [],
+                    "tags": [
+                        "dolç",
+                        "alcohol"
+                    ],
+                    "preu": 12.0
+                }
+            ],
+            "begudes": [],
+            "preu_total_real": 12.0,
+            "logs_transformacio": [
+                "Estil umami: Afegit firm tofu com a toc final.",
+                "Estil umami: Afegit red miso com a toc final.",
+                "Condiment latent: mushroom-wine sauce",
+                "Condiment latent: intense dark chocolate",
+                "Tècnica: yakimono",
+                "Tècnica: reductora_herbal",
+                "Tècnica: nimono",
+                "Maridatge: Generat nou maridatge per primer (Vi blanc jove afruitat)",
+                "Maridatge: Generat nou maridatge per segon (Vi blanc jove sec)",
+                "Maridatge: Generat nou maridatge per postres (Vi blanc criança amb bota)"
+            ]
+        },
+        "avaluacio": {
+            "puntuacio_global": 5,
+            "cost_adaptacio": 24,
+            "utilitat": 2.61,
+            "data_aprenentatge": "1766575706.7321017"
+        }
+    },
+    {
+        "id_cas": 27,
+        "problema": {
+            "tipus_esdeveniment": "congres",
+            "estil_culinari": "",
+            "temporada": "primavera",
+            "n_comensals": 200,
+            "preu_pers_objectiu": 60.0,
+            "restriccions": []
+        },
+        "solucio": {
+            "plats": [
+                {
+                    "curs": "postres",
+                    "nom": "Gotet de Tiramisú Clàssic",
+                    "ingredients": [
+                        "mascarpone",
+                        "coffee",
+                        "sugar",
+                        "cocoa",
+                        "biscuit"
+                    ],
+                    "rols": [],
+                    "tags": [
+                        "dolç"
+                    ],
+                    "preu": 12.0
+                }
+            ],
+            "begudes": [],
+            "preu_total_real": 12.0,
+            "logs_transformacio": [
+                "Maridatge: Generat nou maridatge per primer (Vi blanc criança amb bota)",
+                "Maridatge: Generat nou maridatge per segon (Vi negre reserva)",
+                "Maridatge: Generat nou maridatge per postres (Moscatell dolç)"
+            ]
+        },
+        "avaluacio": {
+            "puntuacio_global": 5,
+            "cost_adaptacio": 3,
+            "utilitat": 1.69,
+            "data_aprenentatge": "1766579376.466931"
+        }
     }
 ]
