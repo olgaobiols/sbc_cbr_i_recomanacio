@@ -1474,74 +1474,147 @@
             "ingredients_rebutjats": [],
             "utilitat": 1.52
         }
-    }, 
+    },
     {
-    "id_cas": 20,
-    "problema": {
-        "tipus_esdeveniment": "aniversari",
-        "estil_culinari": "francesa",
-        "temporada": "primavera",
-        "n_comensals": 2,
-        "preu_pers_objectiu": 120.0,
-        "servei": "assegut",
-        "formalitat": "luxe",
-        "restriccions": []
+        "id_cas": 20,
+        "problema": {
+            "tipus_esdeveniment": "aniversari",
+            "estil_culinari": "francesa",
+            "temporada": "primavera",
+            "n_comensals": 2,
+            "preu_pers_objectiu": 120.0,
+            "servei": "assegut",
+            "formalitat": "luxe",
+            "restriccions": []
+        },
+        "solucio": {
+            "plats": [
+                {
+                    "curs": "primer",
+                    "nom": "Tàrtar de Gamba Vermella i Tomàquet Confitat",
+                    "ingredients": [
+                        "prawns",
+                        "tomato",
+                        "onion",
+                        "chives",
+                        "olive oil",
+                        "lime"
+                    ],
+                    "rols_principals": [
+                        "fish",
+                        "vegetable"
+                    ],
+                    "estil_tags": [
+                        "sofisticat",
+                        "fresc"
+                    ],
+                    "preu": 28.0
+                },
+                {
+                    "curs": "segon",
+                    "nom": "Llobarro Salvatge amb emulsió de Tòfona",
+                    "ingredients": [
+                        "seabass",
+                        "truffle",
+                        "potato",
+                        "butter",
+                        "cream"
+                    ],
+                    "rols_principals": [
+                        "fish",
+                        "tuber"
+                    ],
+                    "estil_tags": [
+                        "luxe",
+                        "cremos"
+                    ],
+                    "preu": 45.0
+                },
+                {
+                    "curs": "postres",
+                    "nom": "Textures de Xocolata i Or",
+                    "ingredients": [
+                        "dark chocolate",
+                        "gold leaf",
+                        "hazelnut",
+                        "sugar"
+                    ],
+                    "rols_principals": [
+                        "sweet"
+                    ],
+                    "estil_tags": [
+                        "dolç",
+                        "luxe"
+                    ],
+                    "preu": 15.0
+                }
+            ],
+            "begudes": [
+                "Xampany Francès",
+                "Aigua amb Gas"
+            ],
+            "preu_total_real": 88.0,
+            "logs_transformacio": []
+        },
+        "avaluacio": {
+            "puntuacio_global": 5,
+            "validat": true,
+            "cost_adaptacio": 0,
+            "ingredients_rebutjats": [],
+            "utilitat": 1.0
+        }
     },
-    "solucio": {
-        "plats": [
-            {
-                "curs": "primer",
-                "nom": "Tàrtar de Gamba Vermella i Tomàquet Confitat",
-                "ingredients": [
-                    "prawns",
-                    "tomato",
-                    "onion",
-                    "chives",
-                    "olive oil",
-                    "lime"
-                ],
-                "rols_principals": ["fish", "vegetable"],
-                "estil_tags": ["sofisticat", "fresc"],
-                "preu": 28.0
-            },
-            {
-                "curs": "segon",
-                "nom": "Llobarro Salvatge amb emulsió de Tòfona",
-                "ingredients": [
-                    "seabass",
-                    "truffle",
-                    "potato",
-                    "butter",
-                    "cream"
-                ],
-                "rols_principals": ["fish", "tuber"],
-                "estil_tags": ["luxe", "cremos"],
-                "preu": 45.0
-            },
-            {
-                "curs": "postres",
-                "nom": "Textures de Xocolata i Or",
-                "ingredients": [
-                    "dark chocolate",
-                    "gold leaf",
-                    "hazelnut",
-                    "sugar"
-                ],
-                "rols_principals": ["sweet"],
-                "estil_tags": ["dolç", "luxe"],
-                "preu": 15.0
-            }
-        ],
-        "begudes": ["Xampany Francès", "Aigua amb Gas"],
-        "preu_total_real": 88.0,
-        "logs_transformacio": []
-    },
-    "avaluacio": {
-        "puntuacio_global": 5,
-        "validat": true,
-        "cost_adaptacio": 0,
-        "ingredients_rebutjats": [],
-        "utilitat": 1.0
+    {
+        "id_cas": 21,
+        "problema": {
+            "tipus_esdeveniment": "aniversari",
+            "estil_culinari": "",
+            "temporada": "estiu",
+            "n_comensals": 1,
+            "preu_pers_objectiu": 80.0,
+            "restriccions": [
+                "nuts"
+            ]
+        },
+        "solucio": {
+            "plats": [
+                {
+                    "curs": "postres",
+                    "nom": "Textures de Maduixa, Mango Laminat i Or",
+                    "ingredients": [
+                        "strawberry",
+                        "gold leaf",
+                        "sugar",
+                        "lime zest",
+                        "mango"
+                    ],
+                    "rols": [],
+                    "tags": [
+                        "dolç",
+                        "luxe"
+                    ],
+                    "preu": 18.0
+                }
+            ],
+            "begudes": [],
+            "preu_total_real": 18.0,
+            "logs_transformacio": [
+                "Estil tropical: Afegit fresh pineapple com a toc final.",
+                "Estil tropical: Afegit mango com a toc final.",
+                "Condiment latent: tropical chutney",
+                "Estil tropical: Afegit lime zest com a toc final.",
+                "Condiment latent: coconut cream",
+                "Preferència: Afegit mango com a toc (afinitat 0.49)",
+                "Maridatge: Generat nou maridatge per primer (Tònica premium)",
+                "Maridatge: Generat nou maridatge per segon (Refresc de taronja)",
+                "Maridatge: Generat nou maridatge per postres (Ginger Ale artesanal)"
+            ]
+        },
+        "avaluacio": {
+            "puntuacio_global": 4,
+            "cost_adaptacio": 19,
+            "utilitat": 2.0,
+            "data_aprenentatge": "1766538772.7542472"
+        }
     }
-}
 ]

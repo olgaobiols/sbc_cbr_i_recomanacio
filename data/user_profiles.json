@@ -10,5 +10,28 @@
         "rejected_pairs": [
             "seabass|truffle"
         ]
+    },
+    "olga": {
+        "alergies": [
+            "nuts"
+        ],
+        "ingredients_preferits": [
+            "coco",
+            "mango",
+            "strawberry"
+        ],
+        "rejected_ingredients": [
+            "dark_chocolate"
+        ],
+        "display_name": "Olga",
+        "rejected_pairs": [
+            "seabass|truffle"
+        ]
+    },
+    "blanca": {
+        "rejected_pairs": [
+            "seabass|truffle"
+        ],
+        "display_name": "Blanca"
     }
 }

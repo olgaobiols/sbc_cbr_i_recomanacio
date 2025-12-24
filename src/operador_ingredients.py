@@ -1,4 +1,5 @@
 import random
+import re
 import unicodedata
 from typing import List, Dict, Set, Any, Optional
 import numpy as np
@@ -66,6 +67,34 @@ def _ingredient_name_blob(info: Dict, fallback: str = "") -> str:
         info.get("name"),
     ]
     return _normalize_text(" ".join(p for p in parts if p))
+
+def _tokens_from_text(value: str) -> Set[str]:
+    normalized = _normalize_text(value)
+    if not normalized:
+        return set()
+    normalized = re.sub(r"[^a-z0-9\\s]", " ", normalized)
+    return {t for t in normalized.split() if t}
+
+def _allergy_tokens_match(
+    alergies_usuari: Set[str],
+    tokens: Set[str],
+    category: str = "",
+) -> bool:
+    if not alergies_usuari:
+        return False
+    if "nuts" in alergies_usuari:
+        if tokens & _TREE_NUT_TOKENS:
+            return True
+        if tokens & _PEANUT_TOKENS:
+            return True
+        if "nut" in tokens or "nuts" in tokens:
+            return True
+        if category == "nuts":
+            return True
+    if "peanuts" in alergies_usuari:
+        if tokens & _PEANUT_TOKENS:
+            return True
+    return False
 
 def _is_meat_or_fish(info: Dict, ingredient_name: str = "") -> bool:
     cat = _normalize_category(info.get("macro_category") or info.get("categoria_macro"))
@@ -233,6 +262,11 @@ def _check_compatibilitat(ingredient_info: Dict, perfil_usuari: Optional[Dict]) 
         familia_ing = _normalize_text(ingredient_info.get('family') or ingredient_info.get('familia'))
         if alergies_usuari.intersection(alergens_ing) or (familia_ing and familia_ing in alergies_usuari):
             return False
+        name_blob = _ingredient_name_blob(ingredient_info)
+        cat = _normalize_category(ingredient_info.get("macro_category") or ingredient_info.get("categoria_macro"))
+        tokens = _tokens_from_text(" ".join([name_blob, familia_ing, cat]))
+        if _allergy_tokens_match(alergies_usuari, tokens, cat):
+            return False
 
     # Validació de dieta
     dieta_usuari = _normalize_diet_tag(perfil_usuari.get('dieta'))
@@ -308,6 +342,15 @@ def ingredients_incompatibles(ingredients: List[str], kb: Any, perfil_usuari: Op
         else:
             dieta = _normalize_diet_tag(perfil_usuari.get("dieta"))
             ing_norm = _normalize_text(ing)
+            alergies = {
+                _normalize_text(a)
+                for a in perfil_usuari.get("alergies", [])
+                if a and not _is_empty_tag(a)
+            }
+            if alergies:
+                tokens = _tokens_from_text(ing_norm)
+                if _allergy_tokens_match(alergies, tokens):
+                    prohibits.add(ing)
             if dieta == "vegan":
                 if any(token in ing_norm for token in _NON_VEGAN_KEYWORDS):
                     prohibits.add(ing)
@@ -471,6 +514,29 @@ _DESSERT_CHEESE_ALLOWLIST = {
     "fresh_cheese",
     "quark",
     "cottage_cheese",
+}
+_TREE_NUT_TOKENS = {
+    "almond",
+    "almonds",
+    "hazelnut",
+    "hazelnuts",
+    "walnut",
+    "walnuts",
+    "cashew",
+    "cashews",
+    "pistachio",
+    "pistachios",
+    "pecan",
+    "pecans",
+    "macadamia",
+    "chestnut",
+    "chestnuts",
+}
+_PEANUT_TOKENS = {
+    "peanut",
+    "peanuts",
+    "groundnut",
+    "groundnuts",
 }
 _HALAL_HARAM_MARKERS = {
     "pork",
@@ -901,7 +967,42 @@ def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits
         
         if ing_norm in prohibits_norm:
             info_orig = kb.get_info_ingredient(ing_nom)
-            if not info_orig: continue 
+            if not info_orig:
+                perfil_context = perfil_usuari or {}
+                substitut_pref = None
+                for pref in preferits:
+                    info_pref = kb.get_info_ingredient(pref)
+                    if not info_pref:
+                        continue
+                    pref_name = info_pref.get("ingredient_name") or pref
+                    pref_norm = _normalize_text(pref_name)
+                    if pref_norm == ing_norm or pref_norm in prohibits_norm:
+                        continue
+                    if whitelist_norm and pref_norm not in whitelist_norm:
+                        continue
+                    if parelles_prohibides and _check_parelles_prohibides(pref_name, nou_plat['ingredients'], parelles_prohibides):
+                        continue
+                    if es_postres and not _es_candidat_postres_segura(info_pref, pref_name):
+                        continue
+                    if not _check_compatibilitat(info_pref, perfil_context):
+                        continue
+                    substitut_pref = pref_name
+                    break
+
+                if substitut_pref:
+                    nou_plat['ingredients'][i] = substitut_pref
+                    log_canvis.append(
+                        f"Substitució: {ing_nom} -> {substitut_pref} [Preferència d'usuari]"
+                    )
+                    used_norms.add(_normalize_text(substitut_pref))
+                    if ingredients_usats is not None:
+                        ingredients_usats.add(_normalize_text(substitut_pref))
+                else:
+                    log_canvis.append(
+                        f"Eliminat: {ing_nom} (ingredient no reconegut i restringit)"
+                    )
+                    nou_plat['ingredients'][i] = None
+                continue 
             
             # Context i candidats potencials
             perfil_context = _build_perfil_context(perfil_usuari, info_orig)
@@ -1088,6 +1189,7 @@ def substituir_ingredients_prohibits(plat: Dict[str, Any], ingredients_prohibits
             if ingredients_usats is not None:
                 ingredients_usats.add(_normalize_text(millor_substitut))
 
+    nou_plat['ingredients'] = [ing for ing in nou_plat['ingredients'] if ing]
     nou_plat['log_transformacio'] = log_canvis
     return nou_plat
 

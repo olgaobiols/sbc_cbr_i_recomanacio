@@ -2,7 +2,7 @@ import json
 import math
 import os
 import unicodedata
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 """
 GESTOR DE LA FASE RETAIN (Aprenentatge)
@@ -62,12 +62,15 @@ def retain_case(
     
     # 1. FILTRE DE SEGURETAT: No s'aprenen errors crítics (al·lèrgies, etc.)
     if evaluation_result == "CRITICAL_FAILURE":
-        print("[RETAIN] Descartat: El cas conté errors de seguretat o restriccions violades.")
+        print("[DECISIÓ: DESCARTAT PER SEGURETAT]")
+        print("El cas ha estat rebutjat degut a un Fracàs Crític (violació de restriccions dures o al·lèrgies).")
+        print("Segons la política de retenció, el sistema no pot interioritzar coneixement insegur.\n")
         return False
-
+        
     # 2. CÀLCUL DEL COST D'ADAPTACIÓ (K)
     k_adapt = _calcular_cost_adaptacio(transformation_log)
-
+    print(f"Cost d'adaptació calculat: K_adapt={k_adapt}\n")
+        
     # 3. CÀLCUL D'UTILITAT (U)
     # Fórmula: $U = Q_{user} \times (1 + \alpha \cdot \ln(1 + K_{adapt}))$
     # On Q_user és la nota normalitzada (0-1) i alpha és el pes de la novetat estructural.
@@ -90,14 +93,19 @@ def retain_case(
 
     d_min = 1.0 - sim_max
     if d_min < GAMMA:
-        print(f"[RETAIN] Descartat: Cas redundant (d_min {d_min:.4f} < {GAMMA}).")
+        print("[DECISIÓ: DESCARTAT PER REDUNDÀNCIA]")
+        print("    • El cas no aporta prou novetat a la Base de Casos.")
+        print(f"    • Distància al veí més proper (d_min={d_min:.2f}) < radi d'exclusió (gamma={GAMMA}).\n")
         return False
 
     # 5. DECISIÓ FINAL I PERSISTÈNCIA
     if utilitat > LLINDAR_UTILITAT:
         return _persistir_cas(kb_instance, new_case, k_adapt, utilitat, user_score, transformation_log)
 
-    print(f"[RETAIN] Descartat: Baixa utilitat (U={utilitat:.2f}). Solució massa trivial.")
+    print("[DECISIÓ: DESCARTAT PER BAIXA UTILITAT]")
+    print(f" • Utilitat calculada (U={utilitat:.2f}) inferior al llindar ({LLINDAR_UTILITAT}).")
+    print(f" • Motiu: El Cost d'Adaptació ha estat baix (K_adapt={k_adapt}).")
+    print(" •  Etiquetat com a solució trivial. El cost de manteniment supera el cost de regeneració futura.\n")
     return False
 
 # --- AUXILIARS DE PERSISTÈNCIA ---
@@ -162,5 +170,9 @@ def _persistir_cas(kb, case, k_adapt, utilitat, score, logs) -> bool:
     with open(PATH_BC, "w", encoding="utf-8") as f:
         json.dump(kb.base_casos, f, indent=4, ensure_ascii=False)
     
-    print(f"[RETAIN] ÈXIT: Cas après amb utilitat {utilitat:.2f} i cost d'adaptació {k_adapt}.")
+    print("[DECISIÓ: APRÈS I RETINGUT]")
+    print("El cas s'ha incorporat exitosament a la memòria a llarg termini pels següents motius:")
+    print("    • Seguretat validada.")
+    print(f"    • Alta Utilitat calculada (U={utilitat:.2f}): Esforç d'adaptació (K={k_adapt}) vs Satisfacció.")
+    print(f"    • Novetat confirmada (d_min >= {GAMMA}).\n")
     return True

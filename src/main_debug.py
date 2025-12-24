@@ -9,7 +9,7 @@ import unicodedata
 from estructura_cas import DescripcioProblema
 from Retriever import Retriever
 from knowledge_base import KnowledgeBase
-from gestor_feedback import GestorRevise
+from gestor_feedback import GestorRevise, MemoriaGlobal
 from operadors_transformacio_realista import (
     substituir_ingredient,
     triar_tecniques_2_operadors_per_menu,
@@ -181,11 +181,14 @@ def _collect_allergen_restrictions(items: List[str]) -> Set[str]:
     if not items:
         return set()
     allergens_keys = {k for k, _ in EU_ALLERGENS}
+    label_map = {_normalize_item(label): key for key, label in EU_ALLERGENS}
     resultat = set()
     for item in items:
         norm = _normalize_item(item)
         if norm in allergens_keys:
             resultat.add(norm)
+        elif norm in label_map:
+            resultat.add(label_map[norm])
     return resultat
 
 def _normalize_item(value: str) -> str:
@@ -1095,6 +1098,9 @@ def main():
     print(_line("-"))
 
     if input_default("Vols actualitzar alguna d'aquestes dades? (s/n)", "n").strip().lower() == "s":
+        prev_rejected_ing = set(stored_rejected_ing)
+        prev_rejected_pairs = set(stored_rejected_pairs)
+        mem_global = None
         if input_default("Volem revisar els al·lèrgens? (s/n)", "n").strip().lower() == "s":
             stored_alergies = seleccionar_alergens()
             perfil_guardat["alergies"] = list(stored_alergies)
@@ -1113,10 +1119,25 @@ def main():
             txt = input_default("Ingredients vetats (en anglès, separats per comes) [Enter per cap]", "")
             stored_rejected_ing = sorted(parse_list_input(txt))
             perfil_guardat["rejected_ingredients"] = stored_rejected_ing
+            nous_ings = set(stored_rejected_ing) - prev_rejected_ing
+            if nous_ings:
+                if mem_global is None:
+                    mem_global = MemoriaGlobal()
+                for ing in sorted(nous_ings):
+                    mem_global.acumular_evidencia_ingredient(ing)
         if input_default("Vols actualitzar parelles vetades? (s/n)", "n").strip().lower() == "s":
             txt = input_default("Parella en format A+B, separades per comes [Enter per cap]", "")
             stored_rejected_pairs = _parse_pairs_input(txt)
             perfil_guardat["rejected_pairs"] = stored_rejected_pairs
+            noves_parelles = set(stored_rejected_pairs) - prev_rejected_pairs
+            if noves_parelles:
+                if mem_global is None:
+                    mem_global = MemoriaGlobal()
+                for pair in sorted(noves_parelles):
+                    if "|" not in pair:
+                        continue
+                    a, b = pair.split("|", 1)
+                    mem_global.acumular_evidencia_parella(a, b)
 
         perfil_guardat.setdefault("display_name", display_name)
         user_profiles[str(user_id)] = perfil_guardat
@@ -1288,7 +1309,7 @@ def main():
                 restr_disp = ", ".join(restr_grup) if restr_grup else "—"
                 print(f"  Confirmat: Grup {i + 1} '{nom_grup}' | Restriccions: {restr_disp}")
 
-        if n_comensals > 1 and (stored_rejected_ing or stored_alergies or stored_restr or stored_dieta):
+        if n_comensals > 1 and (stored_rejected_ing or stored_rejected_pairs or stored_alergies or stored_restr or stored_dieta):
             vol_vip = input_default(
                 _prompt_inline(f"Menú personalitzat per l'amfitrió {display_name.title()}? (tindrem en compte preferències!) (s/n):"),
                 "n",
@@ -1312,7 +1333,7 @@ def main():
                 )
 
         aplica_preferencies = False
-        if n_comensals == 1 and (stored_rejected_ing or stored_alergies or stored_restr or stored_dieta or stored_pref):
+        if n_comensals == 1 and (stored_rejected_ing or stored_rejected_pairs or stored_alergies or stored_restr or stored_dieta or stored_pref):
             vol_pref = input_default(
                 _prompt_inline(
                     f"Vols que el menú tingui en compte les preferències de {display_name.title()}? (s/n):"
@@ -1790,6 +1811,70 @@ def main():
             print(f"   - Primer: {_format_techniques(transf_1, kb)}")
             print(f"   - Segon: {_format_techniques(transf_2, kb)}")
             print(f"   - Postres: {_format_techniques(transf_post, kb)}")
+
+        # Reforç final de seguretat després d'estil i tècniques
+        alergies_segures = set()
+        if perfil_usuari and perfil_usuari.get("alergies"):
+            alergies_segures.update(perfil_usuari.get("alergies") or [])
+        if aplica_preferencies and stored_alergies:
+            alergies_segures.update(stored_alergies)
+
+        dieta_segura = None
+        if perfil_usuari and perfil_usuari.get("dieta"):
+            dieta_segura = perfil_usuari.get("dieta")
+        if dieta_segura is None and aplica_preferencies and stored_dieta:
+            dieta_segura = stored_dieta
+
+        perfil_seguretat = None
+        if alergies_segures or dieta_segura:
+            perfil_seguretat = {}
+            alergies_norm = sorted(_collect_allergen_restrictions(list(alergies_segures)))
+            if alergies_norm:
+                perfil_seguretat["alergies"] = alergies_norm
+            if dieta_segura:
+                perfil_seguretat["dieta"] = dieta_segura
+            if not perfil_seguretat:
+                perfil_seguretat = None
+
+        if perfil_seguretat or restriccions_general or vetats_ingredients:
+            ingredients_usats_final = set()
+            resums_finals = []
+            plats_pre = [
+                ("PRIMER PLAT", plat1),
+                ("SEGON PLAT", plat2),
+                ("POSTRES", postres),
+            ]
+            for etiqueta, p in plats_pre:
+                ingredients = list(p.get("ingredients", []) or [])
+                prohibits = _prohibits_per_plat(ingredients, restriccions_general, perfil_seguretat)
+                prohibits.update(vetats_ingredients)
+                if not prohibits:
+                    continue
+                adaptat = substituir_ingredients_prohibits(
+                    {
+                        "nom": p.get("nom", ""),
+                        "ingredients": ingredients,
+                        "curs": p.get("curs", ""),
+                    },
+                    prohibits,
+                    kb,
+                    perfil_usuari=perfil_seguretat,
+                    ingredients_usats=ingredients_usats_final,
+                    parelles_prohibides=parelles_vetades,
+                    preferits=stored_pref if aplica_preferencies else None,
+                )
+                if isinstance(adaptat, dict):
+                    p["ingredients"] = adaptat.get("ingredients", ingredients)
+                    logs_sub = adaptat.get("log_transformacio", []) or []
+                    if logs_sub:
+                        resums_finals.append((etiqueta, logs_sub))
+
+            if resums_finals:
+                print("\nAjustos finals per seguretat:")
+                for etiqueta, logs_sub in resums_finals:
+                    print(f"- {etiqueta}:")
+                    for log in logs_sub:
+                        print(f"  {log}")
 
         # 8) Afegir begudes
         # --- restriccions només globals per al menú general ---

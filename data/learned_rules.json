@@ -4,15 +4,17 @@
             "tomato": 1,
             "ceba": 2,
             "soy": 1,
-            "lemon": 1
+            "lemon": 1,
+            "hazelnut": 1
         },
         "pairs": {
-            "lemon|water": 1,
-            "seabass|truffle": 2
+            "seabass|truffle": 3
         }
     },
     "global_rules": {
         "ingredients": [],
-        "pairs": []
+        "pairs": [
+            "seabass|truffle"
+        ]
     }
 }
