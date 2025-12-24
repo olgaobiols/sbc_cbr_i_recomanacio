@@ -41,6 +41,25 @@ from operadors_tecniques import (
 )
 
 
+"""
+SISTEMA DE RECOMANACIÓ DE MENÚS (Arquitectura CBR Híbrida)
+---------------------------------------------------------
+Implementació d'un sistema basat en el coneixement per a la generació 
+de menús gastronòmics personalitzats mitjançant el cicle de les 4R.
+
+1. RETRIEVE (Recuperació): Cerca de casos històrics similars en la 
+   KnowledgeBase utilitzant mètriques de distància sobre l'espai del problema.
+2. REUSE (Adaptació): Motor d'adaptació semàntica que transforma el plat 
+   recuperat mitjançant operadors de domini (ingredients, tècniques i begudes) 
+   per satisfer les restriccions d'usuari.
+3. REVISE (Avaluació): Mòdul de feedback dual que permet la interacció 
+   amb l'usuari per refinar la solució i detectar errors de consistència.
+4. RETAIN (Aprenentatge): Gestor de persistència que integra noves 
+   experiències a la memòria episòdica i actualitza la memòria semàntica 
+   (regles) per a futures recomanacions.
+"""
+
+
 kb = KnowledgeBase()
 
 # Compatibilitat amb operadors antics (esperen llistes de diccionaris)
